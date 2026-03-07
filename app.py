@@ -1,124 +1,78 @@
-from flask import Flask, request, jsonify, render_template
-from werkzeug.security import generate_password_hash,check_password_hash
+from flask import Flask, request, jsonify, render_template, redirect, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 from config import Config
-from models import db, User,Connection, Message,MentorshipRequest
-
-
-
+from models import db, User
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.secret_key = app.config.get("SECRET_KEY", "fallback_secret_key")
+
 
 db.init_app(app)
 
-# Home Route
-@app.route("/")
+with app.app_context():
+    db.create_all()
+
+
+@app.route('/')
 def home():
-    return render_template("home.html")
+     return render_template("home.html")
 
-#Register User
-@app.route("/api/register", methods=['POST']) 
+
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    data = request.get_json()
-    user=User(
-        name=data['Name'],
-        email=data['Email'],
-        role=data['Role'],
-        faculty=data.get('Faculty'),
-        department=data.get('Department'),
-       
-   )
-    db.session.add(user)
-    db.session.commit()
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        role = request.form.get('role')
 
-    return jsonify({"message": "User registered successfully"})
+        if not all([name, email, password, role]):
+            flash("All fields are required", "error")
+            return redirect('/register')
 
-   #Login
-@app.route("/api/login", methods=['POST'])
+        if User.query.filter_by(email=email).first():
+            flash("Email already registered", "error")
+            return redirect('/register')
+
+        hashed_password = generate_password_hash(password)
+
+        new_user = User(
+            name=name,
+            email=email,
+            password=hashed_password,
+            role=role
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Registration successful.", "success")
+        return redirect('/login')
+
+    return render_template("registration.html")
+
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
-    user=User.query.filter_by(email=data['Email']).first()
-    if user:
-        if check_password_hash(user.password, data['Password']):
-            return jsonify({"message": "Login successful","role": user.role})
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not all([email, password]):
+            flash("Missing email or password", "error")
+            return redirect('/login')
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and check_password_hash(user.password, password):
+            flash("Login successful", "success")
+            return f"Welcome {user.name}, your role is {user.role}"
         else:
-            return jsonify({"message": "Invalid email or password"}), 404
-        
-#Get all users
-@app.route("/api/users", methods=['GET'])
-def get_users(): 
-    users=User.query.all()
-    results=[]
-    for user in users:
-        results.append({
-            "user_id": user.user_id,
-            "name": user.name,
-            "email": user.email,
-            "role": user.role,
-            "faculty": user.faculty,
-            "department": user.department,
-            
-        })
-    return jsonify(results)
+            flash("Invalid email or password", "error")
+            return redirect('/login')
 
-    
-   
-#Send connection request    
-@app.route("/api/connect", methods=['POST'])
-def connect():
-    data = request.get_json()
+    return render_template("login.html")
 
-    connection= Connection(
-        sender_id=data['sender_id'],
-        receiver_id=data['receiver_id'],
-        status='pending'
-    )
-    db.session.add(connection)
-    db.session.commit()
-
-    return jsonify({"message": "Connection request sent successfully"})
-
-#Accept or reject connection request
-@app.route("/api/connect/accept", methods=['POST'])
-def accept_connection():
-    data = request.get_json()
-    connection=Connection.query.filter_by(connection_id=data['connection_id']).first()
-    if not connection:
-        return jsonify({"message": "Connection request not found"}), 404
-    connection.status='accepted'
-    db.session.commit()
-    return jsonify({"message": "Connection request accepted successfully"})
-
-#Send message
-@app.route("/api/message", methods=['POST'])
-def send_message():
-    data = request.get_json()
-    message=Message(
-        sender_id=data['sender_id'],
-        receiver_id=data['receiver_id'],
-        message_text=data['message_text']
-    )
-    db.session.add(message)
-    db.session.commit()
-
-    return jsonify({"message": "Message sent successfully"})
-
-#Mentorship request
-@app.route("/api/mentorship/request", methods=['POST'])
-def mentorship_request():
-    data = request.get_json()
-    mentorship_request=MentorshipRequest(
-        student_id=data['student_id'],
-        mentor_id=data['mentor_id'],
-        status='pending'
-    )
-    db.session.add(mentorship_request)
-    db.session.commit()
-
-    return jsonify({"message": "Mentorship request sent successfully"})
-
-#Run Server
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)    
+if __name__ == "__main__":
+    app.run(debug=True)
