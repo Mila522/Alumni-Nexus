@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from werkzeug.security import generate_password_hash,check_password_hash
 from config import Config
 from models import db, User,Connection, Message,MentorshipRequest
@@ -11,10 +11,10 @@ app.config.from_object(Config)
 
 db.init_app(app)
 
-#Home Route
+# Home Route
 @app.route("/")
 def home():
-    return "Alumni Nexus API Running"
+    return render_template("home.html")
 
 #Register User
 @app.route("/api/register", methods=['POST']) 
