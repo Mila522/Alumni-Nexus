@@ -1,6 +1,3 @@
-{% extends "base.html" %}
-
-{% block content %}
 <!doctype html>
 <html lang="en">
   <head>
@@ -12,12 +9,21 @@
     <div class="container">
       <h2>Alumni Nexus Registration</h2>
 
-      <form action="/register" method="POST">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div class="popup">{{ message }}</div>
+      {% endfor %} {% endif %} {% endwith %}
+
+      <br /><br />
+
+      <form action="/register" method="POST" enctype="multipart/form-data">
         <label for="name">Full Name:</label>
-        <input type="text" id="name" name="name" required /><br /><br />
+        <input type="text" id="name" name="name" required />
+        <br /><br />
 
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required /><br /><br />
+        <input type="email" id="email" name="email" required />
+        <br /><br />
 
         <label for="password">Password:</label>
         <input
@@ -26,23 +32,96 @@
           name="password"
           required
           minlength="8"
-        /><br /><br />
+        />
+        <br /><br />
+
+        <label for="profile_image">Profile Picture:</label>
+        <input
+          type="file"
+          id="profile_image"
+          name="profile_image"
+          accept=".png,.jpg,.jpeg,.gif"
+        />
+        <br /><br />
 
         <label for="role">Role:</label>
-        <select id="role" name="role" required>
+        <select id="role" name="role" required onchange="showRoleFields()">
           <option value="">Select your role</option>
           <option value="alumni">Alumni</option>
           <option value="student">Student</option>
           <option value="admin">Admin</option>
-          <option value="mentor">Mentor</option></select
-        ><br /><br />
+          <option value="mentor">Mentor</option>
+        </select>
+        <br /><br />
+
+        <div id="student-fields" style="display: none">
+          <h3>Student Profile</h3>
+
+          <label for="faculty">Faculty:</label>
+          <input type="text" id="faculty" name="faculty" />
+          <br /><br />
+
+          <label for="department">Department:</label>
+          <input type="text" id="department" name="department" />
+          <br /><br />
+
+          <label for="graduation_year">Graduation Year:</label>
+          <input type="number" id="graduation_year" name="graduation_year" />
+          <br /><br />
+
+          <label for="industry">Industry:</label>
+          <input type="text" id="industry" name="industry" />
+          <br /><br />
+        </div>
+
+        <div id="alumni-fields" style="display: none">
+          <h3>Alumni Profile</h3>
+
+          <label for="headline">Headline:</label>
+          <input type="text" id="headline" name="headline" />
+          <br /><br />
+
+          <label for="experience">Experience:</label>
+          <textarea id="experience" name="experience"></textarea>
+          <br /><br />
+
+          <label for="career_interest">Career Interest:</label>
+          <input type="text" id="career_interest" name="career_interest" />
+          <br /><br />
+
+          <label for="level_of_study">Level of Study:</label>
+          <select id="level_of_study" name="level_of_study">
+            <option value="">Select level</option>
+            <option value="NQF 5">NQF 5</option>
+            <option value="NQF 6">NQF 6</option>
+            <option value="NQF 7">NQF 7</option>
+            <option value="NQF 8">NQF 8</option>
+            <option value="NQF 9">NQF 9</option>
+          </select>
+          <br /><br />
+        </div>
 
         <button type="submit">Register</button>
       </form>
 
       <p>Already have an account? <a href="/login">Login here</a></p>
     </div>
+
+    <script>
+      function showRoleFields() {
+        const role = document.getElementById("role").value;
+        const studentFields = document.getElementById("student-fields");
+        const alumniFields = document.getElementById("alumni-fields");
+
+        studentFields.style.display = "none";
+        alumniFields.style.display = "none";
+
+        if (role === "student") {
+          studentFields.style.display = "block";
+        } else if (role === "alumni") {
+          alumniFields.style.display = "block";
+        }
+      }
+    </script>
   </body>
 </html>
-{% endblock %}
-
