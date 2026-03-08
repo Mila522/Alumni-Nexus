@@ -18,6 +18,9 @@ with app.app_context():
 def home():
      return render_template("home.html")
 
+@app.route('/pinboard')
+def pinboard():
+     return render_template("pinboard.html")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():

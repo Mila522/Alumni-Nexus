@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
     <div class="container">
         <a class="navbar-brand" href="{{ url_for('home') }}">
-            <i class="bi bi-mortarboard-fill me-2"></i>Alumni Nexus
+            <i></i>Alumni Nexus
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
@@ -17,7 +17,7 @@
                     <a class="nav-link" href="#">MyNetwork</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Pinboard</a>
+                <a class="nav-link" href="{{ url_for('pinboard') }}">Pinboard</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#">MyProfile</a>
