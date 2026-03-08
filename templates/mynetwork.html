@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="network-wrapper">
+
+        <div class="network-header mb-4">
+            <h2 class="fw-bold">My Network</h2>
+            <p class="text-muted mb-0">Grow your alumni connections and discover professionals in your community.</p>
+        </div>
+
+      
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">Search Alumni</h5>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" placeholder="Search by name, field, graduation year...">
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+          
+            <div class="col-lg-8">
+
+               
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Suggested Connections</h5>
+                            <a href="#" class="text-decoration-none small">View all</a>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6 col-xl-4">
+                                <div class="suggestion-card text-center p-3">
+                                    <div class="profile-circle mx-auto mb-3"></div>
+                                    <div class="placeholder-line short mx-auto mb-2"></div>
+                                    <div class="placeholder-line smaller mx-auto mb-3"></div>
+                                    <button class="btn btn-outline-primary btn-sm w-100">Connect</button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-xl-4">
+                                <div class="suggestion-card text-center p-3">
+                                    <div class="profile-circle mx-auto mb-3"></div>
+                                    <div class="placeholder-line short mx-auto mb-2"></div>
+                                    <div class="placeholder-line smaller mx-auto mb-3"></div>
+                                    <button class="btn btn-outline-primary btn-sm w-100">Connect</button>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-xl-4">
+                                <div class="suggestion-card text-center p-3">
+                                    <div class="profile-circle mx-auto mb-3"></div>
+                                    <div class="placeholder-line short mx-auto mb-2"></div>
+                                    <div class="placeholder-line smaller mx-auto mb-3"></div>
+                                    <button class="btn btn-outline-primary btn-sm w-100">Connect</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+>
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3">Connection Requests</h5>
+
+                        <div class="request-item d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="request-avatar"></div>
+                                <div>
+                                    <div class="placeholder-line medium mb-2"></div>
+                                    <div class="placeholder-line smaller"></div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm">Accept</button>
+                                <button class="btn btn-outline-secondary btn-sm">Ignore</button>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="request-item d-flex justify-content-between align-items-center flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="request-avatar"></div>
+                                <div>
+                                    <div class="placeholder-line medium mb-2"></div>
+                                    <div class="placeholder-line smaller"></div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm">Accept</button>
+                                <button class="btn btn-outline-secondary btn-sm">Ignore</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="mb-3">My Connections</h5>
+
+                        <div class="connection-box d-flex align-items-center gap-3 mb-3">
+                            <div class="request-avatar"></div>
+                            <div class="flex-grow-1">
+                                <div class="placeholder-line medium mb-2"></div>
+                                <div class="placeholder-line smaller"></div>
+                            </div>
+                        </div>
+
+                        <div class="connection-box d-flex align-items-center gap-3 mb-3">
+                            <div class="request-avatar"></div>
+                            <div class="flex-grow-1">
+                                <div class="placeholder-line medium mb-2"></div>
+                                <div class="placeholder-line smaller"></div>
+                            </div>
+                        </div>
+
+                        <div class="connection-box d-flex align-items-center gap-3">
+                            <div class="request-avatar"></div>
+                            <div class="flex-grow-1">
+                                <div class="placeholder-line medium mb-2"></div>
+                                <div class="placeholder-line smaller"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3">Network Overview</h5>
+
+                        <div class="overview-box mb-3">
+                            <span>Total Connections</span>
+                            <strong>00</strong>
+                        </div>
+
+                        <div class="overview-box mb-3">
+                            <span>Pending Requests</span>
+                            <strong>00</strong>
+                        </div>
+
+                        <div class="overview-box">
+                            <span>Suggestions</span>
+                            <strong>00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="mb-3">Tips</h5>
+                        <ul class="mb-0 ps-3 text-muted">
+                            <li>Find alumni in your field</li>
+                            <li>Expand your professional circle</li>
+                            <li>Connect for mentorship and opportunities</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

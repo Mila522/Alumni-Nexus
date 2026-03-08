@@ -21,6 +21,10 @@ def home():
 @app.route('/pinboard')
 def pinboard():
      return render_template("pinboard.html")
+@app.route('/mynetwork')
+def mynetwork():
+     return render_template("mynetwork.html")
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
