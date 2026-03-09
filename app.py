@@ -126,7 +126,7 @@ def register():
             db.session.add(alumni_profile)
             db.session.commit()
 
-        flash("Registration successful.", "success")
+        flash(f"{user.name}, you've successfully logged in", "success")
         return redirect(url_for('profile', user_id=new_user.user_id))
 
     return render_template("registration.html")
