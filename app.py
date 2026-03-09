@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from flask import Flask, request, render_template, redirect, flash, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -18,7 +19,7 @@ with app.app_context():
     db.create_all()
 
 # Upload folder
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+Path(app.config['UPLOAD_FOLDER']).mkdir(parents=True, exist_ok=True)
 
 
 def allowed_file(filename):
@@ -33,6 +34,11 @@ def home():
 @app.route('/pinboard')
 def pinboard():
     return render_template('pinboard.html')
+
+
+@app.route('/mynetwork')
+def mynetwork():
+    return render_template('mynetwork.html')
 
 
 @app.route('/register', methods=['GET', 'POST'])
