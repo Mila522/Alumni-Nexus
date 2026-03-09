@@ -1,0 +1,171 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_header %}
+<section>
+    <h1>Admin Dashboard</h1>
+    <p>Welcome back, {{ current_user.name }}. Here is an overview of Alumni Nexus activity.</p>
+</section>
+{% endblock %}
+
+{% block content %}
+<!--edit when they are done with database-->
+<section>
+    <h2>Platform Overview</h2>
+    <div>
+        <div>
+            <h3>Total Alumni</h3>
+            <p><!--We will add placeholder--> </p>
+        </div>
+        <div>
+            <h3>Total Students</h3>
+            <p><!--We will add placeholder--> </p>
+        </div>
+        <div>
+            <h3>Active Connections</h3>
+            <p><!--We will add placeholder--> </p>
+        </div>
+        <div>
+            <h3>Active Mentorships</h3>
+            <p><!--We will add placeholder--> </p>
+        </div>
+    </div>
+</section>
+
+<hr>
+
+
+<section>
+    <h2>Pinboard Summary</h2>
+    <div>
+        <div>
+            <h3>Published Announcements</h3>
+            <p>{{ stats.total_announcements }}</p>
+            <a href="{{ url_for('ManagePosts') }}">View All</a>
+        </div>
+        <div>
+            <h3>Upcoming Events</h3>
+            <p>{{ stats.upcoming_events }}</p>
+            <a href="{{ url_for('ManageEvents') }}">View All</a>
+        </div>
+        <div>
+            <h3>Total RSVPs (This Month)</h3>
+            <p><!--We will add placeholder--> </p>
+        </div>
+        <div>
+            <h3>Attendance Rate</h3>
+            <p>{{ stats.attendance_rate }}%</p>
+            <a href="{{ url_for('ViewEngagementReport') }}">Full Report</a>
+        </div>
+    </div>
+</section>
+
+<hr>
+
+<!-- To be edited later on -->
+<section>
+    <h2>Quick Actions</h2>
+    <ul>
+        <li><a href="{{ url_for('CreatePost') }}">+ Create Announcement</a></li>
+        <li><a href="{{ url_for('CreateEvent') }}">+ Create Event / RSVP</a></li>
+        <li><a href="{{ url_for('ManageUsers') }}">Manage Users</a></li>
+        <li><a href="{{ url_for('ViewEngagementReport') }}">View Engagement Report</a></li>
+    </ul>
+</section>
+
+<hr>
+
+
+<section>
+    <h2>Recent Announcements</h2>
+    {% if recent_posts %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Faculty</th>
+                    <th>Department</th>
+                    <th>Audience</th>
+                    <th>Posted By</th>
+                    <th>Posted</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in recent_posts %}
+                <tr>
+                    <!---To be edited later on to add necessary placeholders -->>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <a href="{{ url_for('admin.edit_post', post_id=post.post_id) }}">Edit</a> |
+                        <form method="POST"
+                              action="{{ url_for('admin.delete_post', post_id=post.post_id) }}"
+                              style="display:inline;"
+                              onsubmit="return confirm('Delete this announcement?');">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No announcements have been posted yet.</p>
+    {% endif %}
+    <a href="{{ url_for('ManagePosts') }}">View All Announcements</a>
+</section>
+
+<hr>
+
+<!-- To be edited later on -->
+<section>
+    <h2>Upcoming Events</h2>
+    {% if upcoming_events %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Event Title</th>
+                    <th>Type</th>
+                    <th>Faculty</th>
+                    <th>Event Date</th>
+                    <th>Location</th>
+                    <th>RSVPs</th>
+                    <th>Attended</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in upcoming_events %}
+                <tr>
+                    <td></td><!-- To be edited later on -->
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td><!-- To be edited later on -->
+                    <td>
+                        <a href="{{ url_for('Attendance') }}">Attendance</a> |<!-- To be edited later on -->
+                        <a href="{{ url_for('EditEvent) }}">Edit</a><!-- To be edited later on -->
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No upcoming events scheduled.</p>
+    {% endif %}
+    <a href="{{ url_for('ManageEvents') }}">View All Events</a>
+</section>
+
+{% endblock %}
