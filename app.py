@@ -19,7 +19,7 @@ with app.app_context():
     db.create_all()
 
 # Upload folder
-Path(app.config['UPLOAD_FOLDER']).mkdir(parents=True, exist_ok=True)
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 
 def allowed_file(filename):
@@ -38,11 +38,6 @@ def mynetwork():
 @app.route('/pinboard')
 def pinboard():
     return render_template('pinboard.html')
-
-
-@app.route('/mynetwork')
-def mynetwork():
-    return render_template('mynetwork.html')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -136,7 +131,7 @@ def register():
             db.session.add(alumni_profile)
             db.session.commit()
 
-        flash(f"{user.name}, you've successfully logged in", "success")
+        flash("Registration successful.", "success")
         return redirect(url_for('profile', user_id=new_user.user_id))
 
     return render_template("registration.html")
