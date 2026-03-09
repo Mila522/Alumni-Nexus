@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
 
+
 db = SQLAlchemy()
 
 
@@ -188,3 +189,63 @@ class MentorshipRequest(db.Model):
         db.DateTime,
         default=datetime.utcnow
     )
+
+
+class Event(db.Model):
+    __tablename__ = "events"
+
+    event_id = db.Column(db.Integer, primary_key=True)
+
+    title = db.Column(db.String(200), nullable=False)
+
+    description = db.Column(db.Text)
+
+    event_date = db.Column(db.DateTime)
+
+    location = db.Column(db.String(200))
+    created_by= db.Column(db.Integer, db.ForeignKey('users.user_id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class RSVP(db.Model):
+    __tablename__ = "rsvps"
+
+    rsvp_id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.user_id')
+    )
+
+    event_id = db.Column(
+        db.Integer,
+        db.ForeignKey('events.event_id')
+    )
+
+
+    response = db.Column(
+        db.String(20),
+        default='going'
+    )  # going| maybe | not_going
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+ )
+
+#CREATE POST MODEL
+class Post(db.Model):
+    __tablename__ = "posts"
+
+    post_id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.user_id')
+    )
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
+
+   
