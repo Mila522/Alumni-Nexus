@@ -152,7 +152,7 @@ def login():
 
         if user and check_password_hash(user.password, password):
             flash(f"{user.name}, you've successfully logged in", "success")
-            return redirect(url_for('profile', user_id=user.user_id))
+            return redirect(url_for('home', user_id=user.user_id))
         else:
             flash("Invalid email or password", "error")
             return redirect(url_for('login'))
