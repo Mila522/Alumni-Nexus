@@ -1,127 +1,196 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alumni Nexus Registration</title>
-  </head>
-  <body>
-    <div class="container">
-      <h2>Alumni Nexus Registration</h2>
+{% extends "base.html" %} {% block title %}Alumni Nexus Registration{% endblock
+%} {% block content %}
+<div class="container mt-5" style="max-width: 800px">
+  <h2 class="mb-4 text-center">Alumni Nexus Registration</h2>
 
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div class="popup">{{ message }}</div>
-      {% endfor %} {% endif %} {% endwith %}
-
-      <br /><br />
-
-      <form action="/register" method="POST" enctype="multipart/form-data">
-        <label for="name">Full Name:</label>
-        <input type="text" id="name" name="name" required />
-        <br /><br />
-
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required />
-        <br /><br />
-
-        <label for="password">Password:</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          required
-          minlength="8"
-        />
-        <br /><br />
-
-        <label for="profile_image">Profile Picture:</label>
-        <input
-          type="file"
-          id="profile_image"
-          name="profile_image"
-          accept=".png,.jpg,.jpeg,.gif"
-        />
-        <br /><br />
-
-        <label for="role">Role:</label>
-        <select id="role" name="role" required onchange="showRoleFields()">
-          <option value="">Select your role</option>
-          <option value="alumni">Alumni</option>
-          <option value="student">Student</option>
-          <option value="mentor">Mentor</option>
-        </select>
-        <br /><br />
-
-        <div id="student-fields" style="display: none">
-          <h3>Student Profile</h3>
-
-          <label for="faculty">Faculty:</label>
-          <input type="text" id="faculty" name="faculty" />
-          <br /><br />
-
-          <label for="department">Department:</label>
-          <input type="text" id="department" name="department" />
-          <br /><br />
-
-          <label for="graduation_year">Graduation Year:</label>
-          <input type="number" id="graduation_year" name="graduation_year" />
-          <br /><br />
-
-          <label for="industry">Industry:</label>
-          <input type="text" id="industry" name="industry" />
-          <br /><br />
-        </div>
-
-        <div id="alumni-fields" style="display: none">
-          <h3>Alumni Profile</h3>
-
-          <label for="headline">Headline:</label>
-          <input type="text" id="headline" name="headline" />
-          <br /><br />
-
-          <label for="experience">Experience:</label>
-          <textarea id="experience" name="experience"></textarea>
-          <br /><br />
-
-          <label for="career_interest">Career Interest:</label>
-          <input type="text" id="career_interest" name="career_interest" />
-          <br /><br />
-
-          <label for="level_of_study">Level of Study:</label>
-          <select id="level_of_study" name="level_of_study">
-            <option value="">Select level</option>
-            <option value="NQF 5">NQF 5</option>
-            <option value="NQF 6">NQF 6</option>
-            <option value="NQF 7">NQF 7</option>
-            <option value="NQF 8">NQF 8</option>
-            <option value="NQF 9">NQF 9</option>
-          </select>
-          <br /><br />
-        </div>
-
-        <button type="submit">Register</button>
-      </form>
-
-      <p>Already have an account? <a href="/login">Login here</a></p>
+  <form
+    action="{{ url_for('register') }}"
+    method="POST"
+    enctype="multipart/form-data"
+  >
+    <div class="mb-3">
+      <label for="name" class="form-label">Full Name:</label>
+      <input type="text" class="form-control" id="name" name="name" required />
     </div>
 
-    <script>
-      function showRoleFields() {
-        const role = document.getElementById("role").value;
-        const studentFields = document.getElementById("student-fields");
-        const alumniFields = document.getElementById("alumni-fields");
+    <div class="mb-3">
+      <label for="email" class="form-label">Email:</label>
+      <input
+        type="email"
+        class="form-control"
+        id="email"
+        name="email"
+        required
+      />
+    </div>
 
-        studentFields.style.display = "none";
-        alumniFields.style.display = "none";
+    <div class="mb-3">
+      <label for="password" class="form-label">Password:</label>
+      <input
+        type="password"
+        class="form-control"
+        id="password"
+        name="password"
+        required
+        minlength="8"
+      />
+    </div>
 
-        if (role === "student") {
-          studentFields.style.display = "block";
-        } else if (role === "alumni") {
-          alumniFields.style.display = "block";
-        }
-      }
-    </script>
-  </body>
-</html>
+    <div class="mb-3">
+      <label for="profile_image" class="form-label">Profile Picture:</label>
+      <input
+        type="file"
+        class="form-control"
+        id="profile_image"
+        name="profile_image"
+        accept=".png,.jpg,.jpeg,.gif"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="role" class="form-label">Role:</label>
+      <select
+        class="form-select"
+        id="role"
+        name="role"
+        required
+        onchange="showRoleFields()"
+      >
+        <option value="">Select your role</option>
+        <option value="alumni">Alumni</option>
+        <option value="student">Student</option>
+        <option value="mentor">Mentor</option>
+      </select>
+    </div>
+
+    <div id="student-fields" style="display: none">
+      <h3 class="mt-4">Student Profile</h3>
+
+      <div class="mb-3">
+        <label for="faculty" class="form-label">Faculty:</label>
+        <input type="text" class="form-control" id="faculty" name="faculty" />
+      </div>
+
+      <div class="mb-3">
+        <label for="department" class="form-label">Department:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="department"
+          name="department"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="graduation_year" class="form-label">Graduation Year:</label>
+        <input
+          type="number"
+          class="form-control"
+          id="graduation_year"
+          name="graduation_year"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="industry" class="form-label">Industry:</label>
+        <input type="text" class="form-control" id="industry" name="industry" />
+      </div>
+    </div>
+
+    <div id="alumni-fields" style="display: none">
+      <h3 class="mt-4">Alumni Profile</h3>
+
+      <div class="mb-3">
+        <label for="headline" class="form-label">Headline:</label>
+        <input type="text" class="form-control" id="headline" name="headline" />
+      </div>
+
+      <div class="mb-3">
+        <label for="experience" class="form-label">Experience:</label>
+        <textarea
+          class="form-control"
+          id="experience"
+          name="experience"
+          rows="4"
+        ></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label for="career_interest" class="form-label">Career Interest:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="career_interest"
+          name="career_interest"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="level_of_study" class="form-label">Level of Study:</label>
+        <select class="form-select" id="level_of_study" name="level_of_study">
+          <option value="">Select level</option>
+          <option value="NQF 5">NQF 5</option>
+          <option value="NQF 6">NQF 6</option>
+          <option value="NQF 7">NQF 7</option>
+          <option value="NQF 8">NQF 8</option>
+          <option value="NQF 9">NQF 9</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="Education" class="form-label">Education:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="Education"
+          name="Education"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="Licence_Certificates" class="form-label"
+          >Licence / Certificates:</label
+        >
+        <input
+          type="text"
+          class="form-control"
+          id="Licence_Certificates"
+          name="Licence_Certificates"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="Skills" class="form-label">Skills:</label>
+        <input type="text" class="form-control" id="Skills" name="Skills" />
+      </div>
+    </div>
+
+    <div class="d-grid mt-4">
+      <button type="submit" class="btn btn-primary">Register</button>
+    </div>
+  </form>
+
+  <p class="text-center mt-3">
+    Already have an account?
+    <a href="{{ url_for('login') }}">Login</a>
+  </p>
+</div>
+
+<script>
+  function showRoleFields() {
+    const role = document.getElementById("role").value;
+    const studentFields = document.getElementById("student-fields");
+    const alumniFields = document.getElementById("alumni-fields");
+
+    studentFields.style.display = "none";
+    alumniFields.style.display = "none";
+
+    if (role === "student") {
+      studentFields.style.display = "block";
+    } else if (role === "alumni") {
+      alumniFields.style.display = "block";
+    }
+  }
+</script>
+{% endblock %}
 
