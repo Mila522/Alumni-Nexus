@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from config import Config
+from sqlalchemy import or_
 from models import db, User, StudentProfile, AlumniProfile,Connection,Message,MentorProfile,MentorshipRequest,Event,RSVP,Post
 
 app = Flask(__name__)
@@ -239,6 +240,70 @@ def get_posts():
             })
 
     return jsonify(results)
+
+@app.route("/api/posts/<int:user_id>",methods=["POST"])   
+@jwt_required()
+def connect_user(user_id):
+    current_user_id = get_jwt_identity()
+    connection = Connection(
+        user_id_1=current_user_id,
+        user_id_2=user_id,
+        status="connected"
+    )
+    db.session.add(connection)
+    db.session.commit()
+
+    return jsonify({"message":"Connection request sent successfully"})
+
+@app.route("/api/suggestions",methods=["GET"])
+@jwt_required()
+def get_suggestions():
+    current_user = get_jwt_identity()
+
+    users=User.query.filter(User.user_id != current_user).limit(5).all()
+    result = []
+    for u in users:
+        result.append({
+            "id": u.user_id,
+            "name": u.name,
+            "industry": u.industry,
+        })
+    return jsonify(result)
+
+@app.route("/api/network-stats",methods=["GET"])
+@jwt_required()
+def get_network_stats():
+    user_id = get_jwt_identity()
+    total=Connection.query.filter_by(sender_id=user_id,status="accepted").count()
+    pending=Connection.query.filter_by(receiver_id=user_id,status="pending").count()
+    suggestions=User.query.count() -1
+    return jsonify({
+        "total_connections": total,
+        "pending_requests": pending,
+        "suggestions": suggestions
+    })
+@app.route("/api/search",methods=["GET"])
+def search_users():
+    query=request.args.get("q")
+    users=User.query.filter(
+        or_(
+            User.name.ilike(f"%{query}%"),
+            User.industry.ilike(f"%{query}%"),
+            User.email.ilike(f"%{query}%")
+        )
+    ).all()
+    results = []
+    for user in users:
+        results.append({
+            "id": user.user_id,
+            "name": user.name,
+            "industry": user.industry,
+            "email": user.email,
+            "graduation_year":user.graduation_year
+        })
+    return jsonify(results)
+
+
 
 
 if __name__ == "__main__":
