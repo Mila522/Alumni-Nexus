@@ -1,5 +1,6 @@
 import os
 from flask import Flask, jsonify, request, render_template, redirect, flash, url_for
+from flask_login import login_required,LoginManager, login_user,current_user,logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from config import Config
@@ -28,17 +29,6 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not session.get('admin_logged_in'):
-            flash("Admin access required.", "error")
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated
 
 
 @app.route('/')
@@ -173,14 +163,8 @@ def login():
             flash("Missing email or password", "error")
             return redirect(url_for('login'))
 
-        # ── Admin check — no database lookup needed ──
-        if email == 'admin@alumninexus.com' and password == 'admintest123':
-            session['admin_logged_in'] = True
-            session['admin_email'] = email
-            return redirect(url_for('admin_dashboard'))
-
-        # Regular user login
         user = User.query.filter_by(email=email).first()
+
         if user and check_password_hash(user.password, password):
 
             login_user(user)   
@@ -201,23 +185,6 @@ def login():
 def profile(user_id):
     user = User.query.get_or_404(user_id)
     return render_template("profile.html", user=user)
-
-
-
-@app.route('/admin/dashboard')
-@admin_required
-def admin_dashboard():
-    return render_template('admin_dashboard.html')
-
-
-@app.route('/admin/logout')
-def admin_logout():
-    session.pop('admin_logged_in', None)
-    session.pop('admin_email', None)
-    flash("You have been logged out.", "success")
-    return redirect(url_for('login'))
-
-
 
 @app.route("/api/events",methods=["POST"])
 @login_required
@@ -382,7 +349,7 @@ def get_network_stats():
         "pending_requests": pending,
         "suggestions": suggestions
     })
-@app.route("/api/search",methods=["GET"])
+@app.route("/api/search", methods=["GET"])
 def search_users():
 
     query = request.args.get("q", "")
@@ -404,6 +371,40 @@ def search_users():
         })
 
     return jsonify(results)
+
+@app.route("/api/my-connections", methods=["GET"])
+@login_required
+def my_connections():
+    user_id = current_user.user_id
+
+    connections = Connection.query.filter(
+        ((Connection.sender_id == user_id) | (Connection.receiver_id == user_id)) &
+        (Connection.status == "accepted")
+    ).all()
+
+    result = []
+    for c in connections:
+        # Get the other user in the connection
+        other_id = c.receiver_id if c.sender_id == user_id else c.sender_id
+        other_user = User.query.get(other_id)
+        result.append({
+            "id": other_user.user_id,
+            "name": other_user.name,
+            "email": other_user.email
+        })
+
+    return jsonify(result)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("home"))
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 
