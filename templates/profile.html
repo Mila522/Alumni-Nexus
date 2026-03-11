@@ -67,6 +67,9 @@ extra_css %}
 {% endfor %} {% endif %} {% endwith %}
 
 <div class="container">
+  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
+    Logout
+</a>
   <div class="profile-card">
     <img
       src="{{ url_for('static', filename=user.profile_image) }}"

@@ -1,9 +1,10 @@
 import os
 from flask import Flask, jsonify, request, render_template, redirect, flash, url_for
-from flask_login import login_required,LoginManager, login_user,current_user
+from flask_login import login_required,LoginManager, login_user,current_user,logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from config import Config
+from email_validator import validate_email, EmailNotValidError
 from sqlalchemy import or_
 from models import db, User, StudentProfile, AlumniProfile,Connection,Message,MentorProfile,MentorshipRequest,Event,RSVP,Post
 
@@ -54,6 +55,13 @@ def register():
         password = request.form.get('password')
         role = request.form.get('role')
         image = request.files.get('profile_image')
+
+        try:
+            validate_email(email)
+        except EmailNotValidError:
+            flash("Invalid email address", "error")
+            return redirect(url_for('register'))
+
 
         if not all([name, email, password, role]):
             flash("All fields are required", "error")
@@ -386,6 +394,13 @@ def my_connections():
         })
 
     return jsonify(result)
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out.", "success")
+    return redirect(url_for("home"))
 
 @login_manager.user_loader
 def load_user(user_id):
