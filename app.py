@@ -1,5 +1,6 @@
 import os
-from flask import Flask, jsonify, request, render_template, redirect, flash, url_for
+from functools import wraps
+from flask import Flask, jsonify, request, render_template, redirect, flash, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
@@ -25,6 +26,17 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('admin_logged_in'):
+            flash("Admin access required.", "error")
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
 
 
 @app.route('/')
@@ -148,8 +160,14 @@ def login():
             flash("Missing email or password", "error")
             return redirect(url_for('login'))
 
-        user = User.query.filter_by(email=email).first()
+        # ── Admin check — no database lookup needed ──
+        if email == 'admin@alumninexus.com' and password == 'admintest123':
+            session['admin_logged_in'] = True
+            session['admin_email'] = email
+            return redirect(url_for('admin_dashboard'))
 
+        # Regular user login
+        user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
             flash(f"{user.name}, you've successfully logged in", "success")
             return redirect(url_for('home', user_id=user.user_id))
@@ -164,6 +182,23 @@ def login():
 def profile(user_id):
     user = User.query.get_or_404(user_id)
     return render_template("profile.html", user=user)
+
+
+
+@app.route('/admin/dashboard')
+@admin_required
+def admin_dashboard():
+    return render_template('admin_dashboard.html')
+
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    session.pop('admin_email', None)
+    flash("You have been logged out.", "success")
+    return redirect(url_for('login'))
+
+
 
 @app.route("/api/events",methods=["POST"])
 @jwt_required()
@@ -282,6 +317,7 @@ def get_network_stats():
         "pending_requests": pending,
         "suggestions": suggestions
     })
+
 @app.route("/api/search",methods=["GET"])
 def search_users():
     query=request.args.get("q")
@@ -302,8 +338,6 @@ def search_users():
             "graduation_year":user.graduation_year
         })
     return jsonify(results)
-
-
 
 
 if __name__ == "__main__":
