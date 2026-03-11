@@ -18,14 +18,14 @@ class User(UserMixin, db.Model):
 
     password = db.Column(db.String(255), nullable=False)
 
-    role = db.Column(db.String(100), nullable=False)  # admin | alumni | student | mentor
+    role = db.Column(db.String(100), nullable=False) 
 
     
     profile_image = db.Column(db.String(255), default='default-profile.png')
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
+    
     student_profile = db.relationship(
         'StudentProfile',
         backref='user',

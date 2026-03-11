@@ -12,7 +12,15 @@
       <label for="name" class="form-label">Full Name:</label>
       <input type="text" class="form-control" id="name" name="name" required />
     </div>
-
+     {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-danger">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
     <div class="mb-3">
       <label for="email" class="form-label">Email:</label>
       <input
