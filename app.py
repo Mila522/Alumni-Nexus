@@ -1,15 +1,18 @@
 import os
-from flask import Flask, jsonify, request, render_template, redirect, flash, url_for
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
+from functools import wraps
+from flask import Flask, jsonify, request, render_template, redirect, flash, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from config import Config
 from email_validator import validate_email, EmailNotValidError
 from sqlalchemy import or_
-from models import db, User, StudentProfile, AlumniProfile,Connection,Message,MentorProfile,MentorshipRequest,Event,RSVP,Post
+from models import db, User, StudentProfile, AlumniProfile, Connection, Message, MentorProfile, MentorshipRequest, Event, RSVP, Post
 
 app = Flask(__name__)
 app.config.from_object(Config)
 app.secret_key = app.config.get("SECRET_KEY", "fallback_secret_key")
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
@@ -22,13 +25,17 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+# ── User loader (required by Flask-Login) ──
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-
 
 
 def admin_required(f):
@@ -51,6 +58,7 @@ def home():
 def mynetwork():
     return render_template('mynetwork.html')
 
+
 @app.route('/pinboard')
 @login_required
 def pinboard():
@@ -72,7 +80,6 @@ def register():
             flash("Invalid email address", "error")
             return redirect(url_for('register'))
 
-
         if not all([name, email, password, role]):
             flash("All fields are required", "error")
             return redirect(url_for('register'))
@@ -83,10 +90,8 @@ def register():
 
         hashed_password = generate_password_hash(password)
 
-        
         image_filename = 'default-profile.png'
 
-        
         if image and image.filename != '':
             if allowed_file(image.filename):
                 filename = secure_filename(image.filename)
@@ -163,9 +168,7 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-
     if request.method == 'POST':
-
         email = request.form.get('email')
         password = request.form.get('password')
 
@@ -173,7 +176,7 @@ def login():
             flash("Missing email or password", "error")
             return redirect(url_for('login'))
 
-        # ── Admin check — no database lookup needed ──
+        # ── Admin check ──
         if email == 'admin@alumninexus.com' and password == 'admintest123':
             session['admin_logged_in'] = True
             session['admin_email'] = email
@@ -182,13 +185,9 @@ def login():
         # Regular user login
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
-
-            login_user(user)   
-
+            login_user(user)
             flash(f"{user.name}, you've successfully logged in", "success")
-
             return redirect(url_for('profile', user_id=user.user_id))
-
         else:
             flash("Invalid email or password", "error")
             return redirect(url_for('login'))
@@ -196,12 +195,19 @@ def login():
     return render_template("login.html")
 
 
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out.", "success")
+    return redirect(url_for('login'))
+
+
 @app.route('/profile/<int:user_id>')
 @login_required
 def profile(user_id):
     user = User.query.get_or_404(user_id)
     return render_template("profile.html", user=user)
-
 
 
 @app.route('/admin/dashboard')
@@ -218,15 +224,15 @@ def admin_logout():
     return redirect(url_for('login'))
 
 
+# ── Events ──
 
-@app.route("/api/events",methods=["POST"])
-@login_required
+@app.route("/api/events", methods=["POST"])
 @login_required
 def create_event():
     user_id = current_user.user_id
-    data=request.get_json()
+    data = request.get_json()
 
-    event=Event(
+    event = Event(
         title=data.get("title"),
         description=data.get("description"),
         location=data.get("location"),
@@ -235,12 +241,13 @@ def create_event():
     )
     db.session.add(event)
     db.session.commit()
-    return jsonify({"message":"Event created successfully"})
+    return jsonify({"message": "Event created successfully"})
 
-@app.route("/api/events",methods=["GET"])
+
+@app.route("/api/events", methods=["GET"])
 @login_required
 def get_events():
-    events=Event.query.all()
+    events = Event.query.all()
     results = []
 
     for e in events:
@@ -250,43 +257,47 @@ def get_events():
             "description": e.description,
             "location": e.location,
             "date": e.event_date
-            })
+        })
 
     return jsonify(results)
 
-@app.route("/api/events/<int:event_id>/rsvp",methods=["POST"])
+
+@app.route("/api/events/<int:event_id>/rsvp", methods=["POST"])
 @login_required
 def rsvp_event(event_id):
     user_id = current_user.user_id
 
-    rsvp=RSVP(
+    rsvp = RSVP(
         user_id=user_id,
         event_id=event_id,
         status="going"
     )
     db.session.add(rsvp)
     db.session.commit()
+    return jsonify({"message": "RSVP successful"})
 
-    return jsonify({"message":"RSVP successful"})
 
-@app.route("/api/posts",methods=["POST"])
+# ── Posts ──
+
+@app.route("/api/posts", methods=["POST"])
 @login_required
 def create_post():
     user_id = current_user.user_id
-    data=request.get_json()
+    data = request.get_json()
 
-    post=Post(
+    post = Post(
         user_id=user_id,
         content=data.get("content")
     )
     db.session.add(post)
     db.session.commit()
-    return jsonify({"message":"Post created successfully"})
+    return jsonify({"message": "Post created successfully"})
 
-@app.route("/api/posts",methods=["GET"])
+
+@app.route("/api/posts", methods=["GET"])
 @login_required
 def get_posts():
-    posts=Post.query.order_by(Post.created_at.desc()).all()
+    posts = Post.query.order_by(Post.created_at.desc()).all()
     results = []
 
     for p in posts:
@@ -295,36 +306,40 @@ def get_posts():
             "user_id": p.user_id,
             "content": p.content,
             "created_at": p.created_at
-            })
+        })
 
     return jsonify(results)
 
+
+# ── Connections ──
+
+@app.route("/api/connect/<int:receiver_id>", methods=["POST"])  # Fixed route (was /api/posts/...)
 @login_required
-@app.route("/api/posts/<int:receiver_id>", methods=["POST"])
 def connect_user(receiver_id):
     sender_id = current_user.user_id
-    # Check if a request already exists
+
     existing = Connection.query.filter_by(sender_id=sender_id, receiver_id=receiver_id).first()
     if existing:
-        return jsonify({"message":"Connection request already sent"}), 400
+        return jsonify({"message": "Connection request already sent"}), 400
 
     connection = Connection(
         sender_id=sender_id,
         receiver_id=receiver_id,
-        status="pending"  # pending until accepted
+        status="pending"
     )
     db.session.add(connection)
     db.session.commit()
-    return jsonify({"message":"Connection request sent successfully"})
+    return jsonify({"message": "Connection request sent successfully"})
+
 
 @app.route("/api/connection-requests", methods=["GET"])
 @login_required
 def get_connection_requests():
     user_id = current_user.user_id
-    requests = Connection.query.filter_by(receiver_id=user_id, status="pending").all()
+    pending_requests = Connection.query.filter_by(receiver_id=user_id, status="pending").all()
 
     result = []
-    for req in requests:
+    for req in pending_requests:
         sender = User.query.get(req.sender_id)
         result.append({
             "id": req.connection_id,
@@ -333,34 +348,37 @@ def get_connection_requests():
 
     return jsonify(result)
 
+
 @app.route("/api/connection-requests/<int:request_id>/accept", methods=["POST"])
 @login_required
 def accept_request(request_id):
     connection = Connection.query.get_or_404(request_id)
     if connection.receiver_id != current_user.user_id:
-        return jsonify({"error":"Unauthorized"}), 403
+        return jsonify({"error": "Unauthorized"}), 403
 
     connection.status = "accepted"
     db.session.commit()
-    return jsonify({"message":"Request accepted"})
+    return jsonify({"message": "Request accepted"})
+
 
 @app.route("/api/connection-requests/<int:request_id>/decline", methods=["POST"])
 @login_required
 def decline_request(request_id):
     connection = Connection.query.get_or_404(request_id)
     if connection.receiver_id != current_user.user_id:
-        return jsonify({"error":"Unauthorized"}), 403
+        return jsonify({"error": "Unauthorized"}), 403
 
     db.session.delete(connection)
     db.session.commit()
-    return jsonify({"message":"Request declined"})
+    return jsonify({"message": "Request declined"})
 
-@app.route("/api/suggestions",methods=["GET"])
+
+@app.route("/api/suggestions", methods=["GET"])
 @login_required
 def get_suggestions():
-    current_user = current_user.user_id
+    user_id = current_user.user_id  # Fixed: was shadowing current_user
 
-    users=User.query.filter(User.user_id != current_user).limit(5).all()
+    users = User.query.filter(User.user_id != user_id).limit(5).all()
     result = []
     for u in users:
         result.append({
@@ -370,21 +388,23 @@ def get_suggestions():
         })
     return jsonify(result)
 
-@app.route("/api/network-stats",methods=["GET"])
+
+@app.route("/api/network-stats", methods=["GET"])
 @login_required
 def get_network_stats():
     user_id = current_user.user_id
-    total=Connection.query.filter_by(sender_id=user_id,status="accepted").count()
-    pending=Connection.query.filter_by(receiver_id=user_id,status="pending").count()
-    suggestions=User.query.count() -1
+    total = Connection.query.filter_by(sender_id=user_id, status="accepted").count()
+    pending = Connection.query.filter_by(receiver_id=user_id, status="pending").count()
+    suggestions = User.query.count() - 1
     return jsonify({
         "total_connections": total,
         "pending_requests": pending,
         "suggestions": suggestions
     })
-@app.route("/api/search",methods=["GET"])
-def search_users():
 
+
+@app.route("/api/search", methods=["GET"])
+def search_users():
     query = request.args.get("q", "")
 
     users = User.query.filter(
@@ -395,7 +415,6 @@ def search_users():
     ).all()
 
     results = []
-
     for user in users:
         results.append({
             "id": user.user_id,
@@ -404,8 +423,6 @@ def search_users():
         })
 
     return jsonify(results)
-
-
 
 
 if __name__ == "__main__":
