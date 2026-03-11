@@ -1,6 +1,3 @@
-Admindashboard · HTML
-Copy
-
 {% extends 'admin_base.html' %}
 
 {% block title %}Dashboard{% endblock %}
@@ -26,7 +23,7 @@ Copy
                     
                 </div>
                 <div class="admin-info">
-                    <p></p>        
+                    <p>{{ session.get('admin_email', 'Admin') }}</p>        
                     <small>Administrator</small>
                 </div>
             </div>
@@ -96,7 +93,7 @@ Copy
         </nav>
 
         <div class="dashboard-nav-footer">
-            <a href="" class="logout-btn">&#8594; Logout</a>
+            <a href="{{ url_for('admin_logout') }}" class="logout-btn">&#8594; Logout</a>
         </div>
     </aside>
 
@@ -123,7 +120,7 @@ Copy
 
                 <div class="section-header">
                     <h2>Platform Overview</h2>
-                    <p>Welcome back, <strong></strong>.</p>
+                    <p>Welcome back, <strong>Administrator</strong>.</p>
                 </div>
 
                 <div class="stats-grid">
@@ -236,12 +233,6 @@ Copy
                                     <div class="action-cell">
                                         <a href=""
                                            class="btn btn-ghost">View</a>       
-                                        <form method="POST"
-                                              action=""
-                                              onsubmit="return confirm('Delete ?');">
-                                            
-                                            <button type="submit" class="btn btn-danger">Delete</button>
-                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -291,19 +282,7 @@ Copy
                                 <td>
                                     <div class="action-cell">
                                         <a href=""
-                                           class="btn btn-ghost">Profile</a>             
-                                        <form method="POST"
-                                              action=""
-                                              onsubmit="return confirm('Approve  as mentor?');">
-                                            
-                                            <button type="submit" class="btn btn-success">Approve</button>
-                                        </form>
-                                        <form method="POST"
-                                              action=""
-                                              onsubmit="return confirm('Reject application?');">
-                                            
-                                            <button type="submit" class="btn btn-danger">Reject</button>
-                                        </form>
+                                           class="btn btn-ghost">Profile</a>
                                     </div>
                                 </td>
                             </tr>
@@ -351,13 +330,7 @@ Copy
                                 <td>
                                     <div class="action-cell">
                                         <a href=""
-                                           class="btn btn-ghost">View</a>              
-                                        <form method="POST"
-                                              action=""
-                                              onsubmit="return confirm('Revoke mentor status for ?');">
-                                            
-                                            <button type="submit" class="btn btn-danger">Revoke</button>
-                                        </form>
+                                           class="btn btn-ghost">View</a>
                                     </div>
                                 </td>
                             </tr>
@@ -391,7 +364,6 @@ Copy
                                 <th>Expertise</th>
                                 <th>Status</th>
                                 <th>Requested</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -401,27 +373,11 @@ Copy
                                 <td><strong></strong></td>    
                                 <td></td>                    
                                 <td></td>                      
+                                <td></td>
                                 <td>
-                                    
-                                    
-                                </td>
-                                <td>
-                                    <span class="pill pill-">
-                                                       
-                                    </span>
+                                    <span class="pill pill-"></span>
                                 </td>
                                 <td></td> 
-                                <td>
-                                    <div class="action-cell">
-                                        
-                                        <form method="POST"
-                                              action=""
-                                              onsubmit="return confirm('Delete this request?');">
-                                            
-                                            <button type="submit" class="btn btn-danger">Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
                             </tr>
                             
                         </tbody>
@@ -454,32 +410,15 @@ Copy
                                 <th>Content</th>
                                 <th>Posted By</th>
                                 <th>Date</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             
                             <tr>
                                 <td></td>
-                                
                                 <td>…</td>
-                                
                                 <td></td>
-                                
                                 <td></td>
-                                <td>
-                                    <div class="action-cell">
-                                        
-                                        <a href=""
-                                           class="btn btn-ghost">Edit</a>
-                                        <form method="POST"
-                                              action=""
-                                              onsubmit="return confirm('Delete this post?');">
-                                            
-                                            <button type="submit" class="btn btn-danger">Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
                             </tr>
                             
                         </tbody>
@@ -514,32 +453,17 @@ Copy
                                 <th>Date</th>
                                 <th>Location</th>
                                 <th>RSVPs</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             
                             <tr>
                                 <td></td>
-                                <td><strong></strong></td>             
-                                
+                                <td><strong></strong></td>
                                 <td>…</td>
-                                <td></td>                         
                                 <td></td>
-                                <td></td>                               
-                                <td>
-                                    <div class="action-cell">
-                                        
-                                        <a href=""
-                                           class="btn btn-ghost">Edit</a>
-                                        <form method="POST"
-                                              action=""
-                                              onsubmit="return confirm('Delete this event?');">
-                                            
-                                            <button type="submit" class="btn btn-danger">Delete</button>
-                                        </form>
-                                    </div>
-                                </td>
+                                <td></td>
+                                <td></td>
                             </tr>
                             
                         </tbody>

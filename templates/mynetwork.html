@@ -1,174 +1,316 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="container py-5">
     <div class="network-wrapper">
 
-        <div class="network-header mb-4">
-            <h2 class="fw-bold">My Network</h2>
-            <p class="text-muted mb-0">Grow your alumni connections and discover professionals in your community.</p>
-        </div>
 
-      
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-body">
-                <h5 class="mb-3">Search Alumni</h5>
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0">
-                        <i class="bi bi-search"></i>
-                    </span>
-                    <input type="text" class="form-control border-start-0" placeholder="Search by name, field, graduation year...">
-                </div>
-            </div>
-        </div>
+    <div class="network-header mb-4">
+        <h2 class="fw-bold">My Network</h2>
+        <p class="text-muted mb-0">Grow your alumni connections and discover professionals in your community.</p>
+    </div>
 
-        <div class="row g-4">
-          
-            <div class="col-lg-8">
+    <!-- SEARCH -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <h5 class="mb-3">Search Alumni</h5>
+           <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <h5 class="mb-3">Search Alumni</h5>
 
-               
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0">Suggested Connections</h5>
-                            <a href="#" class="text-decoration-none small">View all</a>
-                        </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6 col-xl-4">
-                                <div class="suggestion-card text-center p-3">
-                                    <div class="profile-circle mx-auto mb-3"></div>
-                                    <div class="placeholder-line short mx-auto mb-2"></div>
-                                    <div class="placeholder-line smaller mx-auto mb-3"></div>
-                                    <button class="btn btn-outline-primary btn-sm w-100">Connect</button>
-                                </div>
-                            </div>
+    <div class="input-group">
+        <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-search"></i>
+        </span>
 
-                            <div class="col-md-6 col-xl-4">
-                                <div class="suggestion-card text-center p-3">
-                                    <div class="profile-circle mx-auto mb-3"></div>
-                                    <div class="placeholder-line short mx-auto mb-2"></div>
-                                    <div class="placeholder-line smaller mx-auto mb-3"></div>
-                                    <button class="btn btn-outline-primary btn-sm w-100">Connect</button>
-                                </div>
-                            </div>
+        <input id="search-box"
+               type="text"
+               class="form-control border-start-0"
+               placeholder="Search by name or email...">
 
-                            <div class="col-md-6 col-xl-4">
-                                <div class="suggestion-card text-center p-3">
-                                    <div class="profile-circle mx-auto mb-3"></div>
-                                    <div class="placeholder-line short mx-auto mb-2"></div>
-                                    <div class="placeholder-line smaller mx-auto mb-3"></div>
-                                    <button class="btn btn-outline-primary btn-sm w-100">Connect</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
->
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <h5 class="mb-3">Connection Requests</h5>
-
-                        <div class="request-item d-flex justify-content-between align-items-center flex-wrap gap-3">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="request-avatar"></div>
-                                <div>
-                                    <div class="placeholder-line medium mb-2"></div>
-                                    <div class="placeholder-line smaller"></div>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary btn-sm">Accept</button>
-                                <button class="btn btn-outline-secondary btn-sm">Ignore</button>
-                            </div>
-                        </div>
-
-                        <hr>
-
-                        <div class="request-item d-flex justify-content-between align-items-center flex-wrap gap-3">
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="request-avatar"></div>
-                                <div>
-                                    <div class="placeholder-line medium mb-2"></div>
-                                    <div class="placeholder-line smaller"></div>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button class="btn btn-primary btn-sm">Accept</button>
-                                <button class="btn btn-outline-secondary btn-sm">Ignore</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="mb-3">My Connections</h5>
-
-                        <div class="connection-box d-flex align-items-center gap-3 mb-3">
-                            <div class="request-avatar"></div>
-                            <div class="flex-grow-1">
-                                <div class="placeholder-line medium mb-2"></div>
-                                <div class="placeholder-line smaller"></div>
-                            </div>
-                        </div>
-
-                        <div class="connection-box d-flex align-items-center gap-3 mb-3">
-                            <div class="request-avatar"></div>
-                            <div class="flex-grow-1">
-                                <div class="placeholder-line medium mb-2"></div>
-                                <div class="placeholder-line smaller"></div>
-                            </div>
-                        </div>
-
-                        <div class="connection-box d-flex align-items-center gap-3">
-                            <div class="request-avatar"></div>
-                            <div class="flex-grow-1">
-                                <div class="placeholder-line medium mb-2"></div>
-                                <div class="placeholder-line smaller"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-           
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 mb-4">
-                    <div class="card-body">
-                        <h5 class="mb-3">Network Overview</h5>
-
-                        <div class="overview-box mb-3">
-                            <span>Total Connections</span>
-                            <strong>00</strong>
-                        </div>
-
-                        <div class="overview-box mb-3">
-                            <span>Pending Requests</span>
-                            <strong>00</strong>
-                        </div>
-
-                        <div class="overview-box">
-                            <span>Suggestions</span>
-                            <strong>00</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="mb-3">Tips</h5>
-                        <ul class="mb-0 ps-3 text-muted">
-                            <li>Find alumni in your field</li>
-                            <li>Expand your professional circle</li>
-                            <li>Connect for mentorship and opportunities</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+        <button class="btn btn-primary" onclick="searchUsers()">
+            Search
+        </button>
     </div>
 </div>
+
+</div>
+
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- LEFT SIDE -->
+        <div class="col-lg-8">
+
+            <!-- SUGGESTED CONNECTIONS -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Suggested Connections</h5>
+                    </div>
+
+                    <div class="row g-3" id="suggestions-container">
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONNECTION REQUESTS -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body" id="requests-container">
+                    <h5 class="mb-3">Connection Requests</h5>
+                </div>
+            </div>
+
+            <!-- MY CONNECTIONS -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body" id="connections-container">
+                    <h5 class="mb-3">My Connections</h5>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="col-lg-4">
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">Network Overview</h5>
+
+                    <div class="overview-box mb-3">
+                        <span>Total Connections</span>
+                        <strong id="total-connections">0</strong>
+                    </div>
+
+                    <div class="overview-box mb-3">
+                        <span>Pending Requests</span>
+                        <strong id="pending-requests">0</strong>
+                    </div>
+
+                    <div class="overview-box">
+                        <span>Suggestions</span>
+                        <strong id="suggestions-count">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">Tips</h5>
+                    <ul class="mb-0 ps-3 text-muted">
+                        <li>Find alumni in your field</li>
+                        <li>Expand your professional circle</li>
+                        <li>Connect for mentorship and opportunities</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+```
+
+</div>
+
+<script>
+    async function searchUsers(){
+
+    const query = document.getElementById("search-box").value;
+
+    if(query.trim() === "") return;
+
+    const res = await fetch(`/api/search?q=${query}`);
+    const users = await res.json();
+
+    const container = document.getElementById("suggestions-container");
+    container.innerHTML = "";
+
+    users.forEach(user=>{
+        container.innerHTML += `
+        <div class="col-md-6 col-xl-4">
+            <div class="suggestion-card text-center p-3">
+                <div class="profile-circle mx-auto mb-3"></div>
+                <h6>${user.name}</h6>
+                <small>${user.email}</small>
+
+                <button class="btn btn-outline-primary btn-sm w-100 mt-2"
+                    onclick="connectUser(${user.id})">
+                    Connect
+                </button>
+            </div>
+        </div>
+        `;
+    });
+
+}
+
+async function loadSuggestions(){
+    const res = await fetch("/api/suggestions");
+    const users = await res.json();
+
+    const container = document.getElementById("suggestions-container");
+    container.innerHTML = "";
+
+    document.getElementById("suggestions-count").innerText = users.length;
+
+    users.forEach(user=>{
+        container.innerHTML += `
+        <div class="col-md-6 col-xl-4">
+            <div class="suggestion-card text-center p-3">
+                <div class="profile-circle mx-auto mb-3"></div>
+                <h6>${user.name}</h6>
+                <small>${user.industry}</small>
+                <button class="btn btn-outline-primary btn-sm w-100 mt-2"
+                    onclick="connectUser(${user.id})">
+                    Connect
+                </button>
+            </div>
+        </div>
+        `;
+    });
+}
+
+async function connectUser(userId) {
+    try {
+        const res = await fetch(`/api/posts/${userId}`, {
+            method: "POST"
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert(data.message);
+            loadRequests();  // Refresh the Connection Requests list
+            loadStats();     // Refresh stats (pending requests count)
+        } else {
+            alert(data.message || "Error sending request");
+        }
+    } catch (err) {
+        console.error(err);
+        alert("Something went wrong.");
+    }
+}
+
+async function loadRequests() {
+    try {
+        const res = await fetch("/api/connection-requests");
+        const requests = await res.json();
+
+        const container = document.getElementById("requests-container");
+        container.innerHTML = "<h5 class='mb-3'>Connection Requests</h5>";
+
+        if (requests.length === 0) {
+            container.innerHTML += `<p class="text-muted">No pending requests</p>`;
+            document.getElementById("pending-requests").innerText = 0;
+            return;
+        }
+
+        document.getElementById("pending-requests").innerText = requests.length;
+
+        requests.forEach(req => {
+            container.innerHTML += `
+                <div class="request d-flex justify-content-between align-items-center mb-2">
+                    <span>${req.name}</span>
+                    <div>
+                        <button class="btn btn-success btn-sm me-1" onclick="acceptRequest(${req.id})">Accept</button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="declineRequest(${req.id})">Decline</button>
+                    </div>
+                </div>
+            `;
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function acceptRequest(requestId) {
+    await fetch(`/api/connection-requests/${requestId}/accept`, { method: "POST" });
+    loadRequests();
+    loadConnections();
+    loadStats();
+}
+
+async function declineRequest(requestId) {
+    await fetch(`/api/connection-requests/${requestId}/decline`, { method: "POST" });
+    loadRequests();
+    loadStats();
+}
+
+async function loadConnections() {
+    try {
+        const res = await fetch("/api/my-connections");
+        const connections = await res.json();
+
+        const container = document.getElementById("connections-container");
+        container.innerHTML = "<h5 class='mb-3'>My Connections</h5>";
+
+        if (connections.length === 0) {
+            container.innerHTML += `<p class="text-muted">You have no connections yet.</p>`;
+            document.getElementById("total-connections").innerText = 0;
+            return;
+        }
+
+        document.getElementById("total-connections").innerText = connections.length;
+
+        connections.forEach(conn => {
+            container.innerHTML += `
+                <div class="connection d-flex justify-content-between align-items-center mb-2">
+                    <span>${conn.name}</span>
+                    <small class="text-muted">${conn.email}</small>
+                </div>
+            `;
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadStats(){
+    const res = await fetch("/api/network-stats");
+    const data = await res.json();
+
+    document.getElementById("total-connections").innerText = data.total_connections;
+    document.getElementById("pending-requests").innerText = data.pending_requests;
+}
+
+document.getElementById("search-box").addEventListener("keyup", async function(){
+
+    const query = this.value;
+
+    if(query.length < 2){
+        loadSuggestions();
+        return;
+    }
+
+    const res = await fetch(`/api/search?q=${query}`);
+    const users = await res.json();
+
+    const container = document.getElementById("suggestions-container");
+    container.innerHTML = "";
+
+    users.forEach(user=>{
+        container.innerHTML += `
+        <div class="col-md-6 col-xl-4">
+            <div class="suggestion-card text-center p-3">
+                <div class="profile-circle mx-auto mb-3"></div>
+                <h6>${user.name}</h6>
+                <small>${user.email}</small>
+            </div>
+        </div>
+        `;
+    });
+
+});
+loadConnections();
+loadRequests();
+loadSuggestions();
+loadStats();
+
+</script>
 
 {% endblock %}
