@@ -266,22 +266,29 @@ def get_posts():
 
     return jsonify(results)
 
+@app.route("/api/connect/<int:receiver_id>", methods=["POST"])
 @login_required
-@app.route("/api/posts/<int:receiver_id>", methods=["POST"])
 def connect_user(receiver_id):
+
     sender_id = current_user.user_id
-    # Check if a request already exists
-    existing = Connection.query.filter_by(sender_id=sender_id, receiver_id=receiver_id).first()
+
+    existing = Connection.query.filter_by(
+        sender_id=sender_id,
+        receiver_id=receiver_id
+    ).first()
+
     if existing:
         return jsonify({"message":"Connection request already sent"}), 400
 
     connection = Connection(
         sender_id=sender_id,
         receiver_id=receiver_id,
-        status="pending"  # pending until accepted
+        status="pending"
     )
+
     db.session.add(connection)
     db.session.commit()
+
     return jsonify({"message":"Connection request sent successfully"})
 
 @app.route("/api/connection-requests", methods=["GET"])
@@ -325,16 +332,26 @@ def decline_request(request_id):
 @app.route("/api/suggestions",methods=["GET"])
 @login_required
 def get_suggestions():
-    current_user = current_user.user_id
 
-    users=User.query.filter(User.user_id != current_user).limit(5).all()
+    user_id = current_user.user_id
+
+    users = User.query.filter(User.user_id != user_id).limit(5).all()
+
     result = []
+
     for u in users:
+
+        industry = "Unknown"
+
+        if u.student_profile:
+            industry = u.student_profile.industry
+
         result.append({
             "id": u.user_id,
             "name": u.name,
-            "industry": "Unknown"
+            "industry": industry
         })
+
     return jsonify(result)
 
 @app.route("/api/network-stats",methods=["GET"])
@@ -348,26 +365,83 @@ def get_network_stats():
         "total_connections": total,
         "pending_requests": pending,
         "suggestions": suggestions
+    })@app.route("/api/network-stats",methods=["GET"])
+@login_required
+def get_network_stats():
+
+    user_id = current_user.user_id
+
+    total = Connection.query.filter(
+        ((Connection.sender_id == user_id) | (Connection.receiver_id == user_id)) &
+        (Connection.status == "accepted")
+    ).count()
+
+    pending = Connection.query.filter_by(
+        receiver_id=user_id,
+        status="pending"
+    ).count()
+
+    suggestions = User.query.count() - 1
+
+    return jsonify({
+        "total_connections": total,
+        "pending_requests": pending,
+        "suggestions": suggestions
     })
 @app.route("/api/search", methods=["GET"])
 def search_users():
 
     query = request.args.get("q", "")
+    role = request.args.get("role", "")
+    industry = request.args.get("industry", "")
+    faculty = request.args.get("faculty", "")
+    graduation_year = request.args.get("year", "")
 
-    users = User.query.filter(
-        or_(
-            User.name.ilike(f"%{query}%"),
-            User.email.ilike(f"%{query}%")
+    users = db.session.query(User)\
+        .outerjoin(StudentProfile)\
+        .outerjoin(AlumniProfile)
+
+    if query:
+        users = users.filter(
+            or_(
+                User.name.ilike(f"%{query}%"),
+                User.email.ilike(f"%{query}%")
+            )
         )
-    ).all()
+
+    if role:
+        users = users.filter(User.role == role)
+
+    if industry:
+        users = users.filter(StudentProfile.industry.ilike(f"%{industry}%"))
+
+    if faculty:
+        users = users.filter(StudentProfile.faculty.ilike(f"%{faculty}%"))
+
+    if graduation_year:
+        users = users.filter(StudentProfile.graduation_year == graduation_year)
 
     results = []
 
-    for user in users:
+    for user in users.all():
+
+        industry_val = None
+        faculty_val = None
+        year_val = None
+
+        if user.student_profile:
+            industry_val = user.student_profile.industry
+            faculty_val = user.student_profile.faculty
+            year_val = user.student_profile.graduation_year
+
         results.append({
             "id": user.user_id,
             "name": user.name,
-            "email": user.email
+            "email": user.email,
+            "role": user.role,
+            "industry": industry_val,
+            "faculty": faculty_val,
+            "graduation_year": year_val
         })
 
     return jsonify(results)
