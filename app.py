@@ -468,6 +468,12 @@ def my_connections():
         })
 
     return jsonify(result)
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out", "success")
+    return redirect(url_for('login'))
 
 @login_manager.user_loader
 def load_user(user_id):
