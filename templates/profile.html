@@ -58,7 +58,6 @@ extra_css %}
 </style>
 {% endblock %} {% block content %}
 
-<!-- Profile page simple header -->
 <div class="d-flex justify-content-between align-items-left mb-4"></div>
 
 {% with messages = get_flashed_messages(with_categories=true) %} {% if messages
@@ -67,9 +66,8 @@ extra_css %}
 {% endfor %} {% endif %} {% endwith %}
 
 <div class="container">
-  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">
-    Logout
-</a>
+  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger"> Logout </a>
+
   <div class="profile-card">
     <img
       src="{{ url_for('static', filename=user.profile_image) }}"
@@ -90,6 +88,29 @@ extra_css %}
       }}
     </div>
     {% endif %}
+
+    <!-- ADD THIS SECTION HERE -->
+    <div class="mt-3">
+      {% if current_user.user_id == user.user_id %}
+      <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-primary">
+        Edit Profile
+      </a>
+      {% elif connection_status == "connected" %}
+      <a
+        href="{{ url_for('message_page', user_id=user.user_id) }}"
+        class="btn btn-primary"
+      >
+        Message
+      </a>
+      {% elif connection_status == "none" %}
+      <button class="btn btn-outline-primary">Connect</button>
+      {% elif connection_status == "pending_sent" %}
+      <button class="btn btn-secondary" disabled>Request Sent</button>
+      {% elif connection_status == "pending_received" %}
+      <button class="btn btn-warning" disabled>Pending Request</button>
+      {% endif %}
+    </div>
+    <!-- END OF ADDED SECTION -->
   </div>
 
   {% if user.role == 'alumni' and user.alumni_profile %}
@@ -98,27 +119,24 @@ extra_css %}
     <p>{{ user.alumni_profile.experience }}</p>
 
     <h3>Education</h3>
-    <p>{{ user.alumni_profile.Education }}</p>
+    <p>{{ user.alumni_profile.education }}</p>
 
     <h3>Licence / Certificates</h3>
-    <p>{{ user.alumni_profile.Licence_Certificates }}</p>
+    <p>{{ user.alumni_profile.certifications }}</p>
 
     <h3>Skills</h3>
-    <p>{{ user.alumni_profile.Skills }}</p>
+    <p>{{ user.alumni_profile.skills }}</p>
   </div>
   {% endif %} {% if user.role == 'student' and user.student_profile %}
   <div class="section">
     <h3>Student Information</h3>
 
     <p><strong>Faculty:</strong> {{ user.student_profile.faculty }}</p>
-
     <p><strong>Department:</strong> {{ user.student_profile.department }}</p>
-
     <p>
       <strong>Graduation Year:</strong> {{ user.student_profile.graduation_year
       }}
     </p>
-
     <p>
       <strong>Industry Interest:</strong> {{ user.student_profile.industry }}
     </p>
@@ -127,5 +145,3 @@ extra_css %}
 </div>
 
 {% endblock %}
-
-

@@ -1,0 +1,120 @@
+{% extends "base.html" %} {% block content %}
+<div class="container py-5">
+  <div class="card shadow-sm">
+    <div class="card-header bg-white d-flex align-items-center">
+      <img
+        src="{{ url_for('static', filename=other_user.profile_image) }}"
+        width="45"
+        height="45"
+        class="rounded-circle me-3"
+        style="object-fit: cover"
+        alt="Profile"
+      />
+      <div>
+        <h5 class="mb-0">{{ other_user.name }}</h5>
+        <small class="text-muted">{{ other_user.email }}</small>
+      </div>
+    </div>
+
+    <div
+      class="card-body"
+      id="messagesContainer"
+      style="height: 400px; overflow-y: auto; background: #f8f9fa"
+    ></div>
+
+    <div class="card-footer bg-white">
+      <div class="d-flex gap-2">
+        <input
+          type="text"
+          id="messageInput"
+          class="form-control"
+          placeholder="Type your message..."
+        />
+        <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const otherUserId = {{ other_user.user_id | tojson }};
+
+  async function loadMessages() {
+      try {
+          const response = await fetch(`/api/messages/${otherUserId}`);
+          const messages = await response.json();
+
+          const container = document.getElementById("messagesContainer");
+          container.innerHTML = "";
+
+          if (!Array.isArray(messages) || messages.length === 0) {
+              container.innerHTML = `
+                  <div class="text-muted text-center mt-5">
+                      No messages yet. Start the conversation.
+                  </div>
+              `;
+              return;
+          }
+
+          messages.forEach(msg => {
+              container.innerHTML += `
+                  <div class="d-flex mb-3 ${msg.is_mine ? 'justify-content-end' : 'justify-content-start'}">
+                      <div class="p-3 rounded ${msg.is_mine ? 'bg-primary text-white' : 'bg-white border'}" style="max-width: 70%;">
+                          <div>${msg.message_text}</div>
+                          <div class="small mt-1 ${msg.is_mine ? 'text-light' : 'text-muted'}">
+                              ${msg.sent_at}
+                          </div>
+                      </div>
+                  </div>
+              `;
+          });
+
+          container.scrollTop = container.scrollHeight;
+      } catch (error) {
+          console.error("Error loading messages:", error);
+      }
+  }
+
+  async function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const messageText = input.value.trim();
+
+      if (!messageText) {
+          alert("Message cannot be empty");
+          return;
+      }
+
+      try {
+          const response = await fetch(`/api/messages/${otherUserId}`, {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ message_text: messageText })
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+              alert(result.error || "Failed to send message");
+              return;
+          }
+
+          input.value = "";
+          loadMessages();
+      } catch (error) {
+          console.error("Error sending message:", error);
+          alert("Something went wrong while sending the message.");
+      }
+  }
+
+  document.getElementById("messageInput").addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+          sendMessage();
+      }
+  });
+
+  loadMessages();
+  setInterval(loadMessages, 3000);
+</script>
+{% endblock %}

@@ -2,61 +2,47 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
 
-
 db = SQLAlchemy()
 
 
+# ────────────────────────────────────────────────
 # USER TABLE
+# ────────────────────────────────────────────────
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     user_id = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String(100), nullable=False)
-
-    email = db.Column(db.String(100), unique=True, nullable=False)
-
+    email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(50), nullable=False)  # student / alumni / mentor / ...
 
-    role = db.Column(db.String(100), nullable=False) 
-
-    
     profile_image = db.Column(db.String(255), default='default-profile.png')
-
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    
+    # Relationships
     student_profile = db.relationship(
-        'StudentProfile',
-        backref='user',
-        uselist=False,
-        cascade="all, delete-orphan"
+        'StudentProfile', backref='user', uselist=False, cascade="all, delete-orphan"
     )
-
     alumni_profile = db.relationship(
-        'AlumniProfile',
-        backref='user',
-        uselist=False,
-        cascade="all, delete-orphan"
+        'AlumniProfile', backref='user', uselist=False, cascade="all, delete-orphan"
     )
-
     mentor_profile = db.relationship(
-        'MentorProfile',
-        backref='user',
-        uselist=False,
-        cascade="all, delete-orphan"
+        'MentorProfile', backref='user', uselist=False, cascade="all, delete-orphan"
     )
 
     def get_id(self):
         return str(self.user_id)
 
 
+# ────────────────────────────────────────────────
 # STUDENT PROFILE
+# ────────────────────────────────────────────────
 class StudentProfile(db.Model):
     __tablename__ = 'student_profiles'
 
     id = db.Column(db.Integer, primary_key=True)
-
     user_id = db.Column(
         db.Integer,
         db.ForeignKey('users.user_id'),
@@ -65,20 +51,18 @@ class StudentProfile(db.Model):
     )
 
     faculty = db.Column(db.String(100), nullable=False)
-
     department = db.Column(db.String(100), nullable=False)
-
     graduation_year = db.Column(db.Integer, nullable=False)
-
     industry = db.Column(db.String(100), nullable=False)
 
 
+# ────────────────────────────────────────────────
 # ALUMNI PROFILE
+# ────────────────────────────────────────────────
 class AlumniProfile(db.Model):
     __tablename__ = 'alumni_profiles'
 
     id = db.Column(db.Integer, primary_key=True)
-
     user_id = db.Column(
         db.Integer,
         db.ForeignKey('users.user_id'),
@@ -87,71 +71,21 @@ class AlumniProfile(db.Model):
     )
 
     headline = db.Column(db.String(150), nullable=False)
-
+    education = db.Column(db.Text, nullable=True)
     experience = db.Column(db.Text, nullable=False)
-
     career_interest = db.Column(db.String(150), nullable=False)
+    level_of_study = db.Column(db.String(50), nullable=False)
 
-    level_of_study = db.Column(db.String(20), nullable=False)
-
-
-# CONNECTION REQUESTS
-class Connection(db.Model):
-    __tablename__ = "connections"
-
-    connection_id = db.Column(db.Integer, primary_key=True)
-
-    sender_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.user_id')
-    )
-
-    receiver_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.user_id')
-    )
-
-    status = db.Column(
-        db.String(100),
-        default='pending'
-    )  # pending | accepted | rejected
-
-    created_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow
-    )
+    skills = db.Column(db.Text, nullable=True)
+    certifications = db.Column(db.Text, nullable=True)
+    linkedin_url = db.Column(db.String(255), nullable=True)
 
 
-# MESSAGES
-class Message(db.Model):
-    __tablename__ = "messages"
-
-    message_id = db.Column(db.Integer, primary_key=True)
-
-    sender_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.user_id')
-    )
-
-    receiver_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.user_id')
-    )
-
-    message_text = db.Column(
-        db.Text,
-        nullable=False
-    )
-
-    sent_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow
-    )
-
-
+# ────────────────────────────────────────────────
 # MENTOR PROFILE
+# ────────────────────────────────────────────────
 class MentorProfile(db.Model):
-    __tablename__ = "mentor_profiles"
+    __tablename__ = 'mentor_profiles'
 
     mentor_id = db.Column(
         db.Integer,
@@ -159,93 +93,122 @@ class MentorProfile(db.Model):
         primary_key=True
     )
 
-    expertise = db.Column(db.String(200))
+    expertise = db.Column(db.String(200), nullable=True)
+    availability = db.Column(db.String(100), nullable=True)
 
-    availability = db.Column(db.String(100))
+
+# ────────────────────────────────────────────────
+# CONNECTIONS
+# ────────────────────────────────────────────────
+class Connection(db.Model):
+    __tablename__ = 'connections'
+
+    connection_id = db.Column(db.Integer, primary_key=True)
+
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+
+    status = db.Column(db.String(20), default='pending')  # pending / accepted / rejected
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+# ────────────────────────────────────────────────
+# MESSAGES
+# ────────────────────────────────────────────────
+class Message(db.Model):
+    __tablename__ = 'messages'
+
+    message_id = db.Column(db.Integer, primary_key=True)
+
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+
+    message_text = db.Column(db.Text, nullable=False)
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+# ────────────────────────────────────────────────
 # MENTORSHIP REQUESTS
+# ────────────────────────────────────────────────
 class MentorshipRequest(db.Model):
-    __tablename__ = "mentorship_requests"
+    __tablename__ = 'mentorship_requests'
 
     request_id = db.Column(db.Integer, primary_key=True)
 
-    student_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.user_id')
-    )
+    student_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    mentor_id = db.Column(db.Integer, db.ForeignKey('mentor_profiles.mentor_id'), nullable=False)
 
-    mentor_id = db.Column(
-        db.Integer,
-        db.ForeignKey('mentor_profiles.mentor_id')
-    )
-
-    status = db.Column(
-        db.String(20),
-        default='pending'
-    )  # pending | accepted | rejected
-
-    request_date = db.Column(
-        db.DateTime,
-        default=datetime.utcnow
-    )
+    status = db.Column(db.String(20), default='pending')
+    request_date = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+# ────────────────────────────────────────────────
+# EVENTS & RSVPs
+# ────────────────────────────────────────────────
 class Event(db.Model):
-    __tablename__ = "events"
+    __tablename__ = 'events'
 
     event_id = db.Column(db.Integer, primary_key=True)
 
     title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    event_date = db.Column(db.DateTime, nullable=True)
+    location = db.Column(db.String(200), nullable=True)
 
-    description = db.Column(db.Text)
-
-    event_date = db.Column(db.DateTime)
-
-    location = db.Column(db.String(200))
-    created_by= db.Column(db.Integer, db.ForeignKey('users.user_id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+
 class RSVP(db.Model):
-    __tablename__ = "rsvps"
+    __tablename__ = 'rsvps'
 
     rsvp_id = db.Column(db.Integer, primary_key=True)
 
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.user_id')
-    )
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    event_id = db.Column(db.Integer, db.ForeignKey('events.event_id'), nullable=False)
 
-    event_id = db.Column(
-        db.Integer,
-        db.ForeignKey('events.event_id')
-    )
+    response = db.Column(db.String(20), default='going')  # going / maybe / not_going
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-    response = db.Column(
-        db.String(20),
-        default='going'
-    )  # going| maybe | not_going
-
-    created_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow
- )
-
-#CREATE POST MODEL
+# ────────────────────────────────────────────────
+# POSTS (Pinboard)
+# ────────────────────────────────────────────────
 class Post(db.Model):
-    __tablename__ = "posts"
+    __tablename__ = 'posts'
 
     post_id = db.Column(db.Integer, primary_key=True)
 
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey('users.user_id')
-    )
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow
+    image = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class PostLike(db.Model):
+    __tablename__ = 'post_likes'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.post_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('post_id', 'user_id', name='unique_like'),
     )
 
-   
+
+class PostComment(db.Model):
+    __tablename__ = 'post_comments'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.post_id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    is_deleted = db.Column(db.Boolean, default=False)

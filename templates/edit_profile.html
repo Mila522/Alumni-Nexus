@@ -1,0 +1,146 @@
+{% extends "base.html" %} {% block title %}Edit Profile{% endblock %} {% block
+content %}
+<div class="container py-5" style="max-width: 800px">
+  <h2 class="mb-4">Edit Profile</h2>
+
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-4 text-center">
+      <img
+        src="{{ url_for('static', filename=user.profile_image) }}"
+        class="rounded-circle mb-3"
+        width="120"
+        height="120"
+      />
+      <input
+        type="file"
+        name="profile_image"
+        class="form-control form-control-sm"
+        accept="image/*"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Name</label>
+      <input
+        type="text"
+        name="name"
+        class="form-control"
+        value="{{ user.name }}"
+        required
+      />
+    </div>
+
+    <!-- Common fields end here – role specific below -->
+
+    {% if user.role == 'student' and user.student_profile %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5>Student Details</h5>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label>Faculty</label
+            ><input
+              name="faculty"
+              class="form-control"
+              value="{{ user.student_profile.faculty }}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label>Department</label
+            ><input
+              name="department"
+              class="form-control"
+              value="{{ user.student_profile.department }}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label>Graduation Year</label
+            ><input
+              name="graduation_year"
+              class="form-control"
+              value="{{ user.student_profile.graduation_year }}"
+            />
+          </div>
+          <div class="col-md-6">
+            <label>Industry Interest</label
+            ><input
+              name="industry"
+              class="form-control"
+              value="{{ user.student_profile.industry }}"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %} {% if user.role == 'alumni' and user.alumni_profile %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h5>Alumni Details</h5>
+        <div class="mb-3">
+          <label>Headline</label
+          ><input
+            name="headline"
+            class="form-control"
+            value="{{ user.alumni_profile.headline }}"
+          />
+        </div>
+        <div class="mb-3">
+          <label>Experience</label
+          ><textarea name="experience" class="form-control" rows="4">
+{{ user.alumni_profile.experience }}</textarea
+          >
+        </div>
+        <div class="mb-3">
+          <label>Career Interest</label
+          ><input
+            name="career_interest"
+            class="form-control"
+            value="{{ user.alumni_profile.career_interest }}"
+          />
+        </div>
+        <div class="mb-3">
+          <label>Level of Study</label
+          ><input
+            name="level_of_study"
+            class="form-control"
+            value="{{ user.alumni_profile.level_of_study }}"
+          />
+        </div>
+        <div class="mb-3">
+          <label>Education</label
+          ><textarea name="education" class="form-control" rows="3">
+{{ user.alumni_profile.education or '' }}</textarea
+          >
+        </div>
+        <div class="mb-3">
+          <label>Skills (comma separated)</label
+          ><input
+            name="skills"
+            class="form-control"
+            value="{{ user.alumni_profile.skills or '' }}"
+          />
+        </div>
+        <div class="mb-3">
+          <label>Certifications</label
+          ><textarea name="certifications" class="form-control" rows="2">
+{{ user.alumni_profile.certifications or '' }}</textarea
+          >
+        </div>
+        <div class="mb-3">
+          <label>LinkedIn URL</label
+          ><input
+            name="linkedin_url"
+            class="form-control"
+            value="{{ user.alumni_profile.linkedin_url or '' }}"
+          />
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary btn-lg w-100">
+      Save Changes
+    </button>
+  </form>
+</div>
+{% endblock %}
