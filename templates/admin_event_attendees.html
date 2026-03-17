@@ -1,0 +1,32 @@
+{% extends "base.html" %} {% block content %}
+<div class="container py-5">
+  <h2 class="fw-bold mb-4">Event Attendees</h2>
+
+  {% if attendees %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Event</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rsvp, user, event in attendees %}
+          <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ event.title }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No event attendees found.</div>
+  {% endif %}
+</div>
+{% endblock %}

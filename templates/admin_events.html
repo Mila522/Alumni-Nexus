@@ -1,0 +1,35 @@
+{% extends "base.html" %} {% block content %}
+<div class="container py-5">
+  <h2 class="fw-bold mb-4">All Events</h2>
+
+  {% if events %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Location</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for event in events %}
+          <tr>
+            <td>{{ event.title }}</td>
+            <td>{{ event.location }}</td>
+            <td>
+              {{ event.event_date.strftime('%Y-%m-%d %H:%M') if event.event_date
+              else '' }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No events found.</div>
+  {% endif %}
+</div>
+{% endblock %}

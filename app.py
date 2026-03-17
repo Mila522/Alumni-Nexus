@@ -25,10 +25,41 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
 db.init_app(app)
 
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+
+def create_default_admin():
+    admin_email = "admin@alumninexus.com"
+    admin_password = "Admin@12345"
+
+    existing_admin = User.query.filter_by(email=admin_email).first()
+
+    if not existing_admin:
+        admin_user = User(
+            name="System Admin",
+            email=admin_email,
+            password=generate_password_hash(admin_password),
+            role="admin",
+            profile_image="default-profile.png"
+        )
+        db.session.add(admin_user)
+        db.session.commit()
+        print("Default admin created successfully.")
+    else:
+        print("Default admin already exists.")
+
+
 with app.app_context():
     db.create_all()
+    create_default_admin()
 
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+@app.after_request
+def add_no_cache_headers(response):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 
 def allowed_file(filename):
@@ -59,7 +90,8 @@ def get_connection_status(target_id):
         return "pending_sent"
     else:
         return "pending_received"
-    
+
+
 def are_users_connected(user1_id, user2_id):
     connection = Connection.query.filter(
         (
@@ -70,6 +102,7 @@ def are_users_connected(user1_id, user2_id):
     ).first()
 
     return connection is not None
+
 
 @app.route("/messages/<int:user_id>")
 @login_required
@@ -85,6 +118,7 @@ def message_page(user_id):
         return redirect(url_for("profile", user_id=other_user.user_id))
 
     return render_template("message.html", other_user=other_user)
+
 
 @app.route("/api/messages/<int:user_id>", methods=["GET"])
 @login_required
@@ -114,6 +148,7 @@ def get_conversation(user_id):
         })
 
     return jsonify(results)
+
 
 @app.route("/api/messages/<int:user_id>", methods=["POST"])
 @login_required
@@ -162,6 +197,43 @@ def mynetwork():
 @login_required
 def pinboard():
     return render_template('pinboard.html')
+
+
+@app.route('/events')
+@login_required
+def events_page():
+    return render_template('events.html')
+
+
+# ADDED: announcements page route
+@app.route('/announcements')
+@login_required
+def announcements_page():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    return render_template('announcements.html')
+
+
+@app.route('/admin/new-post')
+@login_required
+def admin_new_post():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    return redirect(url_for('announcements_page'))
+
+
+@app.route('/admin/new-event')
+@login_required
+def admin_new_event():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    return redirect(url_for('events_page'))
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -277,6 +349,10 @@ def login():
         if user and check_password_hash(user.password, password):
             login_user(user)
             flash(f"{user.name}, you've successfully logged in", "success")
+
+            if user.role == "admin":
+                return redirect(url_for('admin_dashboard'))
+
             return redirect(url_for('profile', user_id=user.user_id))
         else:
             flash("Invalid email or password", "error")
@@ -343,34 +419,52 @@ def edit_profile():
 @app.route("/api/events", methods=["POST"])
 @login_required
 def create_event():
-    user_id = current_user.user_id
-    data = request.get_json()
+    if current_user.role != "admin":
+        return jsonify({"error": "Only admin can create events"}), 403
 
-    event_date = None
-    if data.get("event_date"):
-        try:
-            event_date = datetime.fromisoformat(data.get("event_date"))
-        except ValueError:
-            return jsonify({"error": "Invalid event date format"}), 400
+    user_id = current_user.user_id
+    data = request.get_json(silent=True) or {}
+
+    title = data.get("title", "").strip()
+    description = data.get("description", "").strip()
+    location = data.get("location", "").strip()
+    raw_event_date = data.get("event_date", "").strip()
+
+    if not title or not description or not location or not raw_event_date:
+        return jsonify({"error": "All fields are required"}), 400
+
+    try:
+        if "T" in raw_event_date:
+            event_date = datetime.fromisoformat(raw_event_date)
+        else:
+            event_date = datetime.strptime(raw_event_date, "%Y/%m/%d %H:%M")
+    except Exception as e:
+        print("DATE ERROR:", e)
+        return jsonify({"error": "Invalid event date format"}), 400
 
     event = Event(
-        title=data.get("title"),
-        description=data.get("description"),
-        location=data.get("location"),
+        title=title,
+        description=description,
+        location=location,
         event_date=event_date,
         created_by=user_id
     )
+
     db.session.add(event)
     db.session.commit()
-    return jsonify({"message": "Event created successfully"})
+
+    return jsonify({
+        "message": "Event created successfully",
+        "event_id": event.event_id
+    }), 201
 
 
 @app.route("/api/events", methods=["GET"])
 @login_required
 def get_events():
-    events = Event.query.all()
-    results = []
+    events = Event.query.order_by(Event.event_date.desc()).all()
 
+    results = []
     for e in events:
         results.append({
             "event_id": e.event_id,
@@ -388,7 +482,13 @@ def get_events():
 def rsvp_event(event_id):
     user_id = current_user.user_id
 
-    existing_rsvp = RSVP.query.filter_by(user_id=user_id, event_id=event_id).first()
+    Event.query.get_or_404(event_id)
+
+    existing_rsvp = RSVP.query.filter_by(
+        user_id=user_id,
+        event_id=event_id
+    ).first()
+
     if existing_rsvp:
         return jsonify({"message": "You have already RSVPed for this event"}), 400
 
@@ -397,15 +497,21 @@ def rsvp_event(event_id):
         event_id=event_id,
         response="going"
     )
+
     db.session.add(rsvp)
     db.session.commit()
+
     return jsonify({"message": "RSVP successful"})
 
+
+# ────────────────────────────────────────────────
+# PINBOARD POSTS
+# ────────────────────────────────────────────────
 @app.route("/api/posts", methods=["POST"])
 @login_required
 def create_post():
-    if current_user.role not in ["admin", "alumni"]:
-        return jsonify({"error": "Only admins and alumni can create posts"}), 403
+    if current_user.role not in ["alumni", "admin"]:
+        return jsonify({"error": "Only alumni and admin can create posts"}), 403
 
     content = request.form.get("content", "").strip()
     image = request.files.get("image")
@@ -459,10 +565,11 @@ def get_posts():
             "post_id": p.post_id,
             "user_id": p.user_id,
             "name": author.name if author else "Deleted",
-            "profile_image": author.profile_image if author else "default-profile.png",
+            "role": author.role if author else "",
+            "profile_image": (author.profile_image if author and author.profile_image else "default-profile.png"),
             "content": p.content,
             "image": p.image,
-            "created_at": p.created_at.strftime("%Y-%m-%d %H:%M"),
+            "created_at": p.created_at.strftime("%Y-%m-%d %H:%M") if p.created_at else "",
             "like_count": like_count,
             "comment_count": comment_count,
             "liked_by_me": liked_by_me
@@ -497,7 +604,7 @@ def toggle_like(post_id):
 def add_comment(post_id):
     Post.query.get_or_404(post_id)
 
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     content = data.get("content", "").strip()
 
     if not content:
@@ -511,7 +618,7 @@ def add_comment(post_id):
     db.session.add(comment)
     db.session.commit()
 
-    return jsonify({"message": "Comment added"})
+    return jsonify({"message": "Comment added"}), 201
 
 
 @app.route("/api/posts/<int:post_id>/comments", methods=["GET"])
@@ -528,12 +635,12 @@ def get_post_comments(post_id):
     for c in comments:
         author = User.query.get(c.user_id)
         results.append({
-            "comment_id": c.id,
+            "comment_id": getattr(c, "comment_id", getattr(c, "id", None)),
             "user_id": c.user_id,
             "name": author.name if author else "Unknown",
-            "profile_image": author.profile_image if author else "default-profile.png",
+            "profile_image": (author.profile_image if author and author.profile_image else "default-profile.png"),
             "content": c.content,
-            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M")
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
         })
 
     return jsonify(results)
@@ -733,6 +840,115 @@ def my_connections():
             })
 
     return jsonify(result)
+
+
+@app.route('/admin/dashboard')
+@login_required
+def admin_dashboard():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    total_students = User.query.filter_by(role="student").count()
+    total_alumni = User.query.filter_by(role="alumni").count()
+    total_mentors = User.query.filter_by(role="mentor").count()
+    total_events = Event.query.count()
+    total_rsvps = RSVP.query.count()
+    total_event_attendees = RSVP.query.filter_by(response="going").count()
+
+    return render_template(
+        "admin_dashboard.html",
+        total_students=total_students,
+        total_alumni=total_alumni,
+        total_mentors=total_mentors,
+        total_events=total_events,
+        total_rsvps=total_rsvps,
+        total_event_attendees=total_event_attendees
+    )
+
+
+# ADDED: admin alumni view page
+@app.route('/admin/alumni')
+@login_required
+def admin_alumni():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    alumni_users = User.query.filter_by(role="alumni").all()
+    return render_template("admin_alumni.html", alumni_users=alumni_users)
+
+
+# ADDED: admin students view page
+@app.route('/admin/students')
+@login_required
+def admin_students():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    student_users = User.query.filter_by(role="student").all()
+    return render_template("admin_students.html", student_users=student_users)
+
+
+# ADDED: admin events view page
+@app.route('/admin/events')
+@login_required
+def admin_events():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    events = Event.query.order_by(Event.event_date.desc()).all()
+    return render_template("admin_events.html", events=events)
+
+
+# ADDED: admin mentors view page
+@app.route('/admin/mentors')
+@login_required
+def admin_mentors():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    mentor_users = User.query.filter_by(role="mentor").all()
+    return render_template("admin_mentors.html", mentor_users=mentor_users)
+
+
+# ADDED: admin event attendees view page
+@app.route('/admin/event-attendees')
+@login_required
+def admin_event_attendees():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    attendees = db.session.query(RSVP, User, Event).join(
+        User, RSVP.user_id == User.user_id
+    ).join(
+        Event, RSVP.event_id == Event.event_id
+    ).filter(
+        RSVP.response == "going"
+    ).all()
+
+    return render_template("admin_event_attendees.html", attendees=attendees)
+
+
+# ADDED: admin RSVPs view page
+@app.route('/admin/rsvps')
+@login_required
+def admin_rsvps():
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for('home'))
+
+    rsvps = db.session.query(RSVP, User, Event).join(
+        User, RSVP.user_id == User.user_id
+    ).join(
+        Event, RSVP.event_id == Event.event_id
+    ).all()
+
+    return render_template("admin_rsvps.html", rsvps=rsvps)
 
 
 @app.route("/logout")

@@ -1,0 +1,199 @@
+{% extends "base.html" %} {% block content %}
+<div class="container py-5">
+  <div class="mb-4">
+    <h2 class="fw-bold">Events</h2>
+    <p class="text-muted">Discover and join upcoming alumni events.</p>
+  </div>
+
+  {% if current_user.role == "admin" %}
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="mb-3">Create Event</h5>
+
+      <input
+        id="eventTitle"
+        class="form-control mb-3"
+        placeholder="Event Title"
+      />
+
+      <textarea
+        id="eventDescription"
+        class="form-control mb-3"
+        placeholder="Event Description"
+      ></textarea>
+
+      <input
+        id="eventLocation"
+        class="form-control mb-3"
+        placeholder="Location"
+      />
+
+      <input
+        id="eventDate"
+        type="datetime-local"
+        class="form-control mb-3"
+        step="60"
+      />
+
+      <button id="createEventBtn" type="button" class="btn btn-primary">
+        Create Event
+      </button>
+    </div>
+  </div>
+  {% endif %}
+
+  <div id="eventsContainer"></div>
+</div>
+
+<script>
+  async function createEvent() {
+    try {
+      const title = document.getElementById("eventTitle")?.value.trim() || "";
+      const description =
+        document.getElementById("eventDescription")?.value.trim() || "";
+      const location =
+        document.getElementById("eventLocation")?.value.trim() || "";
+      const date = document.getElementById("eventDate")?.value || "";
+
+      console.log("Create button clicked");
+      console.log("Raw date value:", date);
+
+      if (!title || !description || !location || !date) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      const response = await fetch("/api/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title,
+          description: description,
+          location: location,
+          event_date: date,
+        }),
+      });
+
+      const text = await response.text();
+      console.log("Create event raw response:", text);
+
+      let result = {};
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        alert("Server did not return valid JSON.");
+        return;
+      }
+
+      if (!response.ok) {
+        alert(result.error || result.message || "Failed to create event");
+        return;
+      }
+
+      alert(result.message || "Event created successfully");
+
+      document.getElementById("eventTitle").value = "";
+      document.getElementById("eventDescription").value = "";
+      document.getElementById("eventLocation").value = "";
+      document.getElementById("eventDate").value = "";
+
+      loadEvents();
+    } catch (error) {
+      console.error("Create event error:", error);
+      alert("Something went wrong while creating the event.");
+    }
+  }
+
+  async function rsvpEvent(eventId) {
+    try {
+      const response = await fetch(`/api/events/${eventId}/rsvp`, {
+        method: "POST",
+      });
+
+      const text = await response.text();
+      console.log("RSVP raw response:", text);
+
+      let result = {};
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        alert("Server did not return valid JSON.");
+        return;
+      }
+
+      if (!response.ok) {
+        alert(result.message || result.error || "Failed to RSVP");
+        return;
+      }
+
+      alert(result.message || "RSVP successful");
+    } catch (error) {
+      console.error("RSVP error:", error);
+      alert("Something went wrong while sending your RSVP.");
+    }
+  }
+
+  async function loadEvents() {
+    try {
+      const response = await fetch("/api/events");
+      const text = await response.text();
+      console.log("Load events raw response:", text);
+
+      let events = [];
+      try {
+        events = JSON.parse(text);
+      } catch (e) {
+        document.getElementById("eventsContainer").innerHTML = `
+          <div class="alert alert-danger">Server did not return valid event data.</div>
+        `;
+        return;
+      }
+
+      const container = document.getElementById("eventsContainer");
+      container.innerHTML = "";
+
+      if (!Array.isArray(events) || events.length === 0) {
+        container.innerHTML = `
+          <div class="alert alert-info">No events available.</div>
+        `;
+        return;
+      }
+
+      events.forEach((event) => {
+        container.innerHTML += `
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h5>${event.title}</h5>
+              <p>${event.description || ""}</p>
+
+              <div class="text-muted mb-2">📍 ${event.location || ""}</div>
+              <div class="text-muted mb-3">
+                📅 ${event.date ? new Date(event.date).toLocaleString() : ""}
+              </div>
+
+              <button type="button" class="btn btn-outline-primary btn-sm" onclick="rsvpEvent(${event.event_id})">
+                RSVP
+              </button>
+            </div>
+          </div>
+        `;
+      });
+    } catch (error) {
+      console.error("Load events error:", error);
+      document.getElementById("eventsContainer").innerHTML = `
+        <div class="alert alert-danger">Failed to load events.</div>
+      `;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const createBtn = document.getElementById("createEventBtn");
+    if (createBtn) {
+      createBtn.addEventListener("click", createEvent);
+    }
+    loadEvents();
+  });
+</script>
+{% endblock %}
