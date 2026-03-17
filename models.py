@@ -32,6 +32,16 @@ class User(UserMixin, db.Model):
         'MentorProfile', backref='user', uselist=False, cascade="all, delete-orphan"
     )
 
+    posts = db.relationship(
+        'Post', backref='author', lazy=True, cascade="all, delete-orphan"
+    )
+    post_likes = db.relationship(
+        'PostLike', backref='user', lazy=True, cascade="all, delete-orphan"
+    )
+    post_comments = db.relationship(
+        'PostComment', backref='user', lazy=True, cascade="all, delete-orphan"
+    )
+
     def get_id(self):
         return str(self.user_id)
 
@@ -183,6 +193,13 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    comments = db.relationship(
+        'PostComment', backref='post', lazy=True, cascade="all, delete-orphan"
+    )
+    likes = db.relationship(
+        'PostLike', backref='post', lazy=True, cascade="all, delete-orphan"
+    )
 
 
 class PostLike(db.Model):

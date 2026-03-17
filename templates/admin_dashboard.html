@@ -1,485 +1,352 @@
-{% extends 'admin_base.html' %}
+{% extends "base.html" %} {% block content %}
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="brand">Alumni Nexus</div>
 
-{% block title %}Dashboard{% endblock %}
+    <div class="admin-profile">
+      <div class="admin-avatar"></div>
+      <div>
+        <div class="admin-email">{{ current_user.email }}</div>
+        <div class="admin-role">Administrator</div>
+      </div>
+    </div>
 
-{% block navbar %}{% endblock %}
+    <div class="sidebar-section-title">Main</div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item active"
+        >Overview</a
+      >
+    </nav>
 
-{% block head %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='admin_dashboard.css') }}">
-{% endblock %}
+    <div class="sidebar-section-title">People</div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item">Registered Users</a>
+      <a href="#" class="nav-item">Mentor Applications</a>
+      <a href="{{ url_for('admin_mentors') }}" class="nav-item"
+        >Active Mentors</a
+      >
+      <a href="#" class="nav-item">Mentorship Requests</a>
+    </nav>
 
-{% block content %}
-<div class="dashboard-wrapper">
+    <div class="sidebar-section-title">Pinboard</div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('pinboard') }}" class="nav-item">Posts</a>
+    </nav>
 
-    
-    <aside class="dashboard-nav">
+    <div class="sidebar-footer">
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+  </aside>
 
-        <div class="dashboard-nav-header">
-            <span class="brand">Alumni Nexus</span>
-            <div class="admin-avatar">
-                <div class="admin-avatar-circle">
-                    
-                </div>
-                <div class="admin-info">
-                    <p>{{ session.get('admin_email', 'Admin') }}</p>        
-                    <small>Administrator</small>
-                </div>
-            </div>
+  <!-- Main Content -->
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h3 class="page-title">Overview</h3>
+      <div class="topbar-text">DUT Alumni Nexus – Admin Portal</div>
+    </div>
+
+    <section class="admin-content">
+      <div class="overview-header">
+        <h1>Platform Overview</h1>
+        <p>Welcome back, Administrator.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h6>Total Alumni</h6>
+          <h2>{{ total_alumni }}</h2>
+          <a href="{{ url_for('admin_alumni') }}">View →</a>
         </div>
 
-        <nav>
-            <ul>
-                <li class="nav-section-label">Main</li>
-                <li>
-                    <a href="#" class="nav-link active" data-target="section-overview">
-                        <span class="nav-label">Overview</span>
-                    </a>
-                </li>
-
-                <li class="nav-section-label">People</li>
-                <li>
-                    <a href="#" class="nav-link" data-target="section-users">
-                        <span class="nav-label">Registered Users</span>
-                        
-                            <span class="badge"></span>
-                        
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link" data-target="section-mentor-applications">
-                        <span class="nav-label">Mentor Applications</span>
-                        
-                            <span class="badge pending"></span>
-                        
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link" data-target="section-active-mentors">
-                        <span class="nav-label">Active Mentors</span>
-                        
-                            <span class="badge"></span>
-                        
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link" data-target="section-mentorship-requests">
-                        <span class="nav-label">Mentorship Requests</span>
-                        
-                            <span class="badge pending"></span>
-                        
-                    </a>
-                </li>
-
-                <li class="nav-section-label">Pinboard</li>
-                <li>
-                    <a href="#" class="nav-link" data-target="section-posts">
-                        <span class="nav-label">Posts</span>
-                        
-                            <span class="badge"></span>
-                        
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link" data-target="section-events">
-                        <span class="nav-label">Events / RSVP</span>
-                        
-                            <span class="badge"></span>
-                        
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <div class="dashboard-nav-footer">
-            <a href="{{ url_for('admin_logout') }}" class="logout-btn">&#8594; Logout</a>
-        </div>
-    </aside>
-
-    
-    <main class="dashboard-content">
-
-        <div class="content-topbar">
-            <h1 id="topbar-title">Overview</h1>
-            <span class="topbar-meta">DUT Alumni Nexus &mdash; Admin Portal</span>
+        <div class="stat-card">
+          <h6>Total Students</h6>
+          <h2>{{ total_students }}</h2>
+          <a href="{{ url_for('admin_students') }}">View →</a>
         </div>
 
-        <div class="content-body">
-
-            
-                
-                    
-                        <div class="flash flash-"></div>
-                    
-                
-            
-
-            
-            <section id="section-overview" class="dashboard-section active">
-
-                <div class="section-header">
-                    <h2>Platform Overview</h2>
-                    <p>Welcome back, <strong>Administrator</strong>.</p>
-                </div>
-
-                <div class="stats-grid">
-
-                    <div class="stat-card">
-                        <h3>Total Alumni</h3>
-                        <div class="stat-number"></div>
-                        
-                        <a href="#" class="nav-link-inline" data-target="section-users">View &rarr;</a>
-                    </div>
-
-                    <div class="stat-card">
-                        <h3>Total Students</h3>
-                        <div class="stat-number"></div>
-                        
-                        <a href="#" class="nav-link-inline" data-target="section-users">View &rarr;</a>
-                    </div>
-
-                    <div class="stat-card">
-                        <h3>Mentor Applications</h3>
-                        <div class="stat-number"></div>
-                        
-                        <a href="#" class="nav-link-inline" data-target="section-mentor-applications">Review &rarr;</a>
-                    </div>
-
-                    <div class="stat-card">
-                        <h3>Active Mentors</h3>
-                        <div class="stat-number"></div>
-                        
-                        <a href="#" class="nav-link-inline" data-target="section-active-mentors">View &rarr;</a>
-                    </div>
-
-                    <div class="stat-card">
-                        <h3>Mentorship Requests</h3>
-                        <div class="stat-number"></div>
-                        
-                        <a href="#" class="nav-link-inline" data-target="section-mentorship-requests">View &rarr;</a>
-                    </div>
-
-                    <div class="stat-card">
-                        <h3>Total Posts</h3>
-                        <div class="stat-number"></div>
-                        
-                        <a href="#" class="nav-link-inline" data-target="section-posts">View &rarr;</a>
-                    </div>
-
-                    <div class="stat-card">
-                        <h3>Total Events</h3>
-                        <div class="stat-number"></div>
-                        
-                        <a href="#" class="nav-link-inline" data-target="section-events">View &rarr;</a>
-                    </div>
-
-                    <div class="stat-card">
-                        <h3>Total RSVPs</h3>
-                        <div class="stat-number"></div>
-                        
-                        <a href="#" class="nav-link-inline" data-target="section-events">View &rarr;</a>
-                    </div>
-
-                </div>
-
-                <p class="quick-title">Quick Actions</p>
-                <div class="quick-actions">
-                    <a href=""  class="btn btn-primary">+ New Post</a>
-                    <a href="" class="btn btn-primary">+ New Event</a>
-                    <a href="" class="btn btn-outline">Manage Posts</a>
-                    <a href="" class="btn btn-outline">Manage Events</a>
-                </div>
-
-            </section>
-
-            
-            <section id="section-users" class="dashboard-section">
-
-                <div class="section-header">
-                    <h2>Registered Users</h2>
-                    <p>All users registered on the platform.</p>
-                    <div class="header-actions">
-                        <a href="" class="btn btn-outline">Full User Management &rarr;</a>
-                    </div>
-                </div>
-
-                
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Registered</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            <tr>
-                                <td></td>
-                                <td><strong></strong></td>       
-                                <td></td>                       
-                                <td>
-                                    <span class="pill pill-">
-                                                    
-                                    </span>
-                                </td>
-                                <td></td>  
-                                <td>
-                                    <div class="action-cell">
-                                        <a href=""
-                                           class="btn btn-ghost">View</a>       
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
-                
-                    <div class="empty-state"><p>No users registered yet.</p></div>
-                
-
-            </section>
-
-            
-            <section id="section-mentor-applications" class="dashboard-section">
-
-                <div class="section-header">
-                    <h2>Mentor Applications</h2>
-                    <p>Alumni who have applied to become mentors. Review their profile before approving.</p>
-                </div>
-
-                
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Headline</th>
-                                <th>Career Interest</th>
-                                <th>Level of Study</th>
-                                <th>Applied</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            <tr>
-                                <td></td>
-                                <td><strong></strong></td>           
-                                <td></td>                           
-                                <td></td>                          
-                                <td></td>                   
-                                <td></td>                    
-                                <td></td> 
-                                <td>
-                                    <div class="action-cell">
-                                        <a href=""
-                                           class="btn btn-ghost">Profile</a>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
-                
-                    <div class="empty-state"><p>No pending mentor applications.</p></div>
-                
-
-            </section>
-
-            
-            <section id="section-active-mentors" class="dashboard-section">
-
-                <div class="section-header">
-                    <h2>Active Mentors</h2>
-                    <p>Alumni approved as mentors on the platform.</p>
-                </div>
-
-                
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Expertise</th>
-                                <th>Availability</th>
-                                <th>Since</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            <tr>
-                                <td></td>
-                                <td><strong></strong></td>              
-                                <td></td>                              
-                                <td></td>       
-                                <td></td> 
-                                <td></td>   
-                                <td>
-                                    <div class="action-cell">
-                                        <a href=""
-                                           class="btn btn-ghost">View</a>
-                                    </div>
-                                </td>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
-                
-                    <div class="empty-state"><p>No active mentors yet.</p></div>
-                
-
-            </section>
-
-            
-            <section id="section-mentorship-requests" class="dashboard-section">
-
-                <div class="section-header">
-                    <h2>Mentorship Requests</h2>
-                    <p>Requests submitted by students to approved mentors.</p>
-                </div>
-
-                
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Student</th>
-                                <th>Student Email</th>
-                                <th>Mentor</th>
-                                <th>Expertise</th>
-                                <th>Status</th>
-                                <th>Requested</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            <tr>
-                                <td></td>
-                                <td><strong></strong></td>    
-                                <td></td>                    
-                                <td></td>                      
-                                <td></td>
-                                <td>
-                                    <span class="pill pill-"></span>
-                                </td>
-                                <td></td> 
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
-                
-                    <div class="empty-state"><p>No mentorship requests yet.</p></div>
-                
-
-            </section>
-
-            
-            <section id="section-posts" class="dashboard-section">
-
-                <div class="section-header">
-                    <h2>Posts</h2>
-                    <p>All posts published to the DUT Pinboard.</p>
-                    <div class="header-actions">
-                        <a href=""  class="btn btn-primary">+ New Post</a>
-                        <a href="" class="btn btn-outline">Manage All &rarr;</a>
-                    </div>
-                </div>
-
-                
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Content</th>
-                                <th>Posted By</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            <tr>
-                                <td></td>
-                                <td>…</td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
-                
-                    <div class="empty-state"><p>No posts yet.</p></div>
-                
-
-            </section>
-
-            
-            <section id="section-events" class="dashboard-section">
-
-                <div class="section-header">
-                    <h2>Events / RSVP</h2>
-                    <p>All events on the DUT Pinboard with RSVP counts.</p>
-                    <div class="header-actions">
-                        <a href=""  class="btn btn-primary">+ New Event</a>
-                        <a href="" class="btn btn-outline">Manage All &rarr;</a>
-                    </div>
-                </div>
-
-                
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Date</th>
-                                <th>Location</th>
-                                <th>RSVPs</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            
-                            <tr>
-                                <td></td>
-                                <td><strong></strong></td>
-                                <td>…</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                            
-                        </tbody>
-                    </table>
-                </div>
-                
-                    <div class="empty-state"><p>No events yet.</p></div>
-                
-
-            </section>
-
+        <div class="stat-card">
+          <h6>Total Mentors</h6>
+          <h2>{{ total_mentors }}</h2>
+          <a href="{{ url_for('admin_mentors') }}">View →</a>
         </div>
-    </main>
+
+        <div class="stat-card">
+          <h6>Total Events</h6>
+          <h2>{{ total_events }}</h2>
+          <a href="{{ url_for('admin_events') }}">View →</a>
+        </div>
+
+        <div class="stat-card">
+          <h6>Event Attendees</h6>
+          <h2>{{ total_event_attendees }}</h2>
+          <a href="{{ url_for('admin_event_attendees') }}">View →</a>
+        </div>
+
+        <div class="stat-card">
+          <h6>Total RSVPs</h6>
+          <h2>{{ total_rsvps }}</h2>
+          <a href="{{ url_for('admin_rsvps') }}">View →</a>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <h4>Quick Actions</h4>
+        <div class="action-buttons">
+          <a href="{{ url_for('admin_new_post') }}" class="action-btn primary"
+            >+ New Post</a
+          >
+          <a href="{{ url_for('admin_new_event') }}" class="action-btn primary"
+            >+ New Event</a
+          >
+          <a href="{{ url_for('pinboard') }}" class="action-btn"
+            >Manage Posts</a
+          >
+          <a href="{{ url_for('admin_events') }}" class="action-btn"
+            >Manage Events</a
+          >
+        </div>
+      </div>
+    </section>
+  </main>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='admin_scripts.js') }}"></script>
+<style>
+  .admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background: #f5f6f8;
+  }
+
+  .admin-sidebar {
+    width: 280px;
+    background: #111;
+    color: white;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand {
+    font-size: 2rem;
+    font-weight: 700;
+    padding: 0 24px;
+    margin-bottom: 24px;
+  }
+
+  .admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 24px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+  }
+
+  .admin-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #2c2c2c;
+  }
+
+  .admin-email {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .admin-role {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+  }
+
+  .sidebar-section-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    opacity: 0.6;
+    padding: 0 24px;
+    margin: 18px 0 8px;
+    letter-spacing: 1px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nav-item {
+    color: white;
+    text-decoration: none;
+    padding: 14px 24px;
+    display: block;
+    transition: 0.2s;
+  }
+
+  .nav-item:hover,
+  .nav-item.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 24px;
+  }
+
+  .logout-btn {
+    color: white;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .admin-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-topbar {
+    background: white;
+    padding: 22px 32px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .page-title {
+    margin: 0;
+    font-weight: 700;
+  }
+
+  .topbar-text {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  .admin-content {
+    padding: 36px 32px;
+  }
+
+  .overview-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .overview-header p {
+    color: #6b7280;
+    margin-bottom: 30px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .stat-card h6 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+
+  .stat-card h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .stat-card span,
+  .stat-card a {
+    color: #6b7280;
+    font-size: 0.95rem;
+    text-decoration: none;
+  }
+
+  .stat-card a:hover {
+    text-decoration: underline;
+  }
+
+  .quick-actions h4 {
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .action-btn {
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    background: white;
+    color: #111;
+    border: 1px solid #ddd;
+    font-weight: 600;
+    transition: 0.2s;
+  }
+
+  .action-btn:hover {
+    color: #111;
+    transform: translateY(-1px);
+  }
+
+  .action-btn.primary {
+    background: #111;
+    color: white;
+    border: none;
+  }
+
+  .action-btn.primary:hover {
+    color: white;
+  }
+
+  @media (max-width: 1100px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .admin-layout {
+      flex-direction: column;
+    }
+
+    .admin-sidebar {
+      width: 100%;
+    }
+
+    .admin-topbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+  }
+</style>
 {% endblock %}

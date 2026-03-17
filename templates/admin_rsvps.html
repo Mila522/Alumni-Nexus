@@ -1,0 +1,32 @@
+{% extends "base.html" %} {% block content %}
+<div class="container py-5">
+  <h2 class="fw-bold mb-4">All RSVPs</h2>
+
+  {% if rsvps %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Event</th>
+            <th>Response</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rsvp, user, event in rsvps %}
+          <tr>
+            <td>{{ user.name }}</td>
+            <td>{{ event.title }}</td>
+            <td>{{ rsvp.response }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info">No RSVPs found.</div>
+  {% endif %}
+</div>
+{% endblock %}
