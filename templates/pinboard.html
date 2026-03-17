@@ -1,260 +1,595 @@
 {% extends "base.html" %} {% block content %}
-<div class="container py-5">
-  <div class="mb-4">
-    <h2 class="fw-bold">Community Pinboard</h2>
-    <p class="text-muted">
-      View official announcements, opportunities, updates, and upcoming events.
-    </p>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --accent: #5B5BF6;
+    --accent-light: #EEEEFF;
+    --accent-dark: #3A3ACF;
+    --coral: #FF6B5B;
+    --coral-light: #FFF0EE;
+    --emerald: #00C48C;
+    --emerald-light: #E6FBF5;
+    --amber: #F5A623;
+    --amber-light: #FFF8EC;
+    --surface: #FAFAFA;
+    --card: #FFFFFF;
+    --border: rgba(0,0,0,0.07);
+    --border-hover: rgba(91,91,246,0.25);
+    --text-primary: #0D0D1A;
+    --text-secondary: #6B6B80;
+    --text-muted: #A0A0B2;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+    --shadow-hover: 0 8px 32px rgba(91,91,246,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text-primary); }
+
+  /* ── Page Layout ── */
+  .pb-wrapper { max-width: 680px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  /* ── Header ── */
+  .pb-header { margin-bottom: 2rem; }
+  .pb-header-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .pb-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+  .pb-title span { color: var(--accent); }
+  .pb-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 6px; font-weight: 300; }
+
+  /* ── Tabs ── */
+  .pb-tabs { display: flex; gap: 4px; background: #F0F0F8; border-radius: 14px; padding: 4px; margin-bottom: 1.75rem; }
+  .pb-tab { flex: 1; padding: 9px 16px; border: none; border-radius: 10px; background: transparent; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; text-align: center; }
+  .pb-tab.active { background: #FFFFFF; color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-weight: 600; }
+  .pb-tab:hover:not(.active) { color: var(--text-primary); }
+  .pb-pane { display: none; }
+  .pb-pane.active { display: block; animation: fadeUp 0.2s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Section Labels ── */
+  .section-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 1rem; padding: 4px 10px; background: #F0F0F8; border-radius: 20px; }
+  .section-chip svg { stroke: var(--text-muted); flex-shrink: 0; }
+
+  /* ── Cards ── */
+  .pb-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.375rem; margin-bottom: 1rem; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+  .pb-card:hover { box-shadow: var(--shadow-hover); border-color: var(--border-hover); }
+
+  /* ── Badges ── */
+  .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 20px; vertical-align: middle; text-transform: uppercase; }
+  .badge-event { background: var(--accent-light); color: var(--accent-dark); }
+  .badge-announce { background: var(--coral-light); color: #CC3322; }
+  .badge-post { background: var(--emerald-light); color: #00966C; }
+  .badge-new { background: var(--amber-light); color: #CC7A00; }
+
+  /* ── Post Header ── */
+  .post-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .post-head img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
+  .post-head-info { flex: 1; min-width: 0; }
+  .post-author { font-weight: 600; font-size: 14px; color: var(--text-primary); display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .post-time { font-size: 12px; color: var(--text-muted); margin-top: 1px; font-weight: 300; }
+
+  /* ── Content ── */
+  .post-body { font-size: 14px; line-height: 1.7; color: var(--text-primary); margin-bottom: 14px; font-weight: 400; }
+  .post-image { width: 100%; border-radius: var(--radius-sm); margin-bottom: 14px; display: block; max-height: 400px; object-fit: cover; }
+
+  /* ── Event Details ── */
+  .event-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .event-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .event-detail { font-size: 13px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .event-icon { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .icon-loc { background: var(--coral-light); color: #CC3322; }
+  .icon-cal { background: var(--accent-light); color: var(--accent-dark); }
+  .event-icon svg { stroke: currentColor; }
+
+  /* ── Action Row ── */
+  .action-row { display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .action-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.18s ease; }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .action-btn.liked { background: var(--accent-light); color: var(--accent-dark); border-color: rgba(91,91,246,0.3); }
+  .action-btn.rsvpd { background: var(--emerald-light); color: #00966C; border-color: rgba(0,196,140,0.3); }
+  .action-btn svg { width: 13px; height: 13px; }
+
+  /* ── Comments ── */
+  .comment-section { margin-top: 14px; }
+  .comment-item { display: flex; gap: 9px; margin-bottom: 10px; }
+  .comment-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--accent-dark); flex-shrink: 0; }
+  .comment-bubble { background: #F5F5FA; border-radius: 0 10px 10px 10px; padding: 8px 12px; flex: 1; }
+  .comment-bubble strong { font-size: 12px; font-weight: 600; color: var(--text-primary); display: block; }
+  .comment-bubble span { font-size: 13px; color: var(--text-primary); }
+  .comment-bubble small { font-size: 11px; color: var(--text-muted); display: block; margin-top: 3px; font-weight: 300; }
+  .comment-input-row { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+  .comment-input-row input { flex: 1; border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: #F5F5FA; color: var(--text-primary); outline: none; transition: border-color 0.15s; }
+  .comment-input-row input:focus { border-color: var(--accent); background: #fff; }
+  .btn-post { background: var(--accent); color: #fff; border: none; border-radius: 20px; padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: background 0.15s, transform 0.1s; white-space: nowrap; }
+  .btn-post:hover { background: var(--accent-dark); }
+  .btn-post:active { transform: scale(0.97); }
+
+  /* ── Compose Box ── */
+  .compose-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.375rem; margin-bottom: 1.25rem; box-shadow: var(--shadow-sm); }
+  .compose-head { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+  .compose-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--coral)); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .compose-card textarea { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: #F8F8FC; color: var(--text-primary); resize: none; outline: none; line-height: 1.6; transition: border-color 0.15s, background 0.15s; }
+  .compose-card textarea:focus { border-color: var(--accent); background: #fff; }
+  .compose-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; flex-wrap: wrap; gap: 10px; }
+  .compose-actions { display: flex; align-items: center; gap: 8px; }
+  .upload-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); border-radius: 20px; padding: 7px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+  .upload-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .upload-btn svg { width: 14px; height: 14px; }
+  #post-image-input { display: none; }
+  .image-preview-wrap { position: relative; display: inline-block; margin-top: 10px; }
+  .image-preview-wrap img { max-width: 100%; max-height: 220px; border-radius: var(--radius-sm); border: 1px solid var(--border); display: block; }
+  .remove-image { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.55); color: #fff; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; line-height: 1; }
+  .remove-image:hover { background: var(--coral); }
+
+  /* ── Char counter ── */
+  .char-count { font-size: 11px; color: var(--text-muted); font-weight: 300; }
+  .char-count.near { color: var(--amber); }
+  .char-count.over { color: var(--coral); }
+
+  /* ── Empty & Error States ── */
+  .pb-empty { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+  .pb-empty svg { width: 48px; height: 48px; opacity: 0.25; margin-bottom: 12px; }
+  .pb-empty p { font-size: 14px; }
+  .pb-alert { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 1rem; }
+  .pb-alert-info { background: var(--accent-light); color: var(--accent-dark); border: 1px solid rgba(91,91,246,0.2); }
+  .pb-alert-danger { background: var(--coral-light); color: #CC3322; border: 1px solid rgba(255,107,91,0.2); }
+
+  /* ── Loading Skeleton ── */
+  .skeleton { background: linear-gradient(90deg, #F0F0F5 25%, #E8E8F0 50%, #F0F0F5 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  .skel-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.375rem; margin-bottom: 1rem; }
+  .skel-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .skel-circle { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
+  .skel-line { height: 12px; border-radius: 6px; }
+
+  /* ── Divider ── */
+  .feed-divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
+
+  /* ── Spinner ── */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .pb-wrapper { padding: 1.5rem 0.875rem 4rem; }
+    .pb-title { font-size: 22px; }
+  }
+</style>
+
+<div class="pb-wrapper">
+  <!-- Header -->
+  <div class="pb-header">
+    <div class="pb-header-top">
+      <div>
+        <h2 class="pb-title">Community <span>Pinboard</span></h2>
+        <p class="pb-subtitle">Announcements, opportunities, updates and upcoming events.</p>
+      </div>
+    </div>
   </div>
 
-  <div id="pinboardContainer"></div>
+  <!-- Tabs -->
+  <div class="pb-tabs">
+    <button class="pb-tab active" onclick="switchTab('announcements', this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px;margin-top:-2px"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>Announcements
+    </button>
+    <button class="pb-tab" onclick="switchTab('myfeed', this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:6px;margin-top:-2px"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>My Feed
+    </button>
+  </div>
+
+  <!-- Announcements Pane -->
+  <div id="pane-announcements" class="pb-pane active">
+    <div id="announcements-container">
+      <!-- Skeleton loader -->
+      <div class="skel-card">
+        <div class="skel-row">
+          <div class="skeleton skel-circle"></div>
+          <div style="flex:1">
+            <div class="skeleton skel-line" style="width:45%;margin-bottom:8px"></div>
+            <div class="skeleton skel-line" style="width:25%"></div>
+          </div>
+        </div>
+        <div class="skeleton skel-line" style="width:100%;margin-bottom:8px"></div>
+        <div class="skeleton skel-line" style="width:80%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Feed Pane -->
+  <div id="pane-myfeed" class="pb-pane">
+
+    <!-- Compose -->
+    <div class="compose-card">
+      <div class="compose-head">
+        <div class="compose-avatar">ME</div>
+        <textarea id="compose-text" rows="3" maxlength="500"
+          placeholder="Share something with the community..."
+          oninput="updateCharCount(this)"></textarea>
+      </div>
+      <div id="image-preview-area"></div>
+      <div class="compose-footer">
+        <div class="compose-actions">
+          <label class="upload-btn" for="post-image-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            Photo
+          </label>
+          <input type="file" id="post-image-input" accept="image/*" onchange="previewImage(event)">
+          <span class="char-count" id="char-count">500</span>
+        </div>
+        <button class="btn-post" onclick="submitPost()" id="post-btn">Post</button>
+      </div>
+    </div>
+
+    <div id="feed-container">
+      <div class="skel-card">
+        <div class="skel-row">
+          <div class="skeleton skel-circle"></div>
+          <div style="flex:1">
+            <div class="skeleton skel-line" style="width:40%;margin-bottom:8px"></div>
+            <div class="skeleton skel-line" style="width:20%"></div>
+          </div>
+        </div>
+        <div class="skeleton skel-line" style="width:100%;margin-bottom:8px"></div>
+        <div class="skeleton skel-line" style="width:65%"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-  async function toggleLike(postId) {
-    const response = await fetch(`/api/posts/${postId}/like`, {
-      method: "POST",
-    });
+  let currentTab = 'announcements';
+  let selectedImageFile = null;
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      alert(result.error || "Failed to like post");
-      return;
-    }
-
-    loadPinboard();
+  /* ── Tab Switching ── */
+  function switchTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.pb-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.pb-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('pane-' + tab).classList.add('active');
   }
 
-  async function loadComments(postId) {
-    const response = await fetch(`/api/posts/${postId}/comments`);
-    const comments = await response.json();
+  /* ── Char Counter ── */
+  function updateCharCount(textarea) {
+    const remaining = 500 - textarea.value.length;
+    const el = document.getElementById('char-count');
+    el.textContent = remaining;
+    el.className = 'char-count' + (remaining < 50 ? ' near' : '') + (remaining < 0 ? ' over' : '');
+  }
 
-    const container = document.getElementById(`comments-${postId}`);
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    if (!Array.isArray(comments) || comments.length === 0) {
-      container.innerHTML = `<p class="text-muted small">No comments yet.</p>`;
-      return;
-    }
-
-    comments.forEach((comment) => {
-      container.innerHTML += `
-        <div class="border rounded p-2 mb-2 bg-light">
-          <strong>${comment.name}</strong>
-          <div>${comment.content}</div>
-          <small class="text-muted">${comment.created_at}</small>
+  /* ── Image Preview ── */
+  function previewImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    selectedImageFile = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('image-preview-area').innerHTML = `
+        <div class="image-preview-wrap">
+          <img src="${e.target.result}" alt="Preview">
+          <button class="remove-image" onclick="removeImage()" title="Remove">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
       `;
-    });
+    };
+    reader.readAsDataURL(file);
   }
 
-  async function addComment(postId) {
-    const input = document.getElementById(`comment-input-${postId}`);
-    const content = input.value.trim();
-
-    if (!content) {
-      alert("Comment cannot be empty");
-      return;
-    }
-
-    const response = await fetch(`/api/posts/${postId}/comment`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ content: content }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      alert(result.error || "Failed to add comment");
-      return;
-    }
-
-    input.value = "";
-    loadPinboard();
+  function removeImage() {
+    selectedImageFile = null;
+    document.getElementById('post-image-input').value = '';
+    document.getElementById('image-preview-area').innerHTML = '';
   }
 
-  async function rsvpEvent(eventId) {
-    const response = await fetch(`/api/events/${eventId}/rsvp`, {
-      method: "POST",
-    });
+  /* ── Submit Post ── */
+  async function submitPost() {
+    const text = document.getElementById('compose-text').value.trim();
+    if (!text) { showToast('Please write something first.', 'warn'); return; }
+    const btn = document.getElementById('post-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Posting…';
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      alert(result.message || result.error || "Failed to RSVP");
-      return;
-    }
-
-    alert(result.message || "RSVP successful");
-    loadPinboard();
-  }
-
-  async function loadPinboard() {
     try {
-      const [postsResponse, eventsResponse] = await Promise.all([
-        fetch("/api/posts"),
-        fetch("/api/events"),
-      ]);
+      const formData = new FormData();
+      formData.append('content', text);
+      if (selectedImageFile) formData.append('image', selectedImageFile);
 
-      const posts = await postsResponse.json();
-      const events = await eventsResponse.json();
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        body: formData
+      });
 
-      const container = document.getElementById("pinboardContainer");
-      container.innerHTML = "";
-
-      const feedItems = [];
-
-      if (Array.isArray(posts)) {
-        posts.forEach((post) => {
-          feedItems.push({
-            type: "post",
-            sortDate: post.created_at || "",
-            data: post,
-          });
-        });
-      }
-
-      if (Array.isArray(events)) {
-        events.forEach((event) => {
-          feedItems.push({
-            type: "event",
-            sortDate: event.date || "",
-            data: event,
-          });
-        });
-      }
-
-      if (feedItems.length === 0) {
-        container.innerHTML = `
-          <div class="alert alert-info">
-            No updates available at the moment.
-          </div>
-        `;
+      if (!response.ok) {
+        const err = await response.json();
+        showToast(err.error || 'Failed to post', 'error');
         return;
       }
 
-      feedItems.sort((a, b) => {
-        const dateA = new Date(a.sortDate);
-        const dateB = new Date(b.sortDate);
-        return dateB - dateA;
-      });
-
-      feedItems.forEach((item) => {
-        if (item.type === "post") {
-          const post = item.data;
-
-          container.innerHTML += `
-            <div class="card shadow-sm mb-4" id="post-${post.post_id}">
-              <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                  <img
-                    src="/static/${post.profile_image}"
-                    width="40"
-                    height="40"
-                    class="rounded-circle me-2"
-                    style="object-fit: cover;"
-                    onerror="this.src='/static/default-profile.png'"
-                  >
-                  <div>
-                    <div>
-                      <strong>${post.name}</strong>
-                      ${
-                        post.role === "admin"
-                          ? `<span class="badge bg-danger ms-2">Announcement</span>`
-                          : ""
-                      }
-                    </div>
-                    <div class="text-muted small">${post.created_at}</div>
-                  </div>
-                </div>
-
-                <p>${post.content}</p>
-
-                ${
-                  post.image
-                    ? `
-                    <img
-                      src="/static/${post.image}"
-                      class="img-fluid rounded mt-2 mb-3"
-                      alt="Post image"
-                      onerror="this.style.display='none'"
-                    >
-                  `
-                    : ""
-                }
-
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                  <button class="btn btn-sm btn-outline-primary" onclick="toggleLike(${post.post_id})">
-                    ${post.liked_by_me ? "Unlike" : "Like"} (${post.like_count})
-                  </button>
-
-                  <button class="btn btn-sm btn-outline-secondary" onclick="loadComments(${post.post_id})">
-                    Comments (${post.comment_count})
-                  </button>
-                </div>
-
-                <div class="mb-3">
-                  <div id="comments-${post.post_id}" class="mb-2"></div>
-
-                  <div class="d-flex gap-2">
-                    <input
-                      type="text"
-                      id="comment-input-${post.post_id}"
-                      class="form-control"
-                      placeholder="Write a comment..."
-                    >
-                    <button class="btn btn-sm btn-dark" onclick="addComment(${post.post_id})">
-                      Comment
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          `;
-        }
-
-        if (item.type === "event") {
-          const event = item.data;
-
-          container.innerHTML += `
-            <div class="card shadow-sm mb-4" id="event-${event.event_id}">
-              <div class="card-body">
-                <div class="mb-3">
-                  <strong>${event.title}</strong>
-                  <span class="badge bg-primary ms-2">Event</span>
-                </div>
-
-                <p>${event.description || ""}</p>
-
-                <div class="text-muted mb-2">📍 ${event.location || ""}</div>
-                <div class="text-muted mb-3">
-                  📅 ${event.date ? new Date(event.date).toLocaleString() : ""}
-                </div>
-
-                <button class="btn btn-outline-primary btn-sm" onclick="rsvpEvent(${event.event_id})">
-                  RSVP
-                </button>
-              </div>
-            </div>
-          `;
-        }
-      });
-    } catch (error) {
-      console.error("Error loading pinboard:", error);
-      document.getElementById("pinboardContainer").innerHTML = `
-        <div class="alert alert-danger">
-          Failed to load pinboard updates.
-        </div>
-      `;
+      document.getElementById('compose-text').value = '';
+      removeImage();
+      updateCharCount(document.getElementById('compose-text'));
+      showToast('Posted successfully!', 'success');
+      loadFeed();
+    } catch (e) {
+      showToast('Something went wrong.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Post';
     }
   }
 
-  document.addEventListener("DOMContentLoaded", loadPinboard);
+  /* ── Toggle Like ── */
+  async function toggleLike(postId) {
+    const btn = document.querySelector(`[data-like-btn="${postId}"]`);
+    if (btn) { btn.disabled = true; }
+    try {
+      const response = await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+      const result = await response.json();
+      if (!response.ok) { showToast(result.error || 'Failed to like', 'error'); return; }
+      loadFeed();
+    } catch (e) { showToast('Something went wrong.', 'error'); }
+  }
+
+  /* ── Load Comments ── */
+  async function loadComments(postId) {
+    const section = document.getElementById(`comments-${postId}`);
+    if (!section) return;
+    section.style.display = section.style.display === 'none' || !section.style.display ? 'block' : 'none';
+    if (section.style.display === 'none') return;
+
+    const list = document.getElementById(`clist-${postId}`);
+    list.innerHTML = `<div class="skeleton skel-line" style="width:70%;margin-bottom:8px"></div>`;
+
+    try {
+      const response = await fetch(`/api/posts/${postId}/comments`);
+      const comments = await response.json();
+      list.innerHTML = '';
+      if (!Array.isArray(comments) || comments.length === 0) {
+        list.innerHTML = `<p style="font-size:13px;color:var(--text-muted);margin-bottom:8px">No comments yet. Be the first!</p>`;
+        return;
+      }
+      comments.forEach(c => {
+        const initials = (c.name || 'U').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+        list.innerHTML += `
+          <div class="comment-item">
+            <div class="comment-avatar">${initials}</div>
+            <div class="comment-bubble">
+              <strong>${escHtml(c.name)}</strong>
+              <span>${escHtml(c.content)}</span>
+              <small>${c.created_at}</small>
+            </div>
+          </div>`;
+      });
+    } catch(e) {
+      list.innerHTML = `<p style="font-size:13px;color:var(--coral)">Failed to load comments.</p>`;
+    }
+  }
+
+  /* ── Add Comment ── */
+  async function addComment(postId) {
+    const input = document.getElementById(`comment-input-${postId}`);
+    const content = input.value.trim();
+    if (!content) { showToast('Comment cannot be empty', 'warn'); return; }
+
+    const btn = document.querySelector(`[data-comment-btn="${postId}"]`);
+    if (btn) btn.disabled = true;
+
+    try {
+      const response = await fetch(`/api/posts/${postId}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      const result = await response.json();
+      if (!response.ok) { showToast(result.error || 'Failed to comment', 'error'); return; }
+      input.value = '';
+      loadComments(postId);
+      loadFeed();
+    } catch(e) {
+      showToast('Something went wrong.', 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  /* ── RSVP ── */
+  async function rsvpEvent(eventId) {
+    const btn = document.querySelector(`[data-rsvp-btn="${eventId}"]`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
+    try {
+      const response = await fetch(`/api/events/${eventId}/rsvp`, { method: 'POST' });
+      const result = await response.json();
+      if (!response.ok) { showToast(result.message || result.error || 'Failed to RSVP', 'error'); return; }
+      showToast(result.message || 'RSVP confirmed!', 'success');
+      loadPinboard();
+    } catch(e) {
+      showToast('Something went wrong.', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = 'RSVP'; }
+    }
+  }
+
+  /* ── Render Helpers ── */
+  function renderPost(post) {
+    const initials = (post.name || 'U').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return `
+      <div class="pb-card" id="post-${post.post_id}">
+        <div class="post-head">
+          <img src="/static/${post.profile_image}" alt="${escHtml(post.name)}"
+            onerror="this.src='/static/default-profile.png'">
+          <div class="post-head-info">
+            <div class="post-author">
+              ${escHtml(post.name)}
+              ${post.role === 'admin' ? `<span class="badge badge-announce">Announcement</span>` : ''}
+            </div>
+            <div class="post-time">${post.created_at}</div>
+          </div>
+        </div>
+        <div class="post-body">${escHtml(post.content)}</div>
+        ${post.image ? `<img src="/static/${post.image}" class="post-image" alt="Post image" onerror="this.style.display='none'">` : ''}
+        <div class="action-row">
+          <button class="action-btn ${post.liked_by_me ? 'liked' : ''}"
+            data-like-btn="${post.post_id}"
+            onclick="toggleLike(${post.post_id})">
+            <svg viewBox="0 0 24 24" fill="${post.liked_by_me ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            ${post.liked_by_me ? 'Unlike' : 'Like'} · ${post.like_count}
+          </button>
+          <button class="action-btn" onclick="loadComments(${post.post_id})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Comments · ${post.comment_count}
+          </button>
+        </div>
+        <div class="comment-section" id="comments-${post.post_id}" style="display:none">
+          <div id="clist-${post.post_id}"></div>
+          <div class="comment-input-row">
+            <input type="text" id="comment-input-${post.post_id}"
+              placeholder="Write a comment…"
+              onkeydown="if(event.key==='Enter')addComment(${post.post_id})">
+            <button class="btn-post" data-comment-btn="${post.post_id}"
+              onclick="addComment(${post.post_id})">Reply</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function renderEvent(event) {
+    return `
+      <div class="pb-card" id="event-${event.event_id}">
+        <div class="event-title-row">
+          <div class="event-title">${escHtml(event.title)}</div>
+          <span class="badge badge-event">Event</span>
+        </div>
+        ${event.description ? `<div class="post-body">${escHtml(event.description)}</div>` : ''}
+        <div class="event-detail">
+          <div class="event-icon icon-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+          ${escHtml(event.location || '')}
+        </div>
+        <div class="event-detail">
+          <div class="event-icon icon-cal"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+          ${event.date ? new Date(event.date).toLocaleString() : ''}
+        </div>
+        <div class="action-row">
+          <button class="action-btn" data-rsvp-btn="${event.event_id}"
+            onclick="rsvpEvent(${event.event_id})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            RSVP
+          </button>
+        </div>
+      </div>`;
+  }
+
+  /* ── Load Announcements (posts by admin + events) ── */
+  async function loadPinboard() {
+    const container = document.getElementById('announcements-container');
+    try {
+      const [postsRes, eventsRes] = await Promise.all([
+        fetch('/api/posts'), fetch('/api/events')
+      ]);
+      const posts = await postsRes.json();
+      const events = await eventsRes.json();
+
+      let html = '';
+      const adminPosts = Array.isArray(posts) ? posts.filter(p => p.role === 'admin') : [];
+      const allEvents = Array.isArray(events) ? events : [];
+
+      if (allEvents.length > 0) {
+        html += `<div class="section-chip"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Upcoming Events</div>`;
+        allEvents.forEach(e => { html += renderEvent(e); });
+        if (adminPosts.length > 0) html += `<div class="feed-divider"></div>`;
+      }
+
+      if (adminPosts.length > 0) {
+        html += `<div class="section-chip"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Official Announcements</div>`;
+        adminPosts.forEach(p => { html += renderPost(p); });
+      }
+
+      if (!html) {
+        html = `<div class="pb-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <p>No announcements at the moment.</p>
+        </div>`;
+      }
+
+      container.innerHTML = html;
+    } catch(e) {
+      container.innerHTML = `<div class="pb-alert pb-alert-danger">Failed to load announcements.</div>`;
+    }
+  }
+
+  /* ── Load My Feed (all posts) ── */
+  async function loadFeed() {
+    const container = document.getElementById('feed-container');
+    try {
+      const response = await fetch('/api/posts');
+      const posts = await response.json();
+
+      if (!Array.isArray(posts) || posts.length === 0) {
+        container.innerHTML = `<div class="pb-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="3"/>
+            <line x1="9" y1="9" x2="15" y2="9"/>
+            <line x1="9" y1="13" x2="13" y2="13"/>
+          </svg>
+          <p>No posts yet. Be the first to share something!</p>
+        </div>`;
+        return;
+      }
+
+      container.innerHTML = posts.map(renderPost).join('');
+    } catch(e) {
+      container.innerHTML = `<div class="pb-alert pb-alert-danger">Failed to load feed.</div>`;
+    }
+  }
+
+  /* ── Toast Notifications ── */
+  function showToast(msg, type = 'info') {
+    const colors = {
+      success: '#00C48C', error: '#FF6B5B', warn: '#F5A623', info: '#5B5BF6'
+    };
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position:fixed;bottom:24px;right:24px;z-index:9999;
+      background:${colors[type] || colors.info};color:#fff;
+      padding:11px 18px;border-radius:10px;font-size:13px;font-weight:500;
+      font-family:'DM Sans',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.15);
+      opacity:0;transform:translateY(8px);transition:all 0.2s ease;
+      max-width:280px;
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; });
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+      setTimeout(() => toast.remove(), 200);
+    }, 3000);
+  }
+
+  /* ── Helpers ── */
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Init ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    loadPinboard();
+    loadFeed();
+  });
 </script>
+
 {% endblock %}
