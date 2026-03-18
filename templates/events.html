@@ -1,199 +1,533 @@
-{% extends "base.html" %} {% block content %}
-<div class="container py-5">
-  <div class="mb-4">
-    <h2 class="fw-bold">Events</h2>
-    <p class="text-muted">Discover and join upcoming alumni events.</p>
+{% extends "admin_base.html" %} {% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<div class="ev-wrap">
+
+  <div class="ev-header">
+    <div>
+      <h1 class="ev-title">Events</h1>
+      <p class="ev-sub">Discover and join upcoming alumni events.</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="ev-btn-ghost">Dashboard</a>
   </div>
 
   {% if current_user.role == "admin" %}
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h5 class="mb-3">Create Event</h5>
+  <div class="ev-card ev-create">
+    <div class="ev-card-header">
+      <div class="ev-card-dot"></div>
+      <span>Create Event</span>
+    </div>
 
-      <input
-        id="eventTitle"
-        class="form-control mb-3"
-        placeholder="Event Title"
-      />
+    <div class="ev-form-grid">
+      <div class="ev-field">
+        <label class="ev-label" for="eventTitle">Title</label>
+        <input id="eventTitle" class="ev-input" placeholder="Event title…" />
+      </div>
 
-      <textarea
-        id="eventDescription"
-        class="form-control mb-3"
-        placeholder="Event Description"
-      ></textarea>
+      <div class="ev-field">
+        <label class="ev-label" for="eventLocation">Location</label>
+        <input id="eventLocation" class="ev-input" placeholder="Venue or address…" />
+      </div>
 
-      <input
-        id="eventLocation"
-        class="form-control mb-3"
-        placeholder="Location"
-      />
+      <div class="ev-field ev-field-full">
+        <label class="ev-label" for="eventDescription">Description</label>
+        <textarea id="eventDescription" class="ev-input ev-textarea" placeholder="Describe the event…" rows="3"></textarea>
+      </div>
 
-      <input
-        id="eventDate"
-        type="datetime-local"
-        class="form-control mb-3"
-        step="60"
-      />
+      <div class="ev-field">
+        <label class="ev-label" for="eventDate">Date & Time</label>
+        <input id="eventDate" type="datetime-local" class="ev-input" step="60" />
+      </div>
+    </div>
 
-      <button id="createEventBtn" type="button" class="btn btn-primary">
-        Create Event
+    <div class="ev-form-footer">
+      <button id="createEventBtn" type="button" class="ev-btn-primary">
+        <svg viewBox="0 0 16 16" fill="none" width="13" height="13"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <span id="createBtnLabel">Create Event</span>
       </button>
     </div>
   </div>
   {% endif %}
 
+  <div class="ev-section-title">
+    <span>Upcoming Events</span>
+    <span class="ev-section-line"></span>
+  </div>
+
   <div id="eventsContainer"></div>
+
 </div>
+
+<style>
+  :root {
+    --ev-surface: #fff;
+    --ev-border: #e4e4e7;
+    --ev-bg: #f7f7f8;
+    --ev-text: #111;
+    --ev-text2: #52525b;
+    --ev-text3: #a1a1aa;
+    --ev-accent: #111;
+    --ev-radius: 14px;
+    --ev-ff: 'DM Sans', sans-serif;
+    --ev-fd: 'Syne', sans-serif;
+  }
+
+  .ev-wrap {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 52px 24px 80px;
+    font-family: var(--ev-ff);
+  }
+
+  /* header */
+  .ev-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+  }
+
+  .ev-title {
+    font-family: var(--ev-fd);
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    color: var(--ev-text);
+    margin: 0 0 5px;
+    line-height: 1.1;
+  }
+
+  .ev-sub {
+    font-size: 0.875rem;
+    color: var(--ev-text3);
+    margin: 0;
+  }
+
+  .ev-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ev-accent);
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 18px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    font-family: var(--ev-ff);
+    cursor: pointer;
+    transition: background .15s, transform .15s, box-shadow .15s;
+  }
+
+  .ev-btn-primary:hover {
+    background: #2a2a2a;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(0,0,0,0.15);
+  }
+
+  .ev-btn-primary:disabled { opacity: .6; pointer-events: none; }
+
+  .ev-btn-ghost {
+    text-decoration: none;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--ev-text3);
+    padding: 9px 14px;
+    border-radius: 9px;
+    border: 1px solid var(--ev-border);
+    background: var(--ev-surface);
+    transition: color .15s, border-color .15s;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .ev-btn-ghost:hover { color: var(--ev-text); border-color: #bbb; }
+
+  /* card */
+  .ev-card {
+    background: var(--ev-surface);
+    border: 1px solid var(--ev-border);
+    border-radius: var(--ev-radius);
+    box-shadow: 0 2px 20px rgba(0,0,0,0.04);
+    overflow: hidden;
+    animation: evFadeUp .35s ease both;
+    margin-bottom: 18px;
+  }
+
+  @keyframes evFadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* create form card */
+  .ev-create { margin-bottom: 40px; }
+
+  .ev-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--ev-border);
+    font-family: var(--ev-fd);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ev-text);
+  }
+
+  .ev-card-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ev-text);
+    flex-shrink: 0;
+  }
+
+  .ev-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    padding: 24px 28px 0;
+  }
+
+  .ev-field { display: flex; flex-direction: column; gap: 7px; }
+  .ev-field-full { grid-column: 1 / -1; }
+
+  .ev-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--ev-text2);
+    font-family: var(--ev-fd);
+  }
+
+  .ev-input {
+    border: 1.5px solid var(--ev-border);
+    border-radius: 9px;
+    padding: 10px 13px;
+    font-family: var(--ev-ff);
+    font-size: 0.875rem;
+    color: var(--ev-text);
+    background: #fafaf9;
+    outline: none;
+    transition: border-color .18s, box-shadow .18s;
+    width: 100%;
+  }
+
+  .ev-input::placeholder { color: var(--ev-text3); }
+
+  .ev-input:focus {
+    border-color: #888;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+    background: #fff;
+  }
+
+  .ev-textarea { resize: vertical; min-height: 80px; line-height: 1.6; }
+
+  .ev-form-footer {
+    padding: 18px 28px 22px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* section divider */
+  .ev-section-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+    font-family: var(--ev-fd);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--ev-text3);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .ev-section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--ev-border);
+  }
+
+  /* event cards (dynamic) */
+  .ev-event-card {
+    background: var(--ev-surface);
+    border: 1px solid var(--ev-border);
+    border-radius: var(--ev-radius);
+    padding: 22px 26px;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.04);
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: evFadeUp .3s ease both;
+    transition: box-shadow .2s, transform .2s;
+  }
+
+  .ev-event-card:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+
+  .ev-event-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .ev-event-name {
+    font-family: var(--ev-fd);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--ev-text);
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .ev-rsvp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f4f4f5;
+    color: var(--ev-text);
+    border: 1px solid var(--ev-border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: var(--ev-ff);
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .15s;
+    flex-shrink: 0;
+  }
+
+  .ev-rsvp-btn:hover {
+    background: var(--ev-text);
+    color: #fff;
+    border-color: var(--ev-text);
+    transform: translateY(-1px);
+  }
+
+  .ev-event-desc {
+    font-size: 0.875rem;
+    color: var(--ev-text2);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .ev-event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 4px;
+  }
+
+  .ev-meta-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--ev-bg);
+    border: 1px solid var(--ev-border);
+    border-radius: 20px;
+    padding: 4px 11px;
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: var(--ev-text2);
+    white-space: nowrap;
+  }
+
+  /* states */
+  .ev-empty {
+    background: var(--ev-surface);
+    border: 1px solid var(--ev-border);
+    border-radius: var(--ev-radius);
+    padding: 56px 32px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ev-empty-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 13px;
+    background: var(--ev-bg);
+    border: 1px solid var(--ev-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ev-text3);
+  }
+
+  .ev-empty p { font-size: 0.875rem; color: var(--ev-text3); margin: 0; }
+
+  .ev-error {
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  @media (max-width: 600px) {
+    .ev-title { font-size: 1.5rem; }
+    .ev-header { flex-direction: column; gap: 12px; }
+    .ev-form-grid { grid-template-columns: 1fr; }
+    .ev-field-full { grid-column: auto; }
+  }
+</style>
 
 <script>
   async function createEvent() {
+    const btn   = document.getElementById('createEventBtn');
+    const label = document.getElementById('createBtnLabel');
+    const title       = document.getElementById('eventTitle').value.trim();
+    const description = document.getElementById('eventDescription').value.trim();
+    const location    = document.getElementById('eventLocation').value.trim();
+    const date        = document.getElementById('eventDate').value;
+
+    if (!title || !description || !location || !date) {
+      // highlight empty fields
+      [['eventTitle',title],['eventDescription',description],['eventLocation',location],['eventDate',date]].forEach(([id, val]) => {
+        if (!val) {
+          const el = document.getElementById(id);
+          el.style.borderColor = '#f87171';
+          setTimeout(() => el.style.borderColor = '', 1400);
+        }
+      });
+      return;
+    }
+
+    btn.disabled = true;
+    label.textContent = 'Creating…';
+
     try {
-      const title = document.getElementById("eventTitle")?.value.trim() || "";
-      const description =
-        document.getElementById("eventDescription")?.value.trim() || "";
-      const location =
-        document.getElementById("eventLocation")?.value.trim() || "";
-      const date = document.getElementById("eventDate")?.value || "";
-
-      console.log("Create button clicked");
-      console.log("Raw date value:", date);
-
-      if (!title || !description || !location || !date) {
-        alert("Please fill in all fields.");
-        return;
-      }
-
-      const response = await fetch("/api/events", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: title,
-          description: description,
-          location: location,
-          event_date: date,
-        }),
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, location, event_date: date })
       });
 
       const text = await response.text();
-      console.log("Create event raw response:", text);
-
       let result = {};
-      try {
-        result = JSON.parse(text);
-      } catch (e) {
-        alert("Server did not return valid JSON.");
-        return;
-      }
+      try { result = JSON.parse(text); } catch { alert('Server did not return valid JSON.'); return; }
 
-      if (!response.ok) {
-        alert(result.error || result.message || "Failed to create event");
-        return;
-      }
+      if (!response.ok) { alert(result.error || result.message || 'Failed to create event'); return; }
 
-      alert(result.message || "Event created successfully");
-
-      document.getElementById("eventTitle").value = "";
-      document.getElementById("eventDescription").value = "";
-      document.getElementById("eventLocation").value = "";
-      document.getElementById("eventDate").value = "";
+      document.getElementById('eventTitle').value       = '';
+      document.getElementById('eventDescription').value = '';
+      document.getElementById('eventLocation').value    = '';
+      document.getElementById('eventDate').value        = '';
 
       loadEvents();
-    } catch (error) {
-      console.error("Create event error:", error);
-      alert("Something went wrong while creating the event.");
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong while creating the event.');
+    } finally {
+      btn.disabled = false;
+      label.textContent = 'Create Event';
     }
   }
 
   async function rsvpEvent(eventId) {
     try {
-      const response = await fetch(`/api/events/${eventId}/rsvp`, {
-        method: "POST",
-      });
-
+      const response = await fetch(`/api/events/${eventId}/rsvp`, { method: 'POST' });
       const text = await response.text();
-      console.log("RSVP raw response:", text);
-
       let result = {};
-      try {
-        result = JSON.parse(text);
-      } catch (e) {
-        alert("Server did not return valid JSON.");
-        return;
-      }
-
-      if (!response.ok) {
-        alert(result.message || result.error || "Failed to RSVP");
-        return;
-      }
-
-      alert(result.message || "RSVP successful");
-    } catch (error) {
-      console.error("RSVP error:", error);
-      alert("Something went wrong while sending your RSVP.");
+      try { result = JSON.parse(text); } catch { alert('Server did not return valid JSON.'); return; }
+      if (!response.ok) { alert(result.message || result.error || 'Failed to RSVP'); return; }
+      alert(result.message || 'RSVP successful');
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong while sending your RSVP.');
     }
   }
 
   async function loadEvents() {
-    try {
-      const response = await fetch("/api/events");
-      const text = await response.text();
-      console.log("Load events raw response:", text);
+    const container = document.getElementById('eventsContainer');
+    container.innerHTML = '<p style="color:#a1a1aa;font-size:.85rem;padding:8px 0">Loading events…</p>';
 
+    try {
+      const response = await fetch('/api/events');
+      const text = await response.text();
       let events = [];
-      try {
-        events = JSON.parse(text);
-      } catch (e) {
-        document.getElementById("eventsContainer").innerHTML = `
-          <div class="alert alert-danger">Server did not return valid event data.</div>
-        `;
+      try { events = JSON.parse(text); } catch {
+        container.innerHTML = '<div class="ev-error">Server did not return valid event data.</div>';
         return;
       }
 
-      const container = document.getElementById("eventsContainer");
-      container.innerHTML = "";
+      container.innerHTML = '';
 
       if (!Array.isArray(events) || events.length === 0) {
         container.innerHTML = `
-          <div class="alert alert-info">No events available.</div>
-        `;
+          <div class="ev-empty">
+            <div class="ev-empty-icon">
+              <svg viewBox="0 0 24 24" fill="none" width="26" height="26"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M16 3v4M8 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </div>
+            <p>No events available yet.</p>
+          </div>`;
         return;
       }
 
-      events.forEach((event) => {
-        container.innerHTML += `
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5>${event.title}</h5>
-              <p>${event.description || ""}</p>
+      events.forEach((event, i) => {
+        const dateStr = event.date ? new Date(event.date).toLocaleDateString('en-ZA', { day:'numeric', month:'short', year:'numeric' }) : '';
+        const timeStr = event.date ? new Date(event.date).toLocaleTimeString('en-ZA', { hour:'2-digit', minute:'2-digit' }) : '';
 
-              <div class="text-muted mb-2">📍 ${event.location || ""}</div>
-              <div class="text-muted mb-3">
-                📅 ${event.date ? new Date(event.date).toLocaleString() : ""}
-              </div>
-
-              <button type="button" class="btn btn-outline-primary btn-sm" onclick="rsvpEvent(${event.event_id})">
-                RSVP
-              </button>
-            </div>
+        const card = document.createElement('div');
+        card.className = 'ev-event-card';
+        card.style.animationDelay = `${i * 50}ms`;
+        card.innerHTML = `
+          <div class="ev-event-top">
+            <h3 class="ev-event-name">${event.title}</h3>
+            <button class="ev-rsvp-btn" onclick="rsvpEvent(${event.event_id})">
+              <svg viewBox="0 0 16 16" fill="none" width="12" height="12"><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/></svg>
+              RSVP
+            </button>
+          </div>
+          ${event.description ? `<p class="ev-event-desc">${event.description}</p>` : ''}
+          <div class="ev-event-meta">
+            ${event.location ? `
+              <span class="ev-meta-pill">
+                <svg viewBox="0 0 16 16" fill="none" width="10" height="10"><path d="M8 1.5A4.5 4.5 0 0112.5 6c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 018 1.5z" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="6" r="1.5" fill="currentColor"/></svg>
+                ${event.location}
+              </span>` : ''}
+            ${dateStr ? `
+              <span class="ev-meta-pill">
+                <svg viewBox="0 0 16 16" fill="none" width="10" height="10"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M11 1.5v3M5 1.5v3M2 7h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                ${dateStr}
+              </span>
+              <span class="ev-meta-pill">
+                <svg viewBox="0 0 16 16" fill="none" width="10" height="10"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                ${timeStr}
+              </span>` : ''}
           </div>
         `;
+        container.appendChild(card);
       });
-    } catch (error) {
-      console.error("Load events error:", error);
-      document.getElementById("eventsContainer").innerHTML = `
-        <div class="alert alert-danger">Failed to load events.</div>
-      `;
+
+    } catch (err) {
+      console.error(err);
+      container.innerHTML = '<div class="ev-error">Failed to load events.</div>';
     }
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const createBtn = document.getElementById("createEventBtn");
-    if (createBtn) {
-      createBtn.addEventListener("click", createEvent);
-    }
+  document.addEventListener('DOMContentLoaded', () => {
+    const createBtn = document.getElementById('createEventBtn');
+    if (createBtn) createBtn.addEventListener('click', createEvent);
     loadEvents();
   });
 </script>
+
 {% endblock %}
