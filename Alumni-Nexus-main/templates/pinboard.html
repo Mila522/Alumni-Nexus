@@ -1,0 +1,260 @@
+{% extends "base.html" %} {% block content %}
+<div class="container py-5">
+  <div class="mb-4">
+    <h2 class="fw-bold">Community Pinboard</h2>
+    <p class="text-muted">
+      View official announcements, opportunities, updates, and upcoming events.
+    </p>
+  </div>
+
+  <div id="pinboardContainer"></div>
+</div>
+
+<script>
+  async function toggleLike(postId) {
+    const response = await fetch(`/api/posts/${postId}/like`, {
+      method: "POST",
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || "Failed to like post");
+      return;
+    }
+
+    loadPinboard();
+  }
+
+  async function loadComments(postId) {
+    const response = await fetch(`/api/posts/${postId}/comments`);
+    const comments = await response.json();
+
+    const container = document.getElementById(`comments-${postId}`);
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (!Array.isArray(comments) || comments.length === 0) {
+      container.innerHTML = `<p class="text-muted small">No comments yet.</p>`;
+      return;
+    }
+
+    comments.forEach((comment) => {
+      container.innerHTML += `
+        <div class="border rounded p-2 mb-2 bg-light">
+          <strong>${comment.name}</strong>
+          <div>${comment.content}</div>
+          <small class="text-muted">${comment.created_at}</small>
+        </div>
+      `;
+    });
+  }
+
+  async function addComment(postId) {
+    const input = document.getElementById(`comment-input-${postId}`);
+    const content = input.value.trim();
+
+    if (!content) {
+      alert("Comment cannot be empty");
+      return;
+    }
+
+    const response = await fetch(`/api/posts/${postId}/comment`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ content: content }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.error || "Failed to add comment");
+      return;
+    }
+
+    input.value = "";
+    loadPinboard();
+  }
+
+  async function rsvpEvent(eventId) {
+    const response = await fetch(`/api/events/${eventId}/rsvp`, {
+      method: "POST",
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      alert(result.message || result.error || "Failed to RSVP");
+      return;
+    }
+
+    alert(result.message || "RSVP successful");
+    loadPinboard();
+  }
+
+  async function loadPinboard() {
+    try {
+      const [postsResponse, eventsResponse] = await Promise.all([
+        fetch("/api/posts"),
+        fetch("/api/events"),
+      ]);
+
+      const posts = await postsResponse.json();
+      const events = await eventsResponse.json();
+
+      const container = document.getElementById("pinboardContainer");
+      container.innerHTML = "";
+
+      const feedItems = [];
+
+      if (Array.isArray(posts)) {
+        posts.forEach((post) => {
+          feedItems.push({
+            type: "post",
+            sortDate: post.created_at || "",
+            data: post,
+          });
+        });
+      }
+
+      if (Array.isArray(events)) {
+        events.forEach((event) => {
+          feedItems.push({
+            type: "event",
+            sortDate: event.date || "",
+            data: event,
+          });
+        });
+      }
+
+      if (feedItems.length === 0) {
+        container.innerHTML = `
+          <div class="alert alert-info">
+            No updates available at the moment.
+          </div>
+        `;
+        return;
+      }
+
+      feedItems.sort((a, b) => {
+        const dateA = new Date(a.sortDate);
+        const dateB = new Date(b.sortDate);
+        return dateB - dateA;
+      });
+
+      feedItems.forEach((item) => {
+        if (item.type === "post") {
+          const post = item.data;
+
+          container.innerHTML += `
+            <div class="card shadow-sm mb-4" id="post-${post.post_id}">
+              <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                  <img
+                    src="/static/${post.profile_image}"
+                    width="40"
+                    height="40"
+                    class="rounded-circle me-2"
+                    style="object-fit: cover;"
+                    onerror="this.src='/static/default-profile.png'"
+                  >
+                  <div>
+                    <div>
+                      <strong>${post.name}</strong>
+                      ${
+                        post.role === "admin"
+                          ? `<span class="badge bg-danger ms-2">Announcement</span>`
+                          : ""
+                      }
+                    </div>
+                    <div class="text-muted small">${post.created_at}</div>
+                  </div>
+                </div>
+
+                <p>${post.content}</p>
+
+                ${
+                  post.image
+                    ? `
+                    <img
+                      src="/static/${post.image}"
+                      class="img-fluid rounded mt-2 mb-3"
+                      alt="Post image"
+                      onerror="this.style.display='none'"
+                    >
+                  `
+                    : ""
+                }
+
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                  <button class="btn btn-sm btn-outline-primary" onclick="toggleLike(${post.post_id})">
+                    ${post.liked_by_me ? "Unlike" : "Like"} (${post.like_count})
+                  </button>
+
+                  <button class="btn btn-sm btn-outline-secondary" onclick="loadComments(${post.post_id})">
+                    Comments (${post.comment_count})
+                  </button>
+                </div>
+
+                <div class="mb-3">
+                  <div id="comments-${post.post_id}" class="mb-2"></div>
+
+                  <div class="d-flex gap-2">
+                    <input
+                      type="text"
+                      id="comment-input-${post.post_id}"
+                      class="form-control"
+                      placeholder="Write a comment..."
+                    >
+                    <button class="btn btn-sm btn-dark" onclick="addComment(${post.post_id})">
+                      Comment
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+
+        if (item.type === "event") {
+          const event = item.data;
+
+          container.innerHTML += `
+            <div class="card shadow-sm mb-4" id="event-${event.event_id}">
+              <div class="card-body">
+                <div class="mb-3">
+                  <strong>${event.title}</strong>
+                  <span class="badge bg-primary ms-2">Event</span>
+                </div>
+
+                <p>${event.description || ""}</p>
+
+                <div class="text-muted mb-2">📍 ${event.location || ""}</div>
+                <div class="text-muted mb-3">
+                  📅 ${event.date ? new Date(event.date).toLocaleString() : ""}
+                </div>
+
+                <button class="btn btn-outline-primary btn-sm" onclick="rsvpEvent(${event.event_id})">
+                  RSVP
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      });
+    } catch (error) {
+      console.error("Error loading pinboard:", error);
+      document.getElementById("pinboardContainer").innerHTML = `
+        <div class="alert alert-danger">
+          Failed to load pinboard updates.
+        </div>
+      `;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadPinboard);
+</script>
+{% endblock %}

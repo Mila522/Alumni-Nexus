@@ -1,0 +1,123 @@
+{% extends "base.html" %} {% block title %}Sign In{% endblock %} {% block
+content %}
+
+<div class="container mt-5" style="max-width: 500px">
+  <h2 class="mb-4 text-center">Login</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %} {% for category, message in messages %}
+  <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %} {% endif %} {% endwith %}
+
+  <form action="{{ url_for('login') }}" method="POST">
+    <div class="mb-3">
+      <label for="email" class="form-label">Email Address</label>
+      <input
+        type="email"
+        class="form-control"
+        id="email"
+        name="email"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="password" class="form-label">Password</label>
+      <input
+        type="password"
+        class="form-control"
+        id="password"
+        name="password"
+        required
+      />
+    </div>
+
+    <div class="mb-3 text-end">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot Password?</a>
+    </div>
+
+    <div class="d-grid">
+      <button type="submit" class="btn btn-primary">Login</button>
+    </div>
+  </form>
+
+  <div class="text-center mt-3">
+    <p>Don't have an account? <a href="{{ url_for('register') }}">Sign Up</a></p>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="forgotPasswordModalLabel">Reset Password</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Enter your email address and we'll send you instructions to reset your password.</p>
+        <form action="{{ url_for('forgot_password') }}" method="POST" id="forgotPasswordForm">
+          <div class="mb-3">
+            <label for="reset_email" class="form-label">Email Address</label>
+            <input
+              type="email"
+              class="form-control"
+              id="reset_email"
+              name="email"
+              required
+            />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" form="forgotPasswordForm" class="btn btn-primary">Send Reset Link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Optional: Reset Password Page (Alternative approach - uncomment if you prefer separate page) -->
+<!-- 
+{% if request.endpoint == 'reset_password' %}
+<div class="container mt-5" style="max-width: 500px">
+  <h2 class="mb-4 text-center">Reset Password</h2>
+  
+  <form action="{{ url_for('reset_password', token=token) }}" method="POST">
+    <div class="mb-3">
+      <label for="new_password" class="form-label">New Password</label>
+      <input
+        type="password"
+        class="form-control"
+        id="new_password"
+        name="new_password"
+        required
+        minlength="8"
+      />
+      <small class="text-muted">Password must be at least 8 characters long</small>
+    </div>
+
+    <div class="mb-3">
+      <label for="confirm_password" class="form-label">Confirm New Password</label>
+      <input
+        type="password"
+        class="form-control"
+        id="confirm_password"
+        name="confirm_password"
+        required
+        minlength="8"
+      />
+    </div>
+
+    <div class="d-grid">
+      <button type="submit" class="btn btn-primary">Reset Password</button>
+    </div>
+  </form>
+</div>
+{% endif %}
+-->
+
+{% endblock %}

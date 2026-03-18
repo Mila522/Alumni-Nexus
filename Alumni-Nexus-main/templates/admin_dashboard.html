@@ -1,0 +1,352 @@
+{% extends "base.html" %} {% block content %}
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="brand">Alumni Nexus</div>
+
+    <div class="admin-profile">
+      <div class="admin-avatar"></div>
+      <div>
+        <div class="admin-email">{{ current_user.email }}</div>
+        <div class="admin-role">Administrator</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section-title">Main</div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-item active"
+        >Overview</a
+      >
+    </nav>
+
+    <div class="sidebar-section-title">People</div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item">Registered Users</a>
+      <a href="#" class="nav-item">Mentor Applications</a>
+      <a href="{{ url_for('admin_mentors') }}" class="nav-item"
+        >Active Mentors</a
+      >
+      <a href="#" class="nav-item">Mentorship Requests</a>
+    </nav>
+
+    <div class="sidebar-section-title">Pinboard</div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('pinboard') }}" class="nav-item">Posts</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h3 class="page-title">Overview</h3>
+      <div class="topbar-text">DUT Alumni Nexus – Admin Portal</div>
+    </div>
+
+    <section class="admin-content">
+      <div class="overview-header">
+        <h1>Platform Overview</h1>
+        <p>Welcome back, Administrator.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <h6>Total Alumni</h6>
+          <h2>{{ total_alumni }}</h2>
+          <a href="{{ url_for('admin_alumni') }}">View →</a>
+        </div>
+
+        <div class="stat-card">
+          <h6>Total Students</h6>
+          <h2>{{ total_students }}</h2>
+          <a href="{{ url_for('admin_students') }}">View →</a>
+        </div>
+
+        <div class="stat-card">
+          <h6>Total Mentors</h6>
+          <h2>{{ total_mentors }}</h2>
+          <a href="{{ url_for('admin_mentors') }}">View →</a>
+        </div>
+
+        <div class="stat-card">
+          <h6>Total Events</h6>
+          <h2>{{ total_events }}</h2>
+          <a href="{{ url_for('admin_events') }}">View →</a>
+        </div>
+
+        <div class="stat-card">
+          <h6>Event Attendees</h6>
+          <h2>{{ total_event_attendees }}</h2>
+          <a href="{{ url_for('admin_event_attendees') }}">View →</a>
+        </div>
+
+        <div class="stat-card">
+          <h6>Total RSVPs</h6>
+          <h2>{{ total_rsvps }}</h2>
+          <a href="{{ url_for('admin_rsvps') }}">View →</a>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <h4>Quick Actions</h4>
+        <div class="action-buttons">
+          <a href="{{ url_for('admin_new_post') }}" class="action-btn primary"
+            >+ New Post</a
+          >
+          <a href="{{ url_for('admin_new_event') }}" class="action-btn primary"
+            >+ New Event</a
+          >
+          <a href="{{ url_for('pinboard') }}" class="action-btn"
+            >Manage Posts</a
+          >
+          <a href="{{ url_for('admin_events') }}" class="action-btn"
+            >Manage Events</a
+          >
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<style>
+  .admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background: #f5f6f8;
+  }
+
+  .admin-sidebar {
+    width: 280px;
+    background: #111;
+    color: white;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand {
+    font-size: 2rem;
+    font-weight: 700;
+    padding: 0 24px;
+    margin-bottom: 24px;
+  }
+
+  .admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 24px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+  }
+
+  .admin-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #2c2c2c;
+  }
+
+  .admin-email {
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .admin-role {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+  }
+
+  .sidebar-section-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    opacity: 0.6;
+    padding: 0 24px;
+    margin: 18px 0 8px;
+    letter-spacing: 1px;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nav-item {
+    color: white;
+    text-decoration: none;
+    padding: 14px 24px;
+    display: block;
+    transition: 0.2s;
+  }
+
+  .nav-item:hover,
+  .nav-item.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 24px;
+  }
+
+  .logout-btn {
+    color: white;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .admin-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .admin-topbar {
+    background: white;
+    padding: 22px 32px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .page-title {
+    margin: 0;
+    font-weight: 700;
+  }
+
+  .topbar-text {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  .admin-content {
+    padding: 36px 32px;
+  }
+
+  .overview-header h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .overview-header p {
+    color: #6b7280;
+    margin-bottom: 30px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    min-height: 150px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .stat-card h6 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+
+  .stat-card h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .stat-card span,
+  .stat-card a {
+    color: #6b7280;
+    font-size: 0.95rem;
+    text-decoration: none;
+  }
+
+  .stat-card a:hover {
+    text-decoration: underline;
+  }
+
+  .quick-actions h4 {
+    font-weight: 700;
+    margin-bottom: 18px;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .action-btn {
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    background: white;
+    color: #111;
+    border: 1px solid #ddd;
+    font-weight: 600;
+    transition: 0.2s;
+  }
+
+  .action-btn:hover {
+    color: #111;
+    transform: translateY(-1px);
+  }
+
+  .action-btn.primary {
+    background: #111;
+    color: white;
+    border: none;
+  }
+
+  .action-btn.primary:hover {
+    color: white;
+  }
+
+  @media (max-width: 1100px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .admin-layout {
+      flex-direction: column;
+    }
+
+    .admin-sidebar {
+      width: 100%;
+    }
+
+    .admin-topbar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .action-buttons {
+      flex-direction: column;
+    }
+  }
+</style>
+{% endblock %}

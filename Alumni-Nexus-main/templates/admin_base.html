@@ -1,0 +1,23 @@
+
+Admin base · HTML
+Copy
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Portal{% endblock %} | Alumni Nexus &mdash; DUT</title>
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    {% block navbar %}{% include 'partials/admin_navbar.html' %}{% endblock %}
+
+    {% block content %}{% endblock %}
+
+    {% include 'partials/admin_footer.html' %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

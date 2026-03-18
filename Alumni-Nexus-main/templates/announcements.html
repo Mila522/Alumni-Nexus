@@ -1,0 +1,114 @@
+{% extends "base.html" %} {% block content %}
+<div class="container py-5">
+  <!-- HEADER -->
+  <div class="mb-4">
+    <h2 class="fw-bold">Create Announcement</h2>
+    <p class="text-muted">
+      Share important updates, opportunities, or official notices with the
+      community.
+    </p>
+  </div>
+
+  <!-- FORM (ADMIN ONLY) -->
+  {% if current_user.is_authenticated and current_user.role == "admin" %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="mb-3">New Announcement</h5>
+
+      <!-- TEXT -->
+      <textarea
+        id="postContent"
+        class="form-control mb-3"
+        placeholder="Write your announcement..."
+        rows="4"
+      ></textarea>
+
+      <!-- IMAGE -->
+      <input type="file" id="postImage" class="form-control mb-3" />
+
+      <!-- BUTTON -->
+      <div class="d-flex gap-2">
+        <button id="createAnnouncementBtn" class="btn btn-primary">
+          Post Announcement
+        </button>
+
+        <a href="/pinboard" class="btn btn-outline-secondary"> Cancel </a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-danger">
+    You are not authorized to access this page.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  async function createAnnouncement() {
+    try {
+      const contentElement = document.getElementById("postContent");
+      const imageInput = document.getElementById("postImage");
+
+      const content = contentElement.value.trim();
+      const image = imageInput.files[0];
+
+      console.log("Posting announcement...");
+
+      if (!content) {
+        alert("Announcement cannot be empty");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("content", content);
+
+      if (image) {
+        formData.append("image", image);
+      }
+
+      const response = await fetch("/api/posts", {
+        method: "POST",
+        body: formData,
+      });
+
+      const text = await response.text();
+      console.log("Server response:", text);
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        alert("Invalid server response.");
+        return;
+      }
+
+      if (!response.ok) {
+        alert(result.error || result.message || "Failed to post announcement");
+        return;
+      }
+
+      alert("Announcement posted successfully ✅");
+
+      // Reset form
+      contentElement.value = "";
+      imageInput.value = "";
+
+      // Redirect to pinboard
+      window.location.href = "/pinboard";
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Something went wrong while posting the announcement.");
+    }
+  }
+
+  // Attach button event safely
+  document.addEventListener("DOMContentLoaded", function () {
+    const btn = document.getElementById("createAnnouncementBtn");
+
+    if (btn) {
+      btn.addEventListener("click", createAnnouncement);
+    }
+  });
+</script>
+
+{% endblock %}

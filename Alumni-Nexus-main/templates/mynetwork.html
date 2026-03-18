@@ -1,0 +1,399 @@
+{% extends "base.html" %} {% block content %}
+
+<style>
+  .card {
+    border: 1.5px solid #c9a84c !important;
+    box-shadow: 0 2px 8px rgba(201, 168, 76, 0.15) !important;
+  }
+
+  .card:hover {
+    border-color: #e2b93d !important;
+    box-shadow: 0 4px 16px rgba(201, 168, 76, 0.3) !important;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  /* My Connections — individual connection rows outlined in navy */
+  #connections-container .connection {
+    border: 1.5px solid #0a1628;
+    border-radius: 8px;
+    padding: 10px 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  #connections-container .connection:hover {
+    border-color: #1e3a5f;
+    box-shadow: 0 2px 8px rgba(10, 22, 40, 0.12);
+  }
+
+  /* Message button — solid navy */
+  #connections-container .btn-primary {
+    background-color: #0a1628 !important;
+    border-color: #0a1628 !important;
+    color: #fff !important;
+  }
+
+  #connections-container .btn-primary:hover {
+    background-color: #1e3a5f !important;
+    border-color: #1e3a5f !important;
+  }
+
+  /* Search inputs & selects — navy outline */
+  #search-box,
+  #role-filter,
+  #industry-filter,
+  #year-filter {
+    border: 1.5px solid #0a1628 !important;
+    border-radius: 6px;
+  }
+
+  #search-box:focus,
+  #role-filter:focus,
+  #industry-filter:focus,
+  #year-filter:focus {
+    border-color: #1e3a5f !important;
+    box-shadow: 0 0 0 3px rgba(10, 22, 40, 0.12) !important;
+    outline: none;
+  }
+
+  /* Search button — solid gold */
+  .card .btn-primary[onclick="searchUsers()"] {
+    background-color: #c9a84c !important;
+    border-color: #c9a84c !important;
+    color: #0a1628 !important;
+    font-weight: 600;
+  }
+
+  .card .btn-primary[onclick="searchUsers()"]:hover {
+    background-color: #b8962e !important;
+    border-color: #b8962e !important;
+  }
+</style>
+
+<div class="container py-5">
+  <div class="network-wrapper">
+    <div class="network-header mb-4">
+      <h2 class="fw-bold">My Network</h2>
+      <p class="text-muted mb-0">
+        Grow your alumni connections and discover professionals in your
+        community.
+      </p>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body">
+        <h5 class="mb-3">Search Alumni</h5>
+
+        <div class="row g-2">
+          <div class="col-md-4">
+            <input
+              id="search-box"
+              class="form-control"
+              placeholder="Search name or email"
+            />
+          </div>
+
+          <div class="col-md-2">
+            <select id="role-filter" class="form-select">
+              <option value="">Role</option>
+              <option value="student">Student</option>
+              <option value="alumni">Alumni</option>
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <select id="industry-filter" class="form-select">
+              <option value="">Industry</option>
+              <option value="IT">IT</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Business">Business</option>
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <input
+              id="year-filter"
+              class="form-control"
+              placeholder="Grad Year"
+            />
+          </div>
+
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100" onclick="searchUsers()">
+              Search
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- LEFT SIDE -->
+      <div class="col-lg-8">
+        <!-- SUGGESTIONS -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Suggested Connections</h5>
+            </div>
+
+            <div class="row g-3" id="suggestions-container"></div>
+          </div>
+        </div>
+
+        <!-- CONNECTION REQUESTS -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body" id="requests-container">
+            <h5 class="mb-3">Connection Requests</h5>
+          </div>
+        </div>
+
+        <!-- MY CONNECTIONS -->
+        <div class="card shadow-sm border-0">
+          <div class="card-body" id="connections-container">
+            <h5 class="mb-3">My Connections</h5>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE -->
+      <div class="col-lg-4">
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body">
+            <h5 class="mb-3">Network Overview</h5>
+
+            <div class="overview-box mb-3">
+              <span>Total Connections</span>
+              <strong id="total-connections">0</strong>
+            </div>
+
+            <div class="overview-box mb-3">
+              <span>Pending Requests</span>
+              <strong id="pending-requests">0</strong>
+            </div>
+
+            <div class="overview-box">
+              <span>Suggestions</span>
+              <strong id="suggestions-count">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+          <div class="card-body">
+            <h5 class="mb-3">Tips</h5>
+
+            <ul class="mb-0 ps-3 text-muted">
+              <li>Find alumni in your field</li>
+              <li>Expand your professional circle</li>
+              <li>Connect for mentorship and opportunities</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function searchUsers() {
+    const q = document.getElementById("search-box").value;
+    const role = document.getElementById("role-filter").value;
+    const industry = document.getElementById("industry-filter").value;
+    const year = document.getElementById("year-filter").value;
+
+    const res = await fetch(
+      `/api/search?q=${q}&role=${role}&industry=${industry}&year=${year}`,
+    );
+    const users = await res.json();
+
+    const container = document.getElementById("suggestions-container");
+    container.innerHTML = "";
+
+    users.forEach((user) => {
+      container.innerHTML += `
+        <div class="col-md-6 col-xl-4">
+
+            <div class="suggestion-card text-center p-3">
+
+                <div class="profile-circle mx-auto mb-3"></div>
+
+                <h6>${user.name}</h6>
+
+                <small>${user.industry || user.email}</small>
+
+                <button class="btn btn-outline-primary btn-sm w-100 mt-2"
+                onclick="connectUser(${user.id})">
+                Connect
+                </button>
+
+            </div>
+
+        </div>
+        `;
+    });
+  }
+
+  async function loadSuggestions() {
+    const res = await fetch("/api/suggestions");
+    const users = await res.json();
+
+    const container = document.getElementById("suggestions-container");
+    container.innerHTML = "";
+
+    document.getElementById("suggestions-count").innerText = users.length;
+
+    users.forEach((user) => {
+      container.innerHTML += `
+        <div class="col-md-6 col-xl-4">
+
+            <div class="suggestion-card text-center p-3">
+
+                <div class="profile-circle mx-auto mb-3"></div>
+
+                <h6>${user.name}</h6>
+
+                <small>${user.industry}</small>
+
+                <button class="btn btn-outline-primary btn-sm w-100 mt-2"
+                onclick="connectUser(${user.id})">
+                Connect
+                </button>
+
+            </div>
+
+        </div>
+        `;
+    });
+  }
+
+  async function connectUser(userId) {
+    const res = await fetch(`/api/connect/${userId}`, {
+      method: "POST",
+    });
+
+    const data = await res.json();
+
+    alert(data.message);
+
+    loadRequests();
+    loadStats();
+  }
+
+  async function loadRequests() {
+    const res = await fetch("/api/connection-requests");
+    const requests = await res.json();
+
+    const container = document.getElementById("requests-container");
+
+    container.innerHTML = "<h5 class='mb-3'>Connection Requests</h5>";
+
+    if (requests.length === 0) {
+      container.innerHTML += `<p class="text-muted">No pending requests</p>`;
+      document.getElementById("pending-requests").innerText = 0;
+      return;
+    }
+
+    document.getElementById("pending-requests").innerText = requests.length;
+
+    requests.forEach((req) => {
+      container.innerHTML += `
+        <div class="request d-flex justify-content-between align-items-center mb-2">
+
+            <span>${req.name}</span>
+
+            <div>
+
+                <button class="btn btn-success btn-sm me-1"
+                onclick="acceptRequest(${req.id})">
+                Accept
+                </button>
+
+                <button class="btn btn-outline-danger btn-sm"
+                onclick="declineRequest(${req.id})">
+                Decline
+                </button>
+
+            </div>
+
+        </div>
+        `;
+    });
+  }
+
+  async function acceptRequest(id) {
+    await fetch(`/api/connection-requests/${id}/accept`, { method: "POST" });
+
+    loadRequests();
+    loadConnections();
+    loadStats();
+  }
+
+  async function declineRequest(id) {
+    await fetch(`/api/connection-requests/${id}/decline`, { method: "POST" });
+
+    loadRequests();
+    loadStats();
+  }
+
+  async function loadConnections() {
+    const res = await fetch("/api/my-connections");
+    const connections = await res.json();
+
+    const container = document.getElementById("connections-container");
+
+    container.innerHTML = "<h5 class='mb-3'>My Connections</h5>";
+
+    if (connections.length === 0) {
+      container.innerHTML += `<p class="text-muted">You have no connections yet.</p>`;
+      document.getElementById("total-connections").innerText = 0;
+      return;
+    }
+
+    document.getElementById("total-connections").innerText = connections.length;
+
+    connections.forEach((conn) => {
+      container.innerHTML += `
+    <div class="connection d-flex justify-content-between align-items-center mb-2">
+
+        <div>
+            <a href="/profile/${conn.id}" class="fw-bold text-decoration-none">
+                ${conn.name}
+            </a>
+            <br>
+            <small class="text-muted">${conn.email}</small>
+        </div>
+
+        <a href="/messages/${conn.id}" class="btn btn-sm btn-primary">
+            Message
+        </a>
+
+    </div>
+    `;
+    });
+  }
+
+  async function loadStats() {
+    const res = await fetch("/api/network-stats");
+    const data = await res.json();
+
+    document.getElementById("total-connections").innerText =
+      data.total_connections;
+    document.getElementById("pending-requests").innerText =
+      data.pending_requests;
+    document.getElementById("suggestions-count").innerText = data.suggestions;
+  }
+
+  document.getElementById("search-box").addEventListener("keyup", function () {
+    if (this.value.length < 2) {
+      loadSuggestions();
+    }
+  });
+
+  loadConnections();
+  loadRequests();
+  loadSuggestions();
+  loadStats();
+</script>
+
+{% endblock %}

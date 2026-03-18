@@ -1,0 +1,319 @@
+{% extends "base.html" %} {% block title %}Alumni Nexus Registration{% endblock %} {% block content %}
+<div class="container mt-5" style="max-width: 800px">
+  <h2 class="mb-4 text-center">Alumni Nexus Registration</h2>
+
+  <form
+    action="{{ url_for('register') }}"
+    method="POST"
+    enctype="multipart/form-data"
+    onsubmit="return validatePassword()"
+  >
+    <div class="mb-3">
+      <label for="name" class="form-label">Full Name:</label>
+      <input type="text" class="form-control" id="name" name="name" required />
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-danger">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    
+    <div class="mb-3">
+      <label for="email" class="form-label">Email:</label>
+      <input
+        type="email"
+        class="form-control"
+        id="email"
+        name="email"
+        required
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="password" class="form-label">Password:</label>
+      <input
+        type="password"
+        class="form-control"
+        id="password"
+        name="password"
+        required
+        minlength="8"
+        onkeyup="checkPasswordStrength()"
+      />
+      <div class="mt-2">
+        <div class="progress" style="height: 5px;">
+          <div id="password-strength-bar" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+        </div>
+        <small id="password-strength-text" class="form-text text-muted"></small>
+      </div>
+      <div id="password-requirements" class="mt-2 small">
+        <p class="mb-1">Password must contain:</p>
+        <ul class="list-unstyled">
+          <li id="length-check" class="text-danger">
+            <i class="fas fa-times"></i> At least 8 characters
+          </li>
+          <li id="uppercase-check" class="text-danger">
+            <i class="fas fa-times"></i> At least one uppercase letter (A-Z)
+          </li>
+          <li id="lowercase-check" class="text-danger">
+            <i class="fas fa-times"></i> At least one lowercase letter (a-z)
+          </li>
+          <li id="number-check" class="text-danger">
+            <i class="fas fa-times"></i> At least one number (0-9)
+          </li>
+          <li id="special-check" class="text-danger">
+            <i class="fas fa-times"></i> At least one special character (!@#$%^&*)
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="profile_image" class="form-label">Profile Picture:</label>
+      <input
+        type="file"
+        class="form-control"
+        id="profile_image"
+        name="profile_image"
+        accept=".png,.jpg,.jpeg,.gif"
+      />
+    </div>
+
+    <div class="mb-3">
+      <label for="role" class="form-label">Role:</label>
+      <select
+        class="form-select"
+        id="role"
+        name="role"
+        required
+        onchange="showRoleFields()"
+      >
+        <option value="">Select your role</option>
+        <option value="alumni">Alumni</option>
+        <option value="student">Student</option>
+        <option value="mentor">Mentor</option>
+      </select>
+    </div>
+
+    <div id="student-fields" style="display: none">
+      <h3 class="mt-4">Student Profile</h3>
+
+      <div class="mb-3">
+        <label for="faculty" class="form-label">Faculty:</label>
+        <input type="text" class="form-control" id="faculty" name="faculty" />
+      </div>
+
+      <div class="mb-3">
+        <label for="department" class="form-label">Department:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="department"
+          name="department"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="graduation_year" class="form-label">Graduation Year:</label>
+        <input
+          type="number"
+          class="form-control"
+          id="graduation_year"
+          name="graduation_year"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="industry" class="form-label">Industry:</label>
+        <input type="text" class="form-control" id="industry" name="industry" />
+      </div>
+    </div>
+
+    <div id="alumni-fields" style="display: none">
+      <h3 class="mt-4">Alumni Profile</h3>
+
+      <div class="mb-3">
+        <label for="headline" class="form-label">Headline:</label>
+        <input type="text" class="form-control" id="headline" name="headline" />
+      </div>
+
+      <div class="mb-3">
+        <label for="experience" class="form-label">Experience:</label>
+        <textarea
+          class="form-control"
+          id="experience"
+          name="experience"
+          rows="4"
+        ></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label for="career_interest" class="form-label">Career Interest:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="career_interest"
+          name="career_interest"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="level_of_study" class="form-label">Level of Study:</label>
+        <select class="form-select" id="level_of_study" name="level_of_study">
+          <option value="">Select level</option>
+          <option value="NQF 5">NQF 5</option>
+          <option value="NQF 6">NQF 6</option>
+          <option value="NQF 7">NQF 7</option>
+          <option value="NQF 8">NQF 8</option>
+          <option value="NQF 9">NQF 9</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="Education" class="form-label">Education:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="Education"
+          name="Education"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="Licence_Certificates" class="form-label"
+          >Licence / Certificates:</label
+        >
+        <input
+          type="text"
+          class="form-control"
+          id="Licence_Certificates"
+          name="Licence_Certificates"
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="Skills" class="form-label">Skills:</label>
+        <input type="text" class="form-control" id="Skills" name="Skills" />
+      </div>
+    </div>
+
+    <div class="d-grid mt-4">
+      <button type="submit" class="btn btn-primary">Register</button>
+    </div>
+  </form>
+
+  <p class="text-center mt-3">
+    Already have an account?
+    <a href="{{ url_for('login') }}">Login</a>
+  </p>
+</div>
+
+<script>
+  function showRoleFields() {
+    const role = document.getElementById("role").value;
+    const studentFields = document.getElementById("student-fields");
+    const alumniFields = document.getElementById("alumni-fields");
+
+    studentFields.style.display = "none";
+    alumniFields.style.display = "none";
+
+    if (role === "student") {
+      studentFields.style.display = "block";
+    } else if (role === "alumni") {
+      alumniFields.style.display = "block";
+    }
+  }
+
+  function checkPasswordStrength() {
+    const password = document.getElementById("password").value;
+    
+    // Check requirements
+    const lengthCheck = password.length >= 8;
+    const uppercaseCheck = /[A-Z]/.test(password);
+    const lowercaseCheck = /[a-z]/.test(password);
+    const numberCheck = /[0-9]/.test(password);
+    const specialCheck = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    // Update requirement indicators
+    updateRequirement("length-check", lengthCheck);
+    updateRequirement("uppercase-check", uppercaseCheck);
+    updateRequirement("lowercase-check", lowercaseCheck);
+    updateRequirement("number-check", numberCheck);
+    updateRequirement("special-check", specialCheck);
+    
+    // Calculate strength
+    const requirements = [lengthCheck, uppercaseCheck, lowercaseCheck, numberCheck, specialCheck];
+    const metCount = requirements.filter(Boolean).length;
+    
+    // Update strength bar and text
+    const strengthBar = document.getElementById("password-strength-bar");
+    const strengthText = document.getElementById("password-strength-text");
+    
+    const strengthPercentage = (metCount / 5) * 100;
+    strengthBar.style.width = strengthPercentage + "%";
+    
+    if (metCount === 0) {
+      strengthBar.className = "progress-bar bg-danger";
+      strengthText.textContent = "Very Weak";
+    } else if (metCount <= 2) {
+      strengthBar.className = "progress-bar bg-danger";
+      strengthText.textContent = "Weak";
+    } else if (metCount <= 3) {
+      strengthBar.className = "progress-bar bg-warning";
+      strengthText.textContent = "Fair";
+    } else if (metCount <= 4) {
+      strengthBar.className = "progress-bar bg-info";
+      strengthText.textContent = "Good";
+    } else {
+      strengthBar.className = "progress-bar bg-success";
+      strengthText.textContent = "Strong";
+    }
+  }
+
+  function updateRequirement(elementId, isValid) {
+    const element = document.getElementById(elementId);
+    if (isValid) {
+      element.className = "text-success";
+      element.innerHTML = '<i class="fas fa-check"></i> ' + element.textContent.replace('✓', '').replace('✗', '').trim();
+    } else {
+      element.className = "text-danger";
+      element.innerHTML = '<i class="fas fa-times"></i> ' + element.textContent.replace('✓', '').replace('✗', '').trim();
+    }
+  }
+
+  function validatePassword() {
+    const password = document.getElementById("password").value;
+    
+    const lengthCheck = password.length >= 8;
+    const uppercaseCheck = /[A-Z]/.test(password);
+    const lowercaseCheck = /[a-z]/.test(password);
+    const numberCheck = /[0-9]/.test(password);
+    const specialCheck = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    if (!lengthCheck || !uppercaseCheck || !lowercaseCheck || !numberCheck || !specialCheck) {
+      alert("Please ensure your password meets all requirements:\n" +
+            "- At least 8 characters long\n" +
+            "- Contains at least one uppercase letter\n" +
+            "- Contains at least one lowercase letter\n" +
+            "- Contains at least one number\n" +
+            "- Contains at least one special character");
+      return false;
+    }
+    
+    return true;
+  }
+
+  // Initialize password check on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    checkPasswordStrength();
+  });
+</script>
+
+<!-- Add Font Awesome for icons if not already included in base.html -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
