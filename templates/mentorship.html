@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-5" style="background:#fff9fc; min-height:100vh;">
+
+  <div class="p-5 mb-4 border shadow-sm bg-white">
+    <h1 class="fw-bold">Mentorship Hub</h1>
+    <p class="text-muted">
+      Connect with experienced alumni and mentors for career guidance and growth.
+    </p>
+
+    <div class="d-flex gap-2 mt-3 flex-wrap">
+      <a href="#mentors-section" class="btn btn-primary">Find a Mentor</a>
+      <a href="#requests-section" class="btn btn-outline-secondary">My Requests</a>
+
+      {% if current_user.role == 'alumni' %}
+        <a href="{{ url_for('apply_mentor') }}" class="btn btn-outline-dark">Apply to be a Mentor</a>
+      {% endif %}
+    </div>
+
+    {% if current_user.role == 'alumni' %}
+    <p class="text-muted small mt-3 mb-0">
+      Alumni can apply to become mentors and wait for admin approval.
+    </p>
+    {% endif %}
+  </div>
+
+  {% if current_user.role == 'alumni' %}
+  <div class="p-4 border bg-white mb-4 shadow-sm">
+    <h5 class="fw-bold mb-3">Mentor Application Status</h5>
+
+    {% if latest_application %}
+      {% if latest_application.status == 'pending' %}
+        <span class="badge bg-secondary">Pending</span>
+        <p class="text-muted mt-2 mb-0">Your mentor application is currently under review.</p>
+      {% elif latest_application.status == 'approved' %}
+        <span class="badge bg-success">Approved</span>
+        <p class="text-muted mt-2 mb-0">Your mentor application was approved.</p>
+      {% elif latest_application.status == 'rejected' %}
+        <span class="badge bg-danger">Rejected</span>
+        <p class="text-muted mt-2">Your mentor application was rejected. You can apply again.</p>
+        <a href="{{ url_for('apply_mentor') }}" class="btn btn-warning btn-sm">Apply Again</a>
+      {% endif %}
+    {% else %}
+      <p class="text-muted mb-0">You have not submitted a mentor application yet.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if accepted_mentor %}
+  <div class="p-4 border bg-white mb-4 shadow-sm">
+    <h5 class="fw-bold mb-3">My Mentor</h5>
+    <div class="d-flex align-items-center">
+      <img
+        src="{{ url_for('static', filename=accepted_mentor.profile_image) }}"
+        class="rounded-circle me-3"
+        width="80"
+        height="80"
+        style="object-fit: cover"
+        alt="My Mentor"
+      >
+      <div>
+        <h6 class="fw-bold mb-1">{{ accepted_mentor.name }}</h6>
+        <p class="text-muted mb-2">
+          {{ accepted_mentor.mentor_profile.expertise if accepted_mentor.mentor_profile else 'Mentor' }}
+        </p>
+        <a href="{{ url_for('profile', user_id=accepted_mentor.user_id) }}" class="btn btn-outline-primary btn-sm">View Profile</a>
+        <a href="{{ url_for('message_page', user_id=accepted_mentor.user_id) }}" class="btn btn-primary btn-sm">Message</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div id="mentors-section" class="p-4 border bg-white mb-4 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+      <h5 class="fw-bold mb-0">Available Mentors</h5>
+
+      <form method="GET" action="{{ url_for('mentorship') }}" class="d-flex gap-2">
+        <select name="expertise" class="form-select">
+          <option value="">All Expertise</option>
+          <option value="Information Technology" {% if selected_expertise == "Information Technology" %}selected{% endif %}>Information Technology</option>
+          <option value="Business" {% if selected_expertise == "Business" %}selected{% endif %}>Business</option>
+          <option value="Engineering" {% if selected_expertise == "Engineering" %}selected{% endif %}>Engineering</option>
+        </select>
+        <button type="submit" class="btn btn-outline-primary">Filter</button>
+      </form>
+    </div>
+
+    <div class="row g-4">
+      {% if mentors %}
+        {% for mentor in mentors %}
+        <div class="col-md-4">
+          <div class="p-3 border shadow-sm h-100">
+            <div class="d-flex align-items-center mb-3">
+              <img
+                src="{{ url_for('static', filename=mentor.profile_image) }}"
+                class="rounded-circle me-3"
+                width="80"
+                height="80"
+                style="object-fit: cover"
+                alt="Mentor"
+              >
+              <div>
+                <h6 class="fw-bold mb-0">{{ mentor.name }}</h6>
+                <small class="text-muted">{{ mentor.expertise or "Mentor" }}</small><br>
+                <span class="badge bg-warning text-dark">⭐ Verified Mentor</span>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+              <a href="{{ url_for('profile', user_id=mentor.user_id) }}" class="btn btn-outline-secondary btn-sm">
+                View
+              </a>
+
+              {% if current_user.role in ['student', 'alumni'] and current_user.user_id != mentor.user_id %}
+              <form method="POST" action="{{ url_for('request_mentorship', mentor_id=mentor.user_id) }}">
+                <button type="submit" class="btn btn-primary btn-sm">Request</button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12">
+          <div class="alert alert-info mb-0">No mentors found for this expertise.</div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div id="requests-section" class="p-4 border bg-white mb-4 shadow-sm">
+    <h5 class="fw-bold mb-3">My Mentorship Requests</h5>
+
+    {% if my_requests %}
+      {% for req in my_requests %}
+      <div class="p-3 border mb-3">
+        <h6 class="fw-bold">{{ req.mentor_name }}</h6>
+        <small class="text-muted">
+          Requested on {{ req.request_date.strftime('%d %B %Y') if req.request_date else '' }}
+        </small><br>
+
+        {% if req.status == 'pending' %}
+          <span class="badge bg-secondary mt-2">Pending</span>
+        {% elif req.status == 'accepted' %}
+          <span class="badge bg-success mt-2">Accepted</span>
+        {% elif req.status == 'rejected' %}
+          <span class="badge bg-danger mt-2">Rejected</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="alert alert-light border mb-0">
+        You have not sent any mentorship requests yet.
+      </div>
+    {% endif %}
+  </div>
+
+  {% if current_user.role == 'mentor' %}
+  <div class="p-4 border bg-white mb-4 shadow-sm">
+    <h5 class="fw-bold mb-3">Mentor Dashboard Summary</h5>
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="border p-3 text-center">
+          <h4 class="fw-bold">{{ pending_requests_count }}</h4>
+          <p class="text-muted mb-0">Pending Requests</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="border p-3 text-center">
+          <h4 class="fw-bold">{{ accepted_requests_count }}</h4>
+          <p class="text-muted mb-0">Accepted Requests</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="border p-3 text-center">
+          <h4 class="fw-bold">{{ mentees_count }}</h4>
+          <p class="text-muted mb-0">Current Mentees</p>
+        </div>
+      </div>
+    </div>
+
+    <h6 class="fw-bold mb-3">Incoming Requests</h6>
+
+    {% if incoming_requests %}
+      {% for req in incoming_requests %}
+      <div class="p-3 border mb-3">
+        <h6 class="fw-bold mb-1">{{ req.student_name }}</h6>
+        <small class="text-muted">
+          Requested on {{ req.request_date.strftime('%d %B %Y') if req.request_date else '' }}
+        </small><br>
+
+        {% if req.status == 'pending' %}
+        <div class="d-flex gap-2 mt-3">
+          <form method="POST" action="{{ url_for('accept_mentorship_request', request_id=req.request_id) }}">
+            <button type="submit" class="btn btn-success btn-sm">Accept</button>
+          </form>
+          <form method="POST" action="{{ url_for('reject_mentorship_request', request_id=req.request_id) }}">
+            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+          </form>
+        </div>
+        {% elif req.status == 'accepted' %}
+          <span class="badge bg-success mt-2">Accepted</span>
+        {% elif req.status == 'rejected' %}
+          <span class="badge bg-danger mt-2">Rejected</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="alert alert-light border mb-0">No incoming mentorship requests yet.</div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

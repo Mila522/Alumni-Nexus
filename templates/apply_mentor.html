@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h2 class="fw-bold mb-3">Apply to Become a Mentor</h2>
+          <p class="text-muted mb-4">
+            Alumni can apply to become mentors and wait for admin approval.
+          </p>
+
+          <form method="POST">
+            <div class="mb-3">
+              <label class="form-label">Expertise <span class="text-danger">*</span></label>
+              <select name="expertise" class="form-select" required>
+                <option value="">Select expertise</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Business">Business</option>
+                <option value="Engineering">Engineering</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label">Motivation</label>
+              <textarea
+                name="motivation"
+                class="form-control"
+                rows="5"
+                placeholder="Tell the admin why you would like to become a mentor."
+              ></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">Submit Request</button>
+              <a href="{{ url_for('mentorship') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
