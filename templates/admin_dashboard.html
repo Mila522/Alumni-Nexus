@@ -1,106 +1,446 @@
-{% extends "base.html" %} {% block content %}
+{% extends "admin_base.html" %} {% block content %}
+<link
+  href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap"
+  rel="stylesheet"
+/>
+
 <div class="admin-layout">
   <!-- Sidebar -->
   <aside class="admin-sidebar">
-    <div class="brand">Alumni Nexus</div>
+    <div class="brand">
+      <span class="brand-dot"></span>
+      Alumni Nexus
+    </div>
 
     <div class="admin-profile">
-      <div class="admin-avatar"></div>
-      <div>
+      <div class="admin-avatar">
+        <span>{{ current_user.email[0]|upper }}</span>
+      </div>
+      <div class="admin-info">
         <div class="admin-email">{{ current_user.email }}</div>
-        <div class="admin-role">Administrator</div>
+        <div class="admin-role">
+          <span class="role-dot"></span>
+          Administrator
+        </div>
       </div>
     </div>
 
-    <div class="sidebar-section-title">Main</div>
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('admin_dashboard') }}" class="nav-item active"
-        >Overview</a
-      >
-      <a href="{{ url_for('admin_event_analytics') }}" class="nav-item"
-        >Event Analytics</a
-      >
-    </nav>
+    <div class="sidebar-body">
+      <div class="nav-group">
+        <div class="sidebar-section-title">Main</div>
+        <nav class="sidebar-nav">
+          <a href="{{ url_for('admin_dashboard') }}" class="nav-item active">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+              <rect
+                x="2"
+                y="2"
+                width="7"
+                height="7"
+                rx="1.5"
+                fill="currentColor"
+                opacity=".9"
+              />
+              <rect
+                x="11"
+                y="2"
+                width="7"
+                height="7"
+                rx="1.5"
+                fill="currentColor"
+                opacity=".4"
+              />
+              <rect
+                x="2"
+                y="11"
+                width="7"
+                height="7"
+                rx="1.5"
+                fill="currentColor"
+                opacity=".4"
+              />
+              <rect
+                x="11"
+                y="11"
+                width="7"
+                height="7"
+                rx="1.5"
+                fill="currentColor"
+                opacity=".4"
+              />
+            </svg>
+            Overview
+          </a>
+          <a href="{{ url_for('admin_event_analytics') }}" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M4 14l3-3 2 2 5-6 2 2"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                opacity=".6"
+              />
+              <path
+                d="M3 17h14"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                opacity=".6"
+              />
+            </svg>
+            Event Analytics
+          </a>
+        </nav>
+      </div>
 
-    <div class="sidebar-section-title">People</div>
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item">Mentor Applications</a>
-      <a href="{{ url_for('admin_mentors') }}" class="nav-item"
-        >Active Mentors</a
-      >
-      <a href="#" class="nav-item">Mentorship Requests</a>
-    </nav>
+      <div class="nav-group">
+        <div class="sidebar-section-title">People</div>
+        <nav class="sidebar-nav">
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="6" r="3.5" fill="currentColor" opacity=".6" />
+              <path
+                d="M3 17c0-3.866 3.134-7 7-7s7 3.134 7 7"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                opacity=".6"
+              />
+            </svg>
+            Registered Users
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M9 12l2 2 4-4"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                opacity=".6"
+              />
+              <path
+                d="M4 4h12a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V5a1 1 0 011-1z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                opacity=".6"
+              />
+            </svg>
+            Mentor Applications
+          </a>
+          <a href="{{ url_for('admin_mentors') }}" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+              <circle cx="7" cy="7" r="3" fill="currentColor" opacity=".5" />
+              <circle cx="14" cy="7" r="3" fill="currentColor" opacity=".5" />
+              <path
+                d="M1 17c0-3.314 2.686-6 6-6h6c3.314 0 6 2.686 6 6"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                opacity=".6"
+              />
+            </svg>
+            Active Mentors
+          </a>
+          <a href="#" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M3 10h14M3 5h14M3 15h8"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                opacity=".6"
+              />
+            </svg>
+            Mentorship Requests
+          </a>
+        </nav>
+      </div>
 
-    <div class="sidebar-section-title">Pinboard</div>
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('pinboard') }}" class="nav-item">Posts</a>
-    </nav>
+      <div class="nav-group">
+        <div class="sidebar-section-title">Pinboard</div>
+        <nav class="sidebar-nav">
+          <a href="{{ url_for('pinboard') }}" class="nav-item">
+            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
+              <rect
+                x="3"
+                y="3"
+                width="14"
+                height="14"
+                rx="2"
+                stroke="currentColor"
+                stroke-width="1.5"
+                opacity=".6"
+              />
+              <path
+                d="M7 8h6M7 12h4"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                opacity=".6"
+              />
+            </svg>
+            Posts
+          </a>
+        </nav>
+      </div>
 
-    <div class="sidebar-section-title">Events</div>
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('admin_events') }}" class="nav-item">Manage Events</a>
-      <a href="{{ url_for('admin_event_attendees') }}" class="nav-item"
-        >Event Attendees</a
-      >
-      <a href="{{ url_for('admin_rsvps') }}" class="nav-item">All RSVPs</a>
-      <a href="{{ url_for('admin_event_analytics') }}" class="nav-item"
-        >Analytics</a
-      >
-    </nav>
+      <div class="nav-group">
+        <div class="sidebar-section-title">Events</div>
+        <nav class="sidebar-nav">
+          <a href="{{ url_for('admin_events') }}" class="nav-item"
+            >Manage Events</a
+          >
+          <a href="{{ url_for('admin_event_attendees') }}" class="nav-item"
+            >Event Attendees</a
+          >
+          <a href="{{ url_for('admin_rsvps') }}" class="nav-item">All RSVPs</a>
+          <a href="{{ url_for('admin_event_analytics') }}" class="nav-item"
+            >Analytics</a
+          >
+        </nav>
+      </div>
+    </div>
 
     <div class="sidebar-footer">
-      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+      <a href="{{ url_for('logout') }}" class="logout-btn">
+        <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+          <path
+            d="M7 3H4a1 1 0 00-1 1v12a1 1 0 001 1h3M14 14l3-4-3-4M17 10H8"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        Sign out
+      </a>
     </div>
   </aside>
 
   <!-- Main Content -->
   <main class="admin-main">
     <div class="admin-topbar">
-      <h3 class="page-title">Overview</h3>
-      <div class="topbar-text">DUT Alumni Nexus – Admin Portal</div>
+      <div class="topbar-left">
+        <span class="breadcrumb">Dashboard</span>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb breadcrumb-active">Overview</span>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-badge">DUT Alumni Nexus</div>
+      </div>
     </div>
 
     <section class="admin-content">
       <div class="overview-header">
-        <h1>Platform Overview</h1>
-        <p>Welcome back, Administrator.</p>
+        <div class="header-text">
+          <h1>Platform Overview</h1>
+          <p>Welcome back, Administrator. Here's what's happening today.</p>
+        </div>
+        <div class="header-actions">
+          <a href="{{ url_for('admin_new_post') }}" class="action-btn primary">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+              <path
+                d="M8 3v10M3 8h10"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            New Post
+          </a>
+          <a href="{{ url_for('admin_new_event') }}" class="action-btn primary">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+              <path
+                d="M8 3v10M3 8h10"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            New Event
+          </a>
+        </div>
       </div>
 
       <div class="stats-grid">
-        <div class="stat-card">
-          <h6>Total Alumni</h6>
-          <h2>{{ total_alumni }}</h2>
-          <a href="{{ url_for('admin_alumni') }}">View →</a>
+        <div class="stat-card" style="--delay: 0ms">
+          <div class="stat-top">
+            <div class="stat-icon alumni">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path
+                  d="M12 14l9-5-9-5-9 5 9 5z"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M12 14l6.16-3.422A12.083 12.083 0 0118 17.5c0 1.38-.23 2.7-.657 3.927A11.96 11.96 0 0112 22a11.96 11.96 0 01-5.343-1.234A11.97 11.97 0 016 17.5c0-2.18.58-4.22 1.594-5.97L12 14z"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <span class="stat-label">Total Alumni</span>
+          </div>
+          <div class="stat-value">{{ total_alumni }}</div>
+          <a href="{{ url_for('admin_alumni') }}" class="stat-link"
+            >View all <span>→</span></a
+          >
         </div>
 
-        <div class="stat-card">
-          <h6>Total Students</h6>
-          <h2>{{ total_students }}</h2>
-          <a href="{{ url_for('admin_students') }}">View →</a>
+        <div class="stat-card" style="--delay: 60ms">
+          <div class="stat-top">
+            <div class="stat-icon students">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="4"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M4 20c0-4 3.582-7 8-7s8 3 8 7"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <span class="stat-label">Total Students</span>
+          </div>
+          <div class="stat-value">{{ total_students }}</div>
+          <a href="{{ url_for('admin_students') }}" class="stat-link"
+            >View all <span>→</span></a
+          >
         </div>
 
-        <div class="stat-card">
-          <h6>Total Mentors</h6>
-          <h2>{{ total_mentors }}</h2>
-          <a href="{{ url_for('admin_mentors') }}">View →</a>
+        <div class="stat-card" style="--delay: 120ms">
+          <div class="stat-top">
+            <div class="stat-icon mentors">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <circle
+                  cx="9"
+                  cy="8"
+                  r="3.5"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <circle
+                  cx="17"
+                  cy="8"
+                  r="3.5"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M2 20c0-3.5 3.134-6 7-6 1.2 0 2.33.28 3.3.77M13 17.5c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <span class="stat-label">Active Mentors</span>
+          </div>
+          <div class="stat-value">{{ total_mentors }}</div>
+          <a href="{{ url_for('admin_mentors') }}" class="stat-link"
+            >View all <span>→</span></a
+          >
         </div>
 
-        <div class="stat-card">
-          <h6>Total Events</h6>
-          <h2>{{ total_events }}</h2>
-          <a href="{{ url_for('admin_events') }}">View →</a>
+        <div class="stat-card" style="--delay: 180ms">
+          <div class="stat-top">
+            <div class="stat-icon events">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <rect
+                  x="3"
+                  y="5"
+                  width="18"
+                  height="16"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M16 3v4M8 3v4M3 10h18"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <span class="stat-label">Total Events</span>
+          </div>
+          <div class="stat-value">{{ total_events }}</div>
+          <a href="{{ url_for('admin_events') }}" class="stat-link"
+            >View all <span>→</span></a
+          >
         </div>
 
-        <div class="stat-card">
-          <h6>Event Attendees</h6>
-          <h2>{{ total_event_attendees }}</h2>
-          <a href="{{ url_for('admin_event_attendees') }}">View →</a>
+        <div class="stat-card" style="--delay: 240ms">
+          <div class="stat-top">
+            <div class="stat-icon attendees">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path
+                  d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+                <circle
+                  cx="9"
+                  cy="7"
+                  r="4"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <path
+                  d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <span class="stat-label">Event Attendees</span>
+          </div>
+          <div class="stat-value">{{ total_event_attendees }}</div>
+          <a href="{{ url_for('admin_event_attendees') }}" class="stat-link"
+            >View all <span>→</span></a
+          >
         </div>
 
-        <div class="stat-card">
-          <h6>Total RSVPs</h6>
-          <h2>{{ total_rsvps }}</h2>
-          <a href="{{ url_for('admin_rsvps') }}">View →</a>
+        <div class="stat-card" style="--delay: 300ms">
+          <div class="stat-top">
+            <div class="stat-icon rsvps">
+              <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                <path
+                  d="M9 12l2 2 4-4"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <rect
+                  x="3"
+                  y="3"
+                  width="18"
+                  height="18"
+                  rx="3"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+              </svg>
+            </div>
+            <span class="stat-label">Total RSVPs</span>
+          </div>
+          <div class="stat-value">{{ total_rsvps }}</div>
+          <a href="{{ url_for('admin_rsvps') }}" class="stat-link"
+            >View all <span>→</span></a
+          >
         </div>
 
         <div class="stat-card highlight-card">
@@ -111,23 +451,108 @@
       </div>
 
       <div class="quick-actions">
-        <h4>Quick Actions</h4>
+        <div class="section-header">
+          <h4>Quick Actions</h4>
+          <span class="section-line"></span>
+        </div>
         <div class="action-buttons">
-          <a href="{{ url_for('admin_new_post') }}" class="action-btn primary"
-            >+ New Post</a
-          >
-          <a href="{{ url_for('admin_new_event') }}" class="action-btn primary"
-            >+ New Event</a
-          >
-          <a href="{{ url_for('pinboard') }}" class="action-btn"
-            >Manage Posts</a
-          >
-          <a href="{{ url_for('admin_events') }}" class="action-btn"
-            >Manage Events</a
-          >
-          <a href="{{ url_for('admin_event_analytics') }}" class="action-btn"
-            >View Event Analytics</a
-          >
+          <a href="{{ url_for('admin_new_post') }}" class="action-tile">
+            <div class="action-tile-icon">
+              <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
+                <path
+                  d="M4 13V16h3l8-8-3-3-8 8zM14.5 5.5a2.121 2.121 0 010-3L15 2l3 3-.5.5a2.121 2.121 0 01-3 0z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <div class="action-tile-title">New Post</div>
+              <div class="action-tile-sub">Publish to Pinboard</div>
+            </div>
+            <span class="action-tile-arrow">→</span>
+          </a>
+
+          <a href="{{ url_for('admin_new_event') }}" class="action-tile">
+            <div class="action-tile-icon">
+              <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
+                <rect
+                  x="2"
+                  y="4"
+                  width="16"
+                  height="14"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+                <path
+                  d="M14 2v4M6 2v4M2 9h16"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <div class="action-tile-title">New Event</div>
+              <div class="action-tile-sub">Schedule an event</div>
+            </div>
+            <span class="action-tile-arrow">→</span>
+          </a>
+
+          <a href="{{ url_for('pinboard') }}" class="action-tile">
+            <div class="action-tile-icon">
+              <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
+                <rect
+                  x="3"
+                  y="3"
+                  width="14"
+                  height="14"
+                  rx="2"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+                <path
+                  d="M7 7h6M7 11h4"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <div class="action-tile-title">Manage Posts</div>
+              <div class="action-tile-sub">Edit or remove posts</div>
+            </div>
+            <span class="action-tile-arrow">→</span>
+          </a>
+
+          <a href="{{ url_for('admin_events') }}" class="action-tile">
+            <div class="action-tile-icon">
+              <svg viewBox="0 0 20 20" fill="none" width="20" height="20">
+                <circle
+                  cx="10"
+                  cy="10"
+                  r="7.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+                <path
+                  d="M10 6v4l3 3"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <div>
+              <div class="action-tile-title">Manage Events</div>
+              <div class="action-tile-sub">View & edit events</div>
+            </div>
+            <span class="action-tile-arrow">→</span>
+          </a>
         </div>
       </div>
     </section>
@@ -135,171 +560,378 @@
 </div>
 
 <style>
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  :root {
+    --sidebar-bg: #0d0d0d;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-hover: rgba(255, 255, 255, 0.05);
+    --sidebar-active: rgba(255, 255, 255, 0.09);
+    --text-primary: #111018;
+    --text-secondary: #71717a;
+    --text-muted: #a1a1aa;
+    --surface: #ffffff;
+    --bg: #f7f7f8;
+    --border: #e5e5e7;
+    --accent: #111018;
+    --radius: 12px;
+    --font-display: "Syne", sans-serif;
+    --font-body: "DM Sans", sans-serif;
+  }
+
   .admin-layout {
     display: flex;
     min-height: 100vh;
-    background: #f5f6f8;
+    background: var(--bg);
+    font-family: var(--font-body);
+    color: var(--text-primary);
   }
 
   .admin-sidebar {
-    width: 280px;
-    background: #111;
-    color: white;
-    padding: 24px 0;
+    width: 260px;
+    min-width: 260px;
+    background: var(--sidebar-bg);
+    color: #fff;
     display: flex;
     flex-direction: column;
+    padding: 28px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
   }
 
   .brand {
-    font-size: 2rem;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
     font-weight: 700;
-    padding: 0 24px;
-    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+    padding: 0 22px 24px;
+    border-bottom: 1px solid var(--sidebar-border);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .brand-dot {
+    width: 7px;
+    height: 7px;
+    background: #fff;
+    border-radius: 50%;
+    flex-shrink: 0;
   }
 
   .admin-profile {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 0 24px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 20px;
+    gap: 12px;
+    padding: 0 22px 22px;
+    border-bottom: 1px solid var(--sidebar-border);
+    margin-bottom: 8px;
   }
 
   .admin-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #2c2c2c;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: var(--font-display);
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .admin-info {
+    min-width: 0;
   }
 
   .admin-email {
-    font-size: 0.95rem;
-    font-weight: 600;
-    word-break: break-word;
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
   }
 
   .admin-role {
-    font-size: 0.8rem;
-    opacity: 0.8;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    opacity: 0.45;
+    margin-top: 2px;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  .role-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #4ade80;
+    flex-shrink: 0;
+    opacity: 2;
+  }
+
+  .sidebar-body {
+    flex: 1;
+    padding-top: 4px;
+  }
+
+  .nav-group {
+    margin-bottom: 4px;
   }
 
   .sidebar-section-title {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    opacity: 0.6;
-    padding: 0 24px;
-    margin: 18px 0 8px;
-    letter-spacing: 1px;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    opacity: 0.3;
+    padding: 14px 22px 6px;
+    font-family: var(--font-display);
   }
 
   .sidebar-nav {
     display: flex;
     flex-direction: column;
+    gap: 1px;
   }
 
   .nav-item {
-    color: white;
+    color: rgba(255, 255, 255, 0.6);
     text-decoration: none;
-    padding: 14px 24px;
-    display: block;
-    transition: 0.2s;
+    padding: 9px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+    font-weight: 400;
+    border-radius: 0;
+    transition:
+      color 0.15s ease,
+      background 0.15s ease;
+    position: relative;
   }
 
-  .nav-item:hover,
+  .nav-item:hover {
+    background: var(--sidebar-hover);
+    color: rgba(255, 255, 255, 0.9);
+  }
+
   .nav-item.active {
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
+    background: var(--sidebar-active);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: #fff;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .nav-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+  }
+
+  .nav-item:hover .nav-icon,
+  .nav-item.active .nav-icon {
+    opacity: 1;
   }
 
   .sidebar-footer {
-    margin-top: auto;
-    padding: 24px;
+    padding: 20px 22px 0;
+    border-top: 1px solid var(--sidebar-border);
+    margin-top: 10px;
   }
 
   .logout-btn {
-    color: white;
+    color: rgba(255, 255, 255, 0.4);
     text-decoration: none;
-    display: inline-block;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    transition: color 0.15s;
+    font-weight: 500;
+  }
+
+  .logout-btn:hover {
+    color: rgba(255, 255, 255, 0.75);
   }
 
   .admin-main {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
   }
 
   .admin-topbar {
-    background: white;
-    padding: 22px 32px;
-    border-bottom: 1px solid #e5e7eb;
+    background: var(--surface);
+    padding: 0 36px;
+    height: 58px;
+    border-bottom: 1px solid var(--border);
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
-  .page-title {
-    margin: 0;
-    font-weight: 700;
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .topbar-text {
-    color: #6b7280;
-    font-size: 0.95rem;
+  .breadcrumb {
+    font-size: 0.83rem;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .breadcrumb-sep {
+    color: var(--border);
+    font-size: 0.75rem;
+  }
+
+  .breadcrumb-active {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .topbar-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg);
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-family: var(--font-display);
+    letter-spacing: 0.02em;
   }
 
   .admin-content {
-    padding: 36px 32px;
+    padding: 40px 36px;
   }
 
-  .overview-header h1 {
-    font-size: 2.2rem;
+  .overview-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .header-text h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
     font-weight: 700;
-    margin-bottom: 8px;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--text-primary);
+    margin-bottom: 6px;
   }
 
-  .overview-header p {
-    color: #6b7280;
-    margin-bottom: 30px;
+  .header-text p {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    font-weight: 300;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+    align-items: center;
+  }
+
+  .action-btn {
+    text-decoration: none;
+    padding: 9px 16px;
+    border-radius: 9px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+  }
+
+  .action-btn:hover {
+    background: var(--bg);
+    color: var(--text-primary);
+  }
+
+  .action-btn.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .action-btn.primary:hover {
+    background: #2a2a2a;
+    color: #fff;
+    transform: translateY(-1px);
   }
 
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-    margin-bottom: 40px;
+    gap: 12px;
+    margin-bottom: 36px;
   }
 
   .stat-card {
-    background: white;
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    min-height: 150px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px 18px 14px;
+    border: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 8px;
+    transition:
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+    animation: fadeUp 0.4s ease both;
+    animation-delay: var(--delay, 0ms);
+    cursor: default;
   }
 
-  .stat-card h6 {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    color: #6b7280;
-    margin-bottom: 12px;
-  }
-
-  .stat-card h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .stat-card span,
-  .stat-card a {
-    color: #6b7280;
-    font-size: 0.95rem;
-    text-decoration: none;
+  .stat-card:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
   }
 
   .stat-card a:hover {
@@ -310,44 +942,216 @@
     border: 1px solid #111;
   }
 
-  .quick-actions h4 {
+  @keyframes fadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .stat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .stat-icon svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .stat-icon.alumni {
+    background: #f0f0ff;
+    color: #5b5bd6;
+  }
+  .stat-icon.students {
+    background: #fff0f0;
+    color: #d65b5b;
+  }
+  .stat-icon.mentors {
+    background: #f0fff6;
+    color: #1a9a4a;
+  }
+  .stat-icon.events {
+    background: #fffaee;
+    color: #c27b0e;
+  }
+  .stat-icon.attendees {
+    background: #f2f8ff;
+    color: #1e7fc4;
+  }
+  .stat-icon.rsvps {
+    background: #fdf4ff;
+    color: #9c36b5;
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
     font-weight: 700;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .stat-link {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    transition: color 0.15s;
+    font-weight: 500;
+  }
+
+  .stat-link span {
+    transition: transform 0.15s;
+    display: inline-block;
+  }
+
+  .stat-link:hover {
+    color: var(--text-primary);
+  }
+  .stat-link:hover span {
+    transform: translateX(3px);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
     margin-bottom: 18px;
   }
 
+  .section-header h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
   .action-buttons {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 14px;
   }
 
-  .action-btn {
+  .action-tile {
     text-decoration: none;
-    padding: 12px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.18s ease;
+    color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+
+  .action-tile:hover {
+    border-color: #bbb;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+    color: var(--text-primary);
+  }
+
+  .action-tile:hover::after {
+    opacity: 1;
+  }
+
+  .action-tile > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .action-tile-icon {
+    width: 40px;
+    height: 40px;
     border-radius: 10px;
-    background: white;
-    color: #111;
-    border: 1px solid #ddd;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--text-primary);
+  }
+
+  .action-tile-title {
+    font-size: 0.88rem;
     font-weight: 600;
-    transition: 0.2s;
+    margin-bottom: 2px;
   }
 
-  .action-btn:hover {
-    color: #111;
-    transform: translateY(-1px);
+  .action-tile-sub {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    font-weight: 400;
   }
 
-  .action-btn.primary {
-    background: #111;
-    color: white;
-    border: none;
+  .action-tile-arrow {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    transition: transform 0.18s;
   }
 
-  .action-btn.primary:hover {
-    color: white;
+  .action-tile:hover .action-tile-arrow {
+    transform: translateX(3px);
   }
 
-  @media (max-width: 1100px) {
+  @media (max-width: 1200px) {
+    .stats-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .action-buttons {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 1000px) {
     .stats-grid {
       grid-template-columns: repeat(2, 1fr);
     }
@@ -357,23 +1161,37 @@
     .admin-layout {
       flex-direction: column;
     }
-
     .admin-sidebar {
       width: 100%;
+      height: auto;
+      position: static;
+      flex-direction: row;
+      flex-wrap: wrap;
+      padding: 16px;
     }
-
+    .admin-main {
+      min-height: 0;
+    }
+    .admin-content {
+      padding: 24px 18px;
+    }
     .admin-topbar {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
+      padding: 0 18px;
     }
-
     .stats-grid {
       grid-template-columns: 1fr;
     }
-
     .action-buttons {
+      grid-template-columns: 1fr 1fr;
+    }
+    .overview-header {
       flex-direction: column;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .action-buttons {
+      grid-template-columns: 1fr;
     }
   }
 </style>

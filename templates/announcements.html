@@ -1,113 +1,420 @@
-{% extends "base.html" %} {% block content %}
-<div class="container py-5">
-  <!-- HEADER -->
-  <div class="mb-4">
-    <h2 class="fw-bold">Create Announcement</h2>
-    <p class="text-muted">
-      Share important updates, opportunities, or official notices with the
-      community.
-    </p>
+{% extends "admin_base.html" %} {% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<div class="an-wrap">
+
+  <div class="an-header">
+    <div>
+      <h1 class="an-title">Create Announcement</h1>
+      <p class="an-sub">Share updates, opportunities, or official notices with the community.</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="an-cancel">Cancel</a>
   </div>
 
-  <!-- FORM (ADMIN ONLY) -->
   {% if current_user.is_authenticated and current_user.role == "admin" %}
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <h5 class="mb-3">New Announcement</h5>
 
-      <!-- TEXT -->
-      <textarea
-        id="postContent"
-        class="form-control mb-3"
-        placeholder="Write your announcement..."
-        rows="4"
-      ></textarea>
+  <div class="an-card">
 
-      <!-- IMAGE -->
-      <input type="file" id="postImage" class="form-control mb-3" />
-
-      <!-- BUTTON -->
-      <div class="d-flex gap-2">
-        <button id="createAnnouncementBtn" class="btn btn-primary">
-          Post Announcement
-        </button>
-
-        <a href="/pinboard" class="btn btn-outline-secondary"> Cancel </a>
+    <div class="an-field">
+      <label class="an-label" for="postContent">Message</label>
+      <div class="an-textarea-wrap">
+        <textarea id="postContent" class="an-textarea" placeholder="Write your announcement…" rows="6"></textarea>
+        <span class="an-charcount" id="charCount">0</span>
       </div>
     </div>
+
+    <div class="an-field">
+      <label class="an-label">Image <span class="an-optional">optional</span></label>
+      <div class="an-upload" id="uploadZone">
+        <input type="file" id="postImage" accept="image/*" class="an-upload-input" />
+        <div class="an-upload-idle" id="uploadIdle">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Drop an image or <strong>browse</strong></span>
+          <span class="an-upload-hint">PNG, JPG, WEBP · max 10 MB</span>
+        </div>
+        <div class="an-upload-done" id="uploadDone" style="display:none">
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16"><path d="M4 10l4 4 8-8" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="uploadName"></span>
+          <button type="button" class="an-upload-remove" id="removeImage">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="an-actions">
+      <button id="createAnnouncementBtn" class="an-submit">
+        <span id="btnLabel">Post Announcement</span>
+        <svg viewBox="0 0 20 20" fill="currentColor" width="15" height="15"><path d="M3 10l14-7-7 14V10H3z"/></svg>
+      </button>
+    </div>
+
   </div>
+
   {% else %}
-  <div class="alert alert-danger">
-    You are not authorized to access this page.
+  <div class="an-denied">
+    <span>⚠</span> You are not authorised to access this page.
   </div>
   {% endif %}
+
 </div>
 
+<style>
+  :root {
+    --an-bg: #f7f7f8;
+    --an-surface: #fff;
+    --an-border: #e4e4e7;
+    --an-text: #111;
+    --an-text2: #52525b;
+    --an-text3: #a1a1aa;
+    --an-accent: #111;
+    --an-radius: 14px;
+    --an-ff: 'DM Sans', sans-serif;
+    --an-fd: 'Syne', sans-serif;
+  }
+
+  .an-wrap {
+    max-width: 660px;
+    margin: 0 auto;
+    padding: 52px 24px 80px;
+    font-family: var(--an-ff);
+  }
+
+  /* header */
+  .an-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .an-title {
+    font-family: var(--an-fd);
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    color: var(--an-text);
+    margin: 0 0 6px;
+    line-height: 1.1;
+  }
+
+  .an-sub {
+    font-size: 0.875rem;
+    color: var(--an-text3);
+    font-weight: 400;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .an-cancel {
+    text-decoration: none;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--an-text3);
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--an-border);
+    background: var(--an-surface);
+    white-space: nowrap;
+    transition: color .15s, border-color .15s;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .an-cancel:hover { color: var(--an-text); border-color: #bbb; }
+
+  /* card */
+  .an-card {
+    background: var(--an-surface);
+    border: 1px solid var(--an-border);
+    border-radius: var(--an-radius);
+    padding: 32px 36px 28px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.045);
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    animation: anFadeUp .35s ease both;
+  }
+
+  @keyframes anFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* fields */
+  .an-field { display: flex; flex-direction: column; gap: 8px; }
+
+  .an-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--an-text2);
+    font-family: var(--an-fd);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .an-optional {
+    font-size: 0.68rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--an-text3);
+    font-family: var(--an-ff);
+  }
+
+  .an-textarea-wrap { position: relative; }
+
+  .an-textarea {
+    width: 100%;
+    resize: vertical;
+    border: 1.5px solid var(--an-border);
+    border-radius: 10px;
+    padding: 14px 16px 30px;
+    font-family: var(--an-ff);
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--an-text);
+    background: #fafaf9;
+    line-height: 1.65;
+    outline: none;
+    transition: border-color .18s, box-shadow .18s;
+    min-height: 130px;
+  }
+
+  .an-textarea::placeholder { color: var(--an-text3); }
+
+  .an-textarea:focus {
+    border-color: #888;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.055);
+    background: #fff;
+  }
+
+  .an-charcount {
+    position: absolute;
+    bottom: 10px;
+    right: 13px;
+    font-size: 0.68rem;
+    color: var(--an-text3);
+    pointer-events: none;
+  }
+
+  /* upload */
+  .an-upload {
+    border: 1.5px dashed var(--an-border);
+    border-radius: 10px;
+    background: #fafaf9;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .18s, background .18s;
+  }
+
+  .an-upload:hover { border-color: #aaa; background: #f4f4f3; }
+
+  .an-upload-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+  }
+
+  .an-upload-idle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 26px 20px;
+    color: var(--an-text2);
+    font-size: 0.84rem;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .an-upload-idle strong { color: var(--an-text); }
+
+  .an-upload-hint {
+    font-size: 0.73rem;
+    color: var(--an-text3);
+    font-weight: 400;
+  }
+
+  .an-upload-done {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 13px 16px;
+    font-size: 0.83rem;
+    color: var(--an-text);
+    font-weight: 500;
+    background: #f0fdf4;
+    border-top: 1px solid #bbf7d0;
+  }
+
+  .an-upload-done span {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8rem;
+    color: var(--an-text2);
+  }
+
+  .an-upload-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.72rem;
+    color: var(--an-text3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    z-index: 3;
+    position: relative;
+    transition: color .15s, background .15s;
+  }
+
+  .an-upload-remove:hover { color: #dc2626; background: #fff0f0; }
+
+  /* actions */
+  .an-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
+    border-top: 1px solid var(--an-border);
+  }
+
+  .an-submit {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--an-accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 22px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: var(--an-ff);
+    cursor: pointer;
+    transition: background .15s, transform .15s, box-shadow .15s;
+    letter-spacing: -0.01em;
+  }
+
+  .an-submit:hover {
+    background: #2a2a2a;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.16);
+  }
+
+  .an-submit:disabled { opacity: .6; pointer-events: none; }
+
+  /* denied */
+  .an-denied {
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  @media (max-width: 600px) {
+    .an-card { padding: 24px 20px; }
+    .an-title { font-size: 1.5rem; }
+    .an-header { flex-direction: column; gap: 12px; }
+  }
+</style>
+
 <script>
+  // char count
+  const textarea = document.getElementById('postContent');
+  const charCount = document.getElementById('charCount');
+  textarea.addEventListener('input', () => { charCount.textContent = textarea.value.length; });
+
+  // file upload UI
+  const imageInput  = document.getElementById('postImage');
+  const uploadIdle  = document.getElementById('uploadIdle');
+  const uploadDone  = document.getElementById('uploadDone');
+  const uploadName  = document.getElementById('uploadName');
+  const removeBtn   = document.getElementById('removeImage');
+  const uploadZone  = document.getElementById('uploadZone');
+
+  imageInput.addEventListener('change', showFile);
+
+  function showFile() {
+    const f = imageInput.files[0];
+    if (!f) return;
+    uploadName.textContent = f.name;
+    uploadIdle.style.display = 'none';
+    uploadDone.style.display = 'flex';
+  }
+
+  removeBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    imageInput.value = '';
+    uploadIdle.style.display = 'flex';
+    uploadDone.style.display = 'none';
+  });
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.style.borderColor = '#888'; });
+  uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.style.borderColor = '';
+    if (e.dataTransfer.files.length) { imageInput.files = e.dataTransfer.files; showFile(); }
+  });
+
+  // submit
   async function createAnnouncement() {
+    const btn     = document.getElementById('createAnnouncementBtn');
+    const label   = document.getElementById('btnLabel');
+    const content = textarea.value.trim();
+    const image   = imageInput.files[0];
+
+    if (!content) {
+      textarea.style.borderColor = '#f87171';
+      textarea.focus();
+      setTimeout(() => textarea.style.borderColor = '', 1400);
+      return;
+    }
+
+    btn.disabled = true;
+    label.textContent = 'Posting…';
+
     try {
-      const contentElement = document.getElementById("postContent");
-      const imageInput = document.getElementById("postImage");
-
-      const content = contentElement.value.trim();
-      const image = imageInput.files[0];
-
-      console.log("Posting announcement...");
-
-      if (!content) {
-        alert("Announcement cannot be empty");
-        return;
-      }
-
       const formData = new FormData();
-      formData.append("content", content);
+      formData.append('content', content);
+      if (image) formData.append('image', image);
 
-      if (image) {
-        formData.append("image", image);
-      }
-
-      const response = await fetch("/api/posts", {
-        method: "POST",
-        body: formData,
-      });
-
+      const response = await fetch('/api/posts', { method: 'POST', body: formData });
       const text = await response.text();
-      console.log("Server response:", text);
-
       let result;
-      try {
-        result = JSON.parse(text);
-      } catch (e) {
-        alert("Invalid server response.");
-        return;
-      }
+      try { result = JSON.parse(text); } catch { alert('Invalid server response.'); return; }
 
-      if (!response.ok) {
-        alert(result.error || result.message || "Failed to post announcement");
-        return;
-      }
+      if (!response.ok) { alert(result.error || result.message || 'Failed to post announcement'); return; }
 
-      alert("Announcement posted successfully ✅");
-
-      // Reset form
-      contentElement.value = "";
-      imageInput.value = "";
-
-      // Redirect to pinboard
-      window.location.href = "/pinboard";
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Something went wrong while posting the announcement.");
+      window.location.href = '/pinboard';
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong while posting the announcement.');
+    } finally {
+      btn.disabled = false;
+      label.textContent = 'Post Announcement';
     }
   }
 
-  // Attach button event safely
-  document.addEventListener("DOMContentLoaded", function () {
-    const btn = document.getElementById("createAnnouncementBtn");
-
-    if (btn) {
-      btn.addEventListener("click", createAnnouncement);
-    }
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('createAnnouncementBtn');
+    if (btn) btn.addEventListener('click', createAnnouncement);
   });
 </script>
 
