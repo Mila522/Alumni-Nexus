@@ -17,11 +17,13 @@
       <a href="{{ url_for('admin_dashboard') }}" class="nav-item active"
         >Overview</a
       >
+      <a href="{{ url_for('admin_event_analytics') }}" class="nav-item"
+        >Event Analytics</a
+      >
     </nav>
 
     <div class="sidebar-section-title">People</div>
     <nav class="sidebar-nav">
-      <a href="#" class="nav-item">Registered Users</a>
       <a href="#" class="nav-item">Mentor Applications</a>
       <a href="{{ url_for('admin_mentors') }}" class="nav-item"
         >Active Mentors</a
@@ -32,6 +34,18 @@
     <div class="sidebar-section-title">Pinboard</div>
     <nav class="sidebar-nav">
       <a href="{{ url_for('pinboard') }}" class="nav-item">Posts</a>
+    </nav>
+
+    <div class="sidebar-section-title">Events</div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin_events') }}" class="nav-item">Manage Events</a>
+      <a href="{{ url_for('admin_event_attendees') }}" class="nav-item"
+        >Event Attendees</a
+      >
+      <a href="{{ url_for('admin_rsvps') }}" class="nav-item">All RSVPs</a>
+      <a href="{{ url_for('admin_event_analytics') }}" class="nav-item"
+        >Analytics</a
+      >
     </nav>
 
     <div class="sidebar-footer">
@@ -88,6 +102,12 @@
           <h2>{{ total_rsvps }}</h2>
           <a href="{{ url_for('admin_rsvps') }}">View →</a>
         </div>
+
+        <div class="stat-card highlight-card">
+          <h6>Event Analytics</h6>
+          <h2>Insights</h2>
+          <a href="{{ url_for('admin_event_analytics') }}">Open Dashboard →</a>
+        </div>
       </div>
 
       <div class="quick-actions">
@@ -104,6 +124,9 @@
           >
           <a href="{{ url_for('admin_events') }}" class="action-btn"
             >Manage Events</a
+          >
+          <a href="{{ url_for('admin_event_analytics') }}" class="action-btn"
+            >View Event Analytics</a
           >
         </div>
       </div>
@@ -153,6 +176,7 @@
   .admin-email {
     font-size: 0.95rem;
     font-weight: 600;
+    word-break: break-word;
   }
 
   .admin-role {
@@ -280,6 +304,10 @@
 
   .stat-card a:hover {
     text-decoration: underline;
+  }
+
+  .highlight-card {
+    border: 1px solid #111;
   }
 
   .quick-actions h4 {

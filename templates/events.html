@@ -46,6 +46,8 @@
 </div>
 
 <script>
+  const USER_ROLE = "{{ current_user.role }}";
+
   async function createEvent() {
     try {
       const title = document.getElementById("eventTitle")?.value.trim() || "";
@@ -54,9 +56,6 @@
       const location =
         document.getElementById("eventLocation")?.value.trim() || "";
       const date = document.getElementById("eventDate")?.value || "";
-
-      console.log("Create button clicked");
-      console.log("Raw date value:", date);
 
       if (!title || !description || !location || !date) {
         alert("Please fill in all fields.");
@@ -69,23 +68,14 @@
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title: title,
-          description: description,
-          location: location,
+          title,
+          description,
+          location,
           event_date: date,
         }),
       });
 
-      const text = await response.text();
-      console.log("Create event raw response:", text);
-
-      let result = {};
-      try {
-        result = JSON.parse(text);
-      } catch (e) {
-        alert("Server did not return valid JSON.");
-        return;
-      }
+      const result = await response.json();
 
       if (!response.ok) {
         alert(result.error || result.message || "Failed to create event");
@@ -101,7 +91,6 @@
 
       loadEvents();
     } catch (error) {
-      console.error("Create event error:", error);
       alert("Something went wrong while creating the event.");
     }
   }
@@ -112,44 +101,118 @@
         method: "POST",
       });
 
-      const text = await response.text();
-      console.log("RSVP raw response:", text);
-
-      let result = {};
-      try {
-        result = JSON.parse(text);
-      } catch (e) {
-        alert("Server did not return valid JSON.");
-        return;
-      }
+      const result = await response.json();
 
       if (!response.ok) {
         alert(result.message || result.error || "Failed to RSVP");
+        loadEvents();
         return;
       }
 
-      alert(result.message || "RSVP successful");
+      loadEvents();
     } catch (error) {
-      console.error("RSVP error:", error);
       alert("Something went wrong while sending your RSVP.");
     }
+  }
+
+  async function attendEvent(eventId) {
+    try {
+      const response = await fetch(`/api/events/${eventId}/attend`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.message || result.error || "Failed to mark attending");
+        loadEvents();
+        return;
+      }
+
+      loadEvents();
+    } catch (error) {
+      alert("Something went wrong while marking attendance.");
+    }
+  }
+
+  async function cancelRsvp(eventId) {
+    try {
+      const response = await fetch(`/api/events/${eventId}/cancel-rsvp`, {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.message || result.error || "Failed to cancel RSVP");
+        loadEvents();
+        return;
+      }
+
+      loadEvents();
+    } catch (error) {
+      alert("Something went wrong while cancelling your RSVP.");
+    }
+  }
+
+  function buildActionButtons(event) {
+    if (USER_ROLE === "admin") {
+      return `<span class="badge bg-secondary">Admin cannot RSVP</span>`;
+    }
+
+    if (event.user_status === "rsvp") {
+      return `
+        <button
+          type="button"
+          class="btn btn-success btn-sm me-2"
+          onclick="attendEvent(${event.event_id})"
+        >
+          Attending
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger btn-sm"
+          onclick="cancelRsvp(${event.event_id})"
+        >
+          Cancel RSVP
+        </button>
+      `;
+    }
+
+    if (event.user_status === "attending") {
+      return `
+        <button
+          type="button"
+          class="btn btn-success btn-sm me-2"
+          disabled
+        >
+          You are Attending
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger btn-sm"
+          onclick="cancelRsvp(${event.event_id})"
+        >
+          Cancel RSVP
+        </button>
+      `;
+    }
+
+    return `
+      <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        onclick="rsvpEvent(${event.event_id})"
+      >
+        RSVP
+      </button>
+    `;
   }
 
   async function loadEvents() {
     try {
       const response = await fetch("/api/events");
-      const text = await response.text();
-      console.log("Load events raw response:", text);
-
-      let events = [];
-      try {
-        events = JSON.parse(text);
-      } catch (e) {
-        document.getElementById("eventsContainer").innerHTML = `
-          <div class="alert alert-danger">Server did not return valid event data.</div>
-        `;
-        return;
-      }
+      const events = await response.json();
 
       const container = document.getElementById("eventsContainer");
       container.innerHTML = "";
@@ -162,26 +225,32 @@
       }
 
       events.forEach((event) => {
+        const actionButtons = buildActionButtons(event);
+
         container.innerHTML += `
           <div class="card shadow-sm mb-4">
             <div class="card-body">
               <h5>${event.title}</h5>
               <p>${event.description || ""}</p>
-
               <div class="text-muted mb-2">📍 ${event.location || ""}</div>
-              <div class="text-muted mb-3">
+              <div class="text-muted mb-2">
                 📅 ${event.date ? new Date(event.date).toLocaleString() : ""}
               </div>
+              <div class="text-muted mb-1">
+                Total RSVPs: <strong>${event.rsvp_count}</strong>
+              </div>
+              <div class="text-muted mb-3">
+                Total Attending: <strong>${event.attending_count}</strong>
+              </div>
 
-              <button type="button" class="btn btn-outline-primary btn-sm" onclick="rsvpEvent(${event.event_id})">
-                RSVP
-              </button>
+              <div class="d-flex flex-wrap gap-2">
+                ${actionButtons}
+              </div>
             </div>
           </div>
         `;
       });
     } catch (error) {
-      console.error("Load events error:", error);
       document.getElementById("eventsContainer").innerHTML = `
         <div class="alert alert-danger">Failed to load events.</div>
       `;

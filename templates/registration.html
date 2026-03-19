@@ -12,15 +12,12 @@
       <label for="name" class="form-label">Full Name:</label>
       <input type="text" class="form-control" id="name" name="name" required />
     </div>
-     {% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    {% for category, message in messages %}
-      <div class="alert alert-danger">
-        {{ message }}
-      </div>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %} {% endif %} {% endwith %}
+
     <div class="mb-3">
       <label for="email" class="form-label">Email:</label>
       <input
@@ -146,30 +143,30 @@
       </div>
 
       <div class="mb-3">
-        <label for="Education" class="form-label">Education:</label>
+        <label for="education" class="form-label">Education:</label>
         <input
           type="text"
           class="form-control"
-          id="Education"
-          name="Education"
+          id="education"
+          name="education"
         />
       </div>
 
       <div class="mb-3">
-        <label for="Licence_Certificates" class="form-label"
+        <label for="certifications" class="form-label"
           >Licence / Certificates:</label
         >
         <input
           type="text"
           class="form-control"
-          id="Licence_Certificates"
-          name="Licence_Certificates"
+          id="certifications"
+          name="certifications"
         />
       </div>
 
       <div class="mb-3">
-        <label for="Skills" class="form-label">Skills:</label>
-        <input type="text" class="form-control" id="Skills" name="Skills" />
+        <label for="skills" class="form-label">Skills:</label>
+        <input type="text" class="form-control" id="skills" name="skills" />
       </div>
     </div>
 
@@ -201,4 +198,3 @@
   }
 </script>
 {% endblock %}
-

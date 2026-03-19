@@ -16,12 +16,11 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), nullable=False)  # student / alumni / mentor / ...
+    role = db.Column(db.String(50), nullable=False)
 
     profile_image = db.Column(db.String(255), default='default-profile.png')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Relationships
     student_profile = db.relationship(
         'StudentProfile', backref='user', uselist=False, cascade="all, delete-orphan"
     )
@@ -118,7 +117,7 @@ class Connection(db.Model):
     sender_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
 
-    status = db.Column(db.String(20), default='pending')  # pending / accepted / rejected
+    status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -177,8 +176,12 @@ class RSVP(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     event_id = db.Column(db.Integer, db.ForeignKey('events.event_id'), nullable=False)
 
-    response = db.Column(db.String(20), default='going')  # going / maybe / not_going
+    response = db.Column(db.String(20), default='rsvp')  # rsvp / attending
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'event_id', name='unique_user_event_rsvp'),
+    )
 
 
 # ────────────────────────────────────────────────

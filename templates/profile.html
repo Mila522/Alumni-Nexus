@@ -89,43 +89,55 @@ extra_css %}
     </div>
     {% endif %}
 
-    <!-- ADD THIS SECTION HERE -->
-    <div class="mt-3">
+    <div
+      class="mt-3"
+      id="connection-action-area"
+      data-user-id="{{ user.user_id }}"
+      data-can-poll="{{ 'true' if current_user.user_id != user.user_id else 'false' }}"
+    >
       {% if current_user.user_id == user.user_id %}
       <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-primary">
         Edit Profile
       </a>
       {% elif connection_status == "connected" %}
+      <button class="btn btn-success" disabled>Accepted</button>
       <a
         href="{{ url_for('message_page', user_id=user.user_id) }}"
-        class="btn btn-primary"
+        class="btn btn-primary ms-2"
       >
         Message
       </a>
       {% elif connection_status == "none" %}
-      <button class="btn btn-outline-primary">Connect</button>
+      <button
+        class="btn btn-outline-primary"
+        id="connectBtn"
+        onclick="sendConnectionRequest({{ user.user_id }})"
+      >
+        Connect
+      </button>
       {% elif connection_status == "pending_sent" %}
-      <button class="btn btn-secondary" disabled>Request Sent</button>
+      <button class="btn btn-secondary" disabled>
+        Connection Request Sent
+      </button>
       {% elif connection_status == "pending_received" %}
       <button class="btn btn-warning" disabled>Pending Request</button>
       {% endif %}
     </div>
-    <!-- END OF ADDED SECTION -->
   </div>
 
   {% if user.role == 'alumni' and user.alumni_profile %}
   <div class="section">
     <h3>Experience</h3>
-    <p>{{ user.alumni_profile.experience }}</p>
+    <p>{{ user.alumni_profile.experience or "None" }}</p>
 
     <h3>Education</h3>
-    <p>{{ user.alumni_profile.education }}</p>
+    <p>{{ user.alumni_profile.education or "None" }}</p>
 
-    <h3>Licence / Certificates</h3>
-    <p>{{ user.alumni_profile.certifications }}</p>
+    <h3>Certificates</h3>
+    <p>{{ user.alumni_profile.certifications or "None" }}</p>
 
     <h3>Skills</h3>
-    <p>{{ user.alumni_profile.skills }}</p>
+    <p>{{ user.alumni_profile.skills or "None" }}</p>
   </div>
   {% endif %} {% if user.role == 'student' and user.student_profile %}
   <div class="section">
@@ -143,5 +155,79 @@ extra_css %}
   </div>
   {% endif %}
 </div>
+
+<script>
+  async function sendConnectionRequest(userId) {
+    const btn = document.getElementById("connectBtn");
+
+    try {
+      const response = await fetch(`/api/connect/${userId}`, {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        btn.textContent = "Connection Request Sent";
+        btn.classList.remove("btn-outline-primary");
+        btn.classList.add("btn-secondary");
+        btn.disabled = true;
+      } else {
+        alert(
+          data.message || data.error || "Unable to send connection request",
+        );
+      }
+    } catch (error) {
+      alert("Something went wrong while sending the request.");
+    }
+  }
+
+  async function refreshConnectionStatus(userId) {
+    try {
+      const response = await fetch(`/api/connection-status/${userId}`);
+      const data = await response.json();
+
+      const actionArea = document.getElementById("connection-action-area");
+      if (!actionArea) return;
+
+      if (data.status === "connected") {
+        actionArea.innerHTML = `
+          <button class="btn btn-success" disabled>Accepted</button>
+          <a href="/messages/${userId}" class="btn btn-primary ms-2">Message</a>
+        `;
+      } else if (data.status === "pending_sent") {
+        actionArea.innerHTML = `
+          <button class="btn btn-secondary" disabled>Connection Request Sent</button>
+        `;
+      } else if (data.status === "pending_received") {
+        actionArea.innerHTML = `
+          <button class="btn btn-warning" disabled>Pending Request</button>
+        `;
+      } else if (data.status === "none") {
+        actionArea.innerHTML = `
+          <button
+            class="btn btn-outline-primary"
+            id="connectBtn"
+            onclick="sendConnectionRequest(${userId})"
+          >
+            Connect
+          </button>
+        `;
+      }
+    } catch (error) {
+      console.log("Could not refresh connection status");
+    }
+  }
+
+  const actionArea = document.getElementById("connection-action-area");
+  const userId = actionArea ? actionArea.dataset.userId : null;
+  const canPoll = actionArea ? actionArea.dataset.canPoll === "true" : false;
+
+  if (canPoll && userId) {
+    setInterval(() => {
+      refreshConnectionStatus(userId);
+    }, 5000);
+  }
+</script>
 
 {% endblock %}

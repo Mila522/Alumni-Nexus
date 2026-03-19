@@ -10,7 +10,12 @@
       </p>
     </div>
 
-    <!-- SEARCH -->
+    <div
+      id="network-notification"
+      class="alert alert-success d-none"
+      role="alert"
+    ></div>
+
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body">
         <h5 class="mb-3">Search Alumni</h5>
@@ -59,9 +64,7 @@
     </div>
 
     <div class="row g-4">
-      <!-- LEFT SIDE -->
       <div class="col-lg-8">
-        <!-- SUGGESTIONS -->
         <div class="card shadow-sm border-0 mb-4">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -72,14 +75,12 @@
           </div>
         </div>
 
-        <!-- CONNECTION REQUESTS -->
         <div class="card shadow-sm border-0 mb-4">
           <div class="card-body" id="requests-container">
             <h5 class="mb-3">Connection Requests</h5>
           </div>
         </div>
 
-        <!-- MY CONNECTIONS -->
         <div class="card shadow-sm border-0">
           <div class="card-body" id="connections-container">
             <h5 class="mb-3">My Connections</h5>
@@ -87,7 +88,6 @@
         </div>
       </div>
 
-      <!-- RIGHT SIDE -->
       <div class="col-lg-4">
         <div class="card shadow-sm border-0 mb-4">
           <div class="card-body">
@@ -144,22 +144,18 @@
     users.forEach((user) => {
       container.innerHTML += `
         <div class="col-md-6 col-xl-4">
-
             <div class="suggestion-card text-center p-3">
-
                 <div class="profile-circle mx-auto mb-3"></div>
-
                 <h6>${user.name}</h6>
-
                 <small>${user.industry || user.email}</small>
-
-                <button class="btn btn-outline-primary btn-sm w-100 mt-2"
-                onclick="connectUser(${user.id})">
-                Connect
+                <button
+                  class="btn btn-outline-primary btn-sm w-100 mt-2"
+                  id="connect-btn-${user.id}"
+                  onclick="connectUser(${user.id})"
+                >
+                  Connect
                 </button>
-
             </div>
-
         </div>
         `;
     });
@@ -177,38 +173,45 @@
     users.forEach((user) => {
       container.innerHTML += `
         <div class="col-md-6 col-xl-4">
-
             <div class="suggestion-card text-center p-3">
-
                 <div class="profile-circle mx-auto mb-3"></div>
-
                 <h6>${user.name}</h6>
-
                 <small>${user.industry}</small>
-
-                <button class="btn btn-outline-primary btn-sm w-100 mt-2"
-                onclick="connectUser(${user.id})">
-                Connect
+                <button
+                  class="btn btn-outline-primary btn-sm w-100 mt-2"
+                  id="connect-btn-${user.id}"
+                  onclick="connectUser(${user.id})"
+                >
+                  Connect
                 </button>
-
             </div>
-
         </div>
         `;
     });
   }
 
   async function connectUser(userId) {
+    const btn = document.getElementById(`connect-btn-${userId}`);
+
     const res = await fetch(`/api/connect/${userId}`, {
       method: "POST",
     });
 
     const data = await res.json();
 
-    alert(data.message);
+    if (res.ok) {
+      if (btn) {
+        btn.textContent = "Connection Request Sent";
+        btn.disabled = true;
+        btn.classList.remove("btn-outline-primary");
+        btn.classList.add("btn-secondary");
+      }
 
-    loadRequests();
-    loadStats();
+      loadRequests();
+      loadStats();
+    } else {
+      alert(data.message || data.error || "Unable to send request");
+    }
   }
 
   async function loadRequests() {
@@ -230,11 +233,8 @@
     requests.forEach((req) => {
       container.innerHTML += `
         <div class="request d-flex justify-content-between align-items-center mb-2">
-
             <span>${req.name}</span>
-
             <div>
-
                 <button class="btn btn-success btn-sm me-1"
                 onclick="acceptRequest(${req.id})">
                 Accept
@@ -244,9 +244,7 @@
                 onclick="declineRequest(${req.id})">
                 Decline
                 </button>
-
             </div>
-
         </div>
         `;
     });
@@ -257,6 +255,7 @@
 
     loadRequests();
     loadConnections();
+    loadSuggestions();
     loadStats();
   }
 
@@ -264,6 +263,7 @@
     await fetch(`/api/connection-requests/${id}/decline`, { method: "POST" });
 
     loadRequests();
+    loadSuggestions();
     loadStats();
   }
 
@@ -272,21 +272,31 @@
     const connections = await res.json();
 
     const container = document.getElementById("connections-container");
+    const notification = document.getElementById("network-notification");
 
     container.innerHTML = "<h5 class='mb-3'>My Connections</h5>";
 
     if (connections.length === 0) {
       container.innerHTML += `<p class="text-muted">You have no connections yet.</p>`;
       document.getElementById("total-connections").innerText = 0;
+
+      if (notification) {
+        notification.classList.add("d-none");
+        notification.innerText = "";
+      }
       return;
     }
 
     document.getElementById("total-connections").innerText = connections.length;
 
+    if (notification) {
+      notification.classList.remove("d-none");
+      notification.innerText = `You have ${connections.length} accepted connection(s) in your network.`;
+    }
+
     connections.forEach((conn) => {
       container.innerHTML += `
     <div class="connection d-flex justify-content-between align-items-center mb-2">
-
         <div>
             <a href="/profile/${conn.id}" class="fw-bold text-decoration-none">
                 ${conn.name}
@@ -298,7 +308,6 @@
         <a href="/messages/${conn.id}" class="btn btn-sm btn-primary">
             Message
         </a>
-
     </div>
     `;
     });
