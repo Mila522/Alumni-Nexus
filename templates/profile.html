@@ -1,5 +1,6 @@
-{% extends "base.html" %} {% block title %}User Profile{% endblock %} {% block
-extra_css %}
+{% extends "base.html" %}
+{% block title %}User Profile{% endblock %}
+{% block extra_css %}
 <style>
   .login-alert {
     position: fixed;
@@ -11,6 +12,7 @@ extra_css %}
     border-radius: 8px;
     font-weight: bold;
     box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
   }
 
   .container {
@@ -56,17 +58,20 @@ extra_css %}
     padding-bottom: 5px;
   }
 </style>
-{% endblock %} {% block content %}
+{% endblock %}
 
-<div class="d-flex justify-content-between align-items-left mb-4"></div>
+{% block content %}
 
-{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
-%} {% for category, message in messages %}
-<div class="login-alert">{{ message }}</div>
-{% endfor %} {% endif %} {% endwith %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="login-alert">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 
 <div class="container">
-  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger"> Logout </a>
+  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger mb-3"> Logout </a>
 
   <div class="profile-card">
     <img
@@ -76,25 +81,32 @@ extra_css %}
 
     <div class="name">{{ user.name }}</div>
 
-    {% if user.role == 'alumni' and user.alumni_profile %}
-    <div class="headline">
-      {{ user.alumni_profile.headline }} | {{ user.alumni_profile.level_of_study
-      }} | {{ user.alumni_profile.career_interest }}
-    </div>
-    {% endif %} {% if user.role == 'student' and user.student_profile %}
-    <div class="headline">
-      {{ user.student_profile.faculty }} Student | Graduating {{
-      user.student_profile.graduation_year }} | {{ user.student_profile.industry
-      }}
+    {% if user.role == 'mentor' %}
+    <div class="mt-2">
+      <span class="badge bg-warning text-dark">⭐ Verified Mentor</span>
     </div>
     {% endif %}
 
-    <div
-      class="mt-3"
-      id="connection-action-area"
-      data-user-id="{{ user.user_id }}"
-      data-can-poll="{{ 'true' if current_user.user_id != user.user_id else 'false' }}"
-    >
+    {% if user.role == 'alumni' and user.alumni_profile %}
+    <div class="headline">
+      {{ user.alumni_profile.headline }} | {{ user.alumni_profile.level_of_study }} | {{ user.alumni_profile.career_interest }}
+    </div>
+    {% endif %}
+
+    {% if user.role == 'student' and user.student_profile %}
+    <div class="headline">
+      {{ user.student_profile.faculty }} Student | Graduating {{ user.student_profile.graduation_year }} | {{ user.student_profile.industry }}
+    </div>
+    {% endif %}
+
+    {% if user.role == 'mentor' and user.mentor_profile %}
+    <div class="headline">
+      {{ user.mentor_profile.expertise or 'Mentor' }} | {{ user.mentor_profile.availability or 'Availability not specified' }}
+    </div>
+    {% endif %}
+
+    <!-- ADD THIS SECTION HERE -->
+    <div class="mt-3">
       {% if current_user.user_id == user.user_id %}
       <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-primary">
         Edit Profile
@@ -108,19 +120,25 @@ extra_css %}
         Message
       </a>
       {% elif connection_status == "none" %}
-      <button
-        class="btn btn-outline-primary"
-        id="connectBtn"
-        onclick="sendConnectionRequest({{ user.user_id }})"
-      >
-        Connect
-      </button>
+      <button class="btn btn-outline-primary">Connect</button>
       {% elif connection_status == "pending_sent" %}
       <button class="btn btn-secondary" disabled>
         Connection Request Sent
       </button>
       {% elif connection_status == "pending_received" %}
       <button class="btn btn-warning" disabled>Pending Request</button>
+      {% endif %}
+
+      {% if user.role == 'mentor' and current_user.role in ['student', 'alumni'] and current_user.user_id != user.user_id %}
+        {% if mentorship_status == 'none' or mentorship_status == 'rejected' %}
+        <form method="POST" action="{{ url_for('request_mentorship', mentor_id=user.user_id) }}">
+          <button type="submit" class="btn btn-success">Request Mentorship</button>
+        </form>
+        {% elif mentorship_status == 'pending' %}
+        <button class="btn btn-secondary" disabled>Mentorship Pending</button>
+        {% elif mentorship_status == 'accepted' %}
+        <a href="{{ url_for('message_page', user_id=user.user_id) }}" class="btn btn-success">Message Mentor</a>
+        {% endif %}
       {% endif %}
     </div>
   </div>
@@ -139,19 +157,24 @@ extra_css %}
     <h3>Skills</h3>
     <p>{{ user.alumni_profile.skills or "None" }}</p>
   </div>
-  {% endif %} {% if user.role == 'student' and user.student_profile %}
+  {% endif %}
+
+  {% if user.role == 'student' and user.student_profile %}
   <div class="section">
     <h3>Student Information</h3>
 
     <p><strong>Faculty:</strong> {{ user.student_profile.faculty }}</p>
     <p><strong>Department:</strong> {{ user.student_profile.department }}</p>
-    <p>
-      <strong>Graduation Year:</strong> {{ user.student_profile.graduation_year
-      }}
-    </p>
-    <p>
-      <strong>Industry Interest:</strong> {{ user.student_profile.industry }}
-    </p>
+    <p><strong>Graduation Year:</strong> {{ user.student_profile.graduation_year }}</p>
+    <p><strong>Industry Interest:</strong> {{ user.student_profile.industry }}</p>
+  </div>
+  {% endif %}
+
+  {% if user.role == 'mentor' and user.mentor_profile %}
+  <div class="section">
+    <h3>Mentor Information</h3>
+    <p><strong>Expertise:</strong> {{ user.mentor_profile.expertise }}</p>
+    <p><strong>Availability:</strong> {{ user.mentor_profile.availability }}</p>
   </div>
   {% endif %}
 </div>

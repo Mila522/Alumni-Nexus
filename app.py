@@ -9,21 +9,8 @@ from sqlalchemy import or_, func, case
 
 from config import Config
 from email_validator import validate_email, EmailNotValidError
-from models import (
-    db,
-    User,
-    StudentProfile,
-    AlumniProfile,
-    Connection,
-    Message,
-    MentorProfile,
-    MentorshipRequest,
-    Event,
-    RSVP,
-    Post,
-    PostLike,
-    PostComment
-)
+from models import db, User, StudentProfile, AlumniProfile, Connection, Message, MentorProfile, MentorshipRequest, Event, RSVP, Post, PostLike, PostComment
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -101,8 +88,8 @@ def get_connection_status(target_id):
 
     if conn.sender_id == current_user.user_id:
         return "pending_sent"
-
-    return "pending_received"
+    else:
+        return "pending_received"
 
 
 def are_users_connected(user1_id, user2_id):
@@ -117,21 +104,99 @@ def are_users_connected(user1_id, user2_id):
     return connection is not None
 
 
-@app.route("/")
+@app.route("/messages/<int:user_id>")
+@login_required
+def message_page(user_id):
+    other_user = User.query.get_or_404(user_id)
+
+    if current_user.user_id == other_user.user_id:
+        flash("You cannot message yourself.", "error")
+        return redirect(url_for("profile", user_id=current_user.user_id))
+
+    if not are_users_connected(current_user.user_id, other_user.user_id):
+        flash("You can only message users you are connected with.", "error")
+        return redirect(url_for("profile", user_id=other_user.user_id))
+
+    return render_template("message.html", other_user=other_user)
+
+
+@app.route("/api/messages/<int:user_id>", methods=["GET"])
+@login_required
+def get_conversation(user_id):
+    other_user = User.query.get_or_404(user_id)
+
+    if current_user.user_id == other_user.user_id:
+        return jsonify({"error": "You cannot message yourself"}), 400
+
+    if not are_users_connected(current_user.user_id, other_user.user_id):
+        return jsonify({"error": "You can only view conversations with connected users"}), 403
+
+    messages = Message.query.filter(
+        ((Message.sender_id == current_user.user_id) & (Message.receiver_id == other_user.user_id)) |
+        ((Message.sender_id == other_user.user_id) & (Message.receiver_id == current_user.user_id))
+    ).order_by(Message.sent_at.asc()).all()
+
+    results = []
+    for msg in messages:
+        results.append({
+            "message_id": msg.message_id,
+            "sender_id": msg.sender_id,
+            "receiver_id": msg.receiver_id,
+            "message_text": msg.message_text,
+            "sent_at": msg.sent_at.strftime("%Y-%m-%d %H:%M"),
+            "is_mine": msg.sender_id == current_user.user_id
+        })
+
+    return jsonify(results)
+
+
+@app.route("/api/messages/<int:user_id>", methods=["POST"])
+@login_required
+def send_message(user_id):
+    other_user = User.query.get_or_404(user_id)
+
+    if current_user.user_id == other_user.user_id:
+        return jsonify({"error": "You cannot message yourself"}), 400
+
+    if not are_users_connected(current_user.user_id, other_user.user_id):
+        return jsonify({"error": "You can only message users you are connected with"}), 403
+
+    data = request.get_json()
+    message_text = data.get("message_text", "").strip()
+
+    if not message_text:
+        return jsonify({"error": "Message cannot be empty"}), 400
+
+    new_message = Message(
+        sender_id=current_user.user_id,
+        receiver_id=other_user.user_id,
+        message_text=message_text
+    )
+
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Message sent successfully",
+        "message_id": new_message.message_id
+    }), 201
+
+
+@app.route('/')
 def home():
     return render_template("home.html")
 
 
-@app.route("/mynetwork")
+@app.route('/mynetwork')
 @login_required
 def mynetwork():
-    return render_template("mynetwork.html")
+    return render_template('mynetwork.html')
 
 
-@app.route("/pinboard")
+@app.route('/pinboard')
 @login_required
 def pinboard():
-    return render_template("pinboard.html")
+    return render_template('pinboard.html')
 
 
 @app.route("/events")
@@ -140,7 +205,8 @@ def events_page():
     return render_template("events.html")
 
 
-@app.route("/announcements")
+# ADDED: announcements page route
+@app.route('/announcements')
 @login_required
 def announcements_page():
     if current_user.role != "admin":
@@ -188,6 +254,10 @@ def register():
         if not all([name, email, password, role]):
             flash("All fields are required", "error")
             return redirect(url_for("register"))
+
+        if role == "mentor":
+            flash("Mentors must be approved by the admin first. Please register as a student or alumni.", "error")
+            return redirect(url_for('register'))
 
         if User.query.filter_by(email=email).first():
             flash("Email already registered", "error")
@@ -293,10 +363,10 @@ def login():
             if user.role == "admin":
                 return redirect(url_for("admin_dashboard"))
 
-            return redirect(url_for("profile", user_id=user.user_id))
-
-        flash("Invalid email or password", "error")
-        return redirect(url_for("login"))
+            return redirect(url_for('profile', user_id=user.user_id))
+        else:
+            flash("Invalid email or password", "error")
+            return redirect(url_for('login'))
 
     return render_template("login.html")
 
@@ -314,7 +384,17 @@ def logout():
 def profile(user_id):
     user = User.query.get_or_404(user_id)
     status = get_connection_status(user_id)
-    return render_template("profile.html", user=user, connection_status=status)
+
+    mentorship_status = "none"
+    if user.role == "mentor" and current_user.user_id != user.user_id and current_user.role in ["student", "alumni"]:
+        mentorship_status = get_mentorship_status(current_user.user_id, user.user_id)
+
+    return render_template(
+        "profile.html",
+        user=user,
+        connection_status=status,
+        mentorship_status=mentorship_status
+    )
 
 
 @app.route("/profile/edit", methods=["GET", "POST"])
@@ -368,6 +448,9 @@ def edit_profile():
             current_user.alumni_profile.certifications = request.form.get("certifications")
             current_user.alumni_profile.linkedin_url = request.form.get("linkedin_url")
 
+        elif current_user.role == "mentor" and current_user.mentor_profile:
+            current_user.mentor_profile.expertise = request.form.get("expertise", current_user.mentor_profile.expertise)
+
         db.session.commit()
         flash("Profile updated successfully", "success")
         return redirect(url_for("profile", user_id=current_user.user_id))
@@ -375,319 +458,9 @@ def edit_profile():
     return render_template("edit_profile.html", user=current_user)
 
 
-@app.route("/api/connection-status/<int:user_id>", methods=["GET"])
-@login_required
-def connection_status(user_id):
-    return jsonify({"status": get_connection_status(user_id)})
-
-
-@app.route("/api/connect/<int:receiver_id>", methods=["POST"])
-@login_required
-def connect_user(receiver_id):
-    sender_id = current_user.user_id
-
-    if sender_id == receiver_id:
-        return jsonify({"message": "You cannot connect with yourself"}), 400
-
-    existing = Connection.query.filter(
-        ((Connection.sender_id == sender_id) & (Connection.receiver_id == receiver_id)) |
-        ((Connection.sender_id == receiver_id) & (Connection.receiver_id == sender_id))
-    ).first()
-
-    if existing:
-        return jsonify({"message": "Connection already exists or request already sent"}), 400
-
-    connection = Connection(
-        sender_id=sender_id,
-        receiver_id=receiver_id,
-        status="pending"
-    )
-    db.session.add(connection)
-    db.session.commit()
-
-    return jsonify({"message": "Connection request sent successfully"})
-
-
-@app.route("/api/connection-requests", methods=["GET"])
-@login_required
-def get_connection_requests():
-    user_id = current_user.user_id
-    requests = Connection.query.filter_by(receiver_id=user_id, status="pending").all()
-
-    result = []
-    for req in requests:
-        sender = User.query.get(req.sender_id)
-        result.append({
-            "id": req.connection_id,
-            "name": sender.name if sender else "Unknown"
-        })
-
-    return jsonify(result)
-
-
-@app.route("/api/connection-requests/<int:request_id>/accept", methods=["POST"])
-@login_required
-def accept_request(request_id):
-    connection = Connection.query.get_or_404(request_id)
-
-    if connection.receiver_id != current_user.user_id:
-        return jsonify({"error": "Unauthorized"}), 403
-
-    connection.status = "accepted"
-    db.session.commit()
-
-    return jsonify({"message": "Request accepted"})
-
-
-@app.route("/api/connection-requests/<int:request_id>/decline", methods=["POST"])
-@login_required
-def decline_request(request_id):
-    connection = Connection.query.get_or_404(request_id)
-
-    if connection.receiver_id != current_user.user_id:
-        return jsonify({"error": "Unauthorized"}), 403
-
-    db.session.delete(connection)
-    db.session.commit()
-
-    return jsonify({"message": "Request declined"})
-
-
-@app.route("/api/suggestions", methods=["GET"])
-@login_required
-def get_suggestions():
-    user_id = current_user.user_id
-
-    existing_connections = Connection.query.filter(
-        (Connection.sender_id == user_id) | (Connection.receiver_id == user_id)
-    ).all()
-
-    excluded_ids = {user_id}
-    for conn in existing_connections:
-        excluded_ids.add(conn.sender_id)
-        excluded_ids.add(conn.receiver_id)
-
-    users = User.query.filter(
-        ~User.user_id.in_(excluded_ids),
-        User.role != "admin"
-    ).limit(5).all()
-
-    result = []
-    for u in users:
-        display_value = "Unknown"
-
-        if u.student_profile and u.student_profile.industry:
-            display_value = u.student_profile.industry
-        elif u.alumni_profile and u.alumni_profile.career_interest:
-            display_value = u.alumni_profile.career_interest
-        elif u.alumni_profile and u.alumni_profile.headline:
-            display_value = u.alumni_profile.headline
-        else:
-            display_value = u.role.capitalize()
-
-        result.append({
-            "id": u.user_id,
-            "name": u.name,
-            "industry": display_value
-        })
-
-    return jsonify(result)
-
-
-@app.route("/api/network-stats", methods=["GET"])
-@login_required
-def get_network_stats():
-    user_id = current_user.user_id
-
-    total = Connection.query.filter(
-        ((Connection.sender_id == user_id) | (Connection.receiver_id == user_id)) &
-        (Connection.status == "accepted")
-    ).count()
-
-    pending = Connection.query.filter_by(receiver_id=user_id, status="pending").count()
-
-    existing_connections = Connection.query.filter(
-        (Connection.sender_id == user_id) | (Connection.receiver_id == user_id)
-    ).all()
-
-    excluded_ids = {user_id}
-    for conn in existing_connections:
-        excluded_ids.add(conn.sender_id)
-        excluded_ids.add(conn.receiver_id)
-
-    suggestions = User.query.filter(
-        ~User.user_id.in_(excluded_ids),
-        User.role != "admin"
-    ).count()
-
-    return jsonify({
-        "total_connections": total,
-        "pending_requests": pending,
-        "suggestions": suggestions
-    })
-
-
-@app.route("/api/search", methods=["GET"])
-def search_users():
-    query = request.args.get("q", "")
-    role = request.args.get("role", "")
-    industry = request.args.get("industry", "")
-    faculty = request.args.get("faculty", "")
-    graduation_year = request.args.get("year", "")
-
-    users = db.session.query(User).outerjoin(StudentProfile).outerjoin(AlumniProfile)
-
-    if query:
-        users = users.filter(
-            or_(
-                User.name.ilike(f"%{query}%"),
-                User.email.ilike(f"%{query}%")
-            )
-        )
-
-    if role:
-        users = users.filter(User.role == role)
-
-    if industry:
-        users = users.filter(StudentProfile.industry.ilike(f"%{industry}%"))
-
-    if faculty:
-        users = users.filter(StudentProfile.faculty.ilike(f"%{faculty}%"))
-
-    if graduation_year and graduation_year.isdigit():
-        users = users.filter(StudentProfile.graduation_year == int(graduation_year))
-
-    results = []
-    for user in users.all():
-        industry_val = None
-        faculty_val = None
-        year_val = None
-
-        if user.student_profile:
-            industry_val = user.student_profile.industry
-            faculty_val = user.student_profile.faculty
-            year_val = user.student_profile.graduation_year
-
-        results.append({
-            "id": user.user_id,
-            "name": user.name,
-            "email": user.email,
-            "role": user.role,
-            "industry": industry_val,
-            "faculty": faculty_val,
-            "graduation_year": year_val
-        })
-
-    return jsonify(results)
-
-
-@app.route("/api/my-connections", methods=["GET"])
-@login_required
-def my_connections():
-    user_id = current_user.user_id
-
-    connections = Connection.query.filter(
-        ((Connection.sender_id == user_id) | (Connection.receiver_id == user_id)) &
-        (Connection.status == "accepted")
-    ).all()
-
-    result = []
-    for c in connections:
-        other_id = c.receiver_id if c.sender_id == user_id else c.sender_id
-        other_user = User.query.get(other_id)
-
-        if other_user:
-            result.append({
-                "id": other_user.user_id,
-                "name": other_user.name,
-                "email": other_user.email
-            })
-
-    return jsonify(result)
-
-
-@app.route("/messages/<int:user_id>")
-@login_required
-def message_page(user_id):
-    other_user = User.query.get_or_404(user_id)
-
-    if current_user.user_id == other_user.user_id:
-        flash("You cannot message yourself.", "error")
-        return redirect(url_for("profile", user_id=current_user.user_id))
-
-    if not are_users_connected(current_user.user_id, other_user.user_id):
-        flash("You can only message users you are connected with.", "error")
-        return redirect(url_for("profile", user_id=other_user.user_id))
-
-    return render_template("message.html", other_user=other_user)
-
-
-@app.route("/api/messages/<int:user_id>", methods=["GET"])
-@login_required
-def get_conversation(user_id):
-    other_user = User.query.get_or_404(user_id)
-
-    if current_user.user_id == other_user.user_id:
-        return jsonify({"error": "You cannot message yourself"}), 400
-
-    if not are_users_connected(current_user.user_id, other_user.user_id):
-        return jsonify({"error": "You can only view conversations with connected users"}), 403
-
-    messages = Message.query.filter(
-        ((Message.sender_id == current_user.user_id) & (Message.receiver_id == other_user.user_id)) |
-        ((Message.sender_id == other_user.user_id) & (Message.receiver_id == current_user.user_id))
-    ).order_by(Message.sent_at.asc()).all()
-
-    results = []
-    for msg in messages:
-        results.append({
-            "message_id": msg.message_id,
-            "sender_id": msg.sender_id,
-            "receiver_id": msg.receiver_id,
-            "message_text": msg.message_text,
-            "sent_at": msg.sent_at.strftime("%Y-%m-%d %H:%M"),
-            "is_mine": msg.sender_id == current_user.user_id
-        })
-
-    return jsonify(results)
-
-
-@app.route("/api/messages/<int:user_id>", methods=["POST"])
-@login_required
-def send_message(user_id):
-    other_user = User.query.get_or_404(user_id)
-
-    if current_user.user_id == other_user.user_id:
-        return jsonify({"error": "You cannot message yourself"}), 400
-
-    if not are_users_connected(current_user.user_id, other_user.user_id):
-        return jsonify({"error": "You can only message users you are connected with"}), 403
-
-    data = request.get_json(silent=True) or {}
-    message_text = data.get("message_text", "").strip()
-
-    if not message_text:
-        return jsonify({"error": "Message cannot be empty"}), 400
-
-    new_message = Message(
-        sender_id=current_user.user_id,
-        receiver_id=other_user.user_id,
-        message_text=message_text
-    )
-
-    db.session.add(new_message)
-    db.session.commit()
-
-    return jsonify({
-        "message": "Message sent successfully",
-        "message_id": new_message.message_id
-    }), 201
-
-
-# =========================
+# ────────────────────────────────────────────────
 # EVENTS
-# =========================
-
+# ────────────────────────────────────────────────
 @app.route("/api/events", methods=["POST"])
 @login_required
 def create_event():
@@ -767,8 +540,7 @@ def get_events():
 @app.route("/api/events/<int:event_id>/rsvp", methods=["POST"])
 @login_required
 def rsvp_event(event_id):
-    if current_user.role == "admin":
-        return jsonify({"message": "Admin cannot RSVP for events"}), 403
+    user_id = current_user.user_id
 
     Event.query.get_or_404(event_id)
 
@@ -792,72 +564,12 @@ def rsvp_event(event_id):
     db.session.add(rsvp)
     db.session.commit()
 
-    return jsonify({
-        "message": "RSVP successful",
-        "user_status": "rsvp"
-    }), 200
+    return jsonify({"message": "RSVP successful"})
 
 
-@app.route("/api/events/<int:event_id>/attend", methods=["POST"])
-@login_required
-def attend_event(event_id):
-    if current_user.role == "admin":
-        return jsonify({"message": "Admin cannot attend events through RSVP"}), 403
-
-    Event.query.get_or_404(event_id)
-
-    existing_rsvp = RSVP.query.filter_by(
-        user_id=current_user.user_id,
-        event_id=event_id
-    ).first()
-
-    if not existing_rsvp:
-        return jsonify({
-            "message": "Please RSVP first before marking yourself as attending"
-        }), 400
-
-    if existing_rsvp.response == "attending":
-        return jsonify({
-            "message": "You are already marked as attending"
-        }), 400
-
-    existing_rsvp.response = "attending"
-    db.session.commit()
-
-    return jsonify({
-        "message": "You are now marked as attending",
-        "user_status": "attending"
-    }), 200
-
-
-@app.route("/api/events/<int:event_id>/cancel-rsvp", methods=["POST"])
-@login_required
-def cancel_rsvp_event(event_id):
-    if current_user.role == "admin":
-        return jsonify({"message": "Admin cannot cancel RSVP because admin cannot RSVP"}), 403
-
-    Event.query.get_or_404(event_id)
-
-    existing_rsvp = RSVP.query.filter_by(
-        user_id=current_user.user_id,
-        event_id=event_id
-    ).first()
-
-    if not existing_rsvp:
-        return jsonify({"message": "You have not RSVP'd for this event"}), 400
-
-    db.session.delete(existing_rsvp)
-    db.session.commit()
-
-    return jsonify({
-        "message": "RSVP cancelled successfully"
-    }), 200
-
-
-# =========================
-# POSTS
-# =========================
-
+# ────────────────────────────────────────────────
+# PINBOARD POSTS
+# ────────────────────────────────────────────────
 @app.route("/api/posts", methods=["POST"])
 @login_required
 def create_post():
@@ -943,11 +655,11 @@ def toggle_like(post_id):
         db.session.delete(like)
         db.session.commit()
         return jsonify({"action": "unliked"})
-
-    new_like = PostLike(post_id=post_id, user_id=current_user.user_id)
-    db.session.add(new_like)
-    db.session.commit()
-    return jsonify({"action": "liked"})
+    else:
+        new_like = PostLike(post_id=post.post_id, user_id=current_user.user_id)
+        db.session.add(new_like)
+        db.session.commit()
+        return jsonify({"action": "liked"})
 
 
 @app.route("/api/posts/<int:post_id>/comment", methods=["POST"])
@@ -997,11 +709,203 @@ def get_post_comments(post_id):
     return jsonify(results)
 
 
-# =========================
-# ADMIN
-# =========================
+# ────────────────────────────────────────────────
+# CONNECTIONS
+# ────────────────────────────────────────────────
+@app.route("/api/connect/<int:receiver_id>", methods=["POST"])
+@login_required
+def connect_user(receiver_id):
+    sender_id = current_user.user_id
 
-@app.route("/admin/dashboard")
+    if sender_id == receiver_id:
+        return jsonify({"message": "You cannot connect with yourself"}), 400
+
+    existing = Connection.query.filter(
+        ((Connection.sender_id == sender_id) & (Connection.receiver_id == receiver_id)) |
+        ((Connection.sender_id == receiver_id) & (Connection.receiver_id == sender_id))
+    ).first()
+
+    if existing:
+        return jsonify({"message": "Connection already exists or request already sent"}), 400
+
+    connection = Connection(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        status="pending"
+    )
+    db.session.add(connection)
+    db.session.commit()
+    return jsonify({"message": "Connection request sent successfully"})
+
+
+@app.route("/api/connection-requests", methods=["GET"])
+@login_required
+def get_connection_requests():
+    user_id = current_user.user_id
+    requests = Connection.query.filter_by(receiver_id=user_id, status="pending").all()
+
+    result = []
+    for req in requests:
+        sender = User.query.get(req.sender_id)
+        result.append({
+            "id": req.connection_id,
+            "name": sender.name if sender else "Unknown"
+        })
+    return jsonify(result)
+
+
+@app.route("/api/connection-requests/<int:request_id>/accept", methods=["POST"])
+@login_required
+def accept_request(request_id):
+    connection = Connection.query.get_or_404(request_id)
+
+    if connection.receiver_id != current_user.user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    connection.status = "accepted"
+    db.session.commit()
+    return jsonify({"message": "Request accepted"})
+
+
+@app.route("/api/connection-requests/<int:request_id>/decline", methods=["POST"])
+@login_required
+def decline_request(request_id):
+    connection = Connection.query.get_or_404(request_id)
+
+    if connection.receiver_id != current_user.user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    db.session.delete(connection)
+    db.session.commit()
+    return jsonify({"message": "Request declined"})
+
+
+@app.route("/api/suggestions", methods=["GET"])
+@login_required
+def get_suggestions():
+    user_id = current_user.user_id
+    users = User.query.filter(User.user_id != user_id).limit(5).all()
+
+    result = []
+    for u in users:
+        industry = "Unknown"
+        if u.student_profile:
+            industry = u.student_profile.industry
+
+        result.append({
+            "id": u.user_id,
+            "name": u.name,
+            "industry": industry
+        })
+
+    return jsonify(result)
+
+
+@app.route("/api/network-stats", methods=["GET"])
+@login_required
+def get_network_stats():
+    user_id = current_user.user_id
+
+    total = Connection.query.filter(
+        ((Connection.sender_id == user_id) | (Connection.receiver_id == user_id)) &
+        (Connection.status == "accepted")
+    ).count()
+
+    pending = Connection.query.filter_by(
+        receiver_id=user_id,
+        status="pending"
+    ).count()
+
+    suggestions = max(User.query.count() - 1, 0)
+
+    return jsonify({
+        "total_connections": total,
+        "pending_requests": pending,
+        "suggestions": suggestions
+    })
+
+
+@app.route("/api/search", methods=["GET"])
+def search_users():
+    query = request.args.get("q", "")
+    role = request.args.get("role", "")
+    industry = request.args.get("industry", "")
+    faculty = request.args.get("faculty", "")
+    graduation_year = request.args.get("year", "")
+
+    users = db.session.query(User).outerjoin(StudentProfile).outerjoin(AlumniProfile)
+
+    if query:
+        users = users.filter(
+            or_(
+                User.name.ilike(f"%{query}%"),
+                User.email.ilike(f"%{query}%")
+            )
+        )
+
+    if role:
+        users = users.filter(User.role == role)
+
+    if industry:
+        users = users.filter(StudentProfile.industry.ilike(f"%{industry}%"))
+
+    if faculty:
+        users = users.filter(StudentProfile.faculty.ilike(f"%{faculty}%"))
+
+    if graduation_year:
+        if graduation_year.isdigit():
+            users = users.filter(StudentProfile.graduation_year == int(graduation_year))
+
+    results = []
+    for user in users.all():
+        industry_val = None
+        faculty_val = None
+        year_val = None
+
+        if user.student_profile:
+            industry_val = user.student_profile.industry
+            faculty_val = user.student_profile.faculty
+            year_val = user.student_profile.graduation_year
+
+        results.append({
+            "id": user.user_id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "industry": industry_val,
+            "faculty": faculty_val,
+            "graduation_year": year_val
+        })
+
+    return jsonify(results)
+
+
+@app.route("/api/my-connections", methods=["GET"])
+@login_required
+def my_connections():
+    user_id = current_user.user_id
+
+    connections = Connection.query.filter(
+        ((Connection.sender_id == user_id) | (Connection.receiver_id == user_id)) &
+        (Connection.status == "accepted")
+    ).all()
+
+    result = []
+    for c in connections:
+        other_id = c.receiver_id if c.sender_id == user_id else c.sender_id
+        other_user = User.query.get(other_id)
+
+        if other_user:
+            result.append({
+                "id": other_user.user_id,
+                "name": other_user.name,
+                "email": other_user.email
+            })
+
+    return jsonify(result)
+
+
+@app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
     if current_user.role != "admin":
@@ -1026,7 +930,8 @@ def admin_dashboard():
     )
 
 
-@app.route("/admin/alumni")
+# ADDED: admin alumni view page
+@app.route('/admin/alumni')
 @login_required
 def admin_alumni():
     if current_user.role != "admin":
@@ -1037,7 +942,8 @@ def admin_alumni():
     return render_template("admin_alumni.html", alumni_users=alumni_users)
 
 
-@app.route("/admin/students")
+# ADDED: admin students view page
+@app.route('/admin/students')
 @login_required
 def admin_students():
     if current_user.role != "admin":
@@ -1048,7 +954,8 @@ def admin_students():
     return render_template("admin_students.html", student_users=student_users)
 
 
-@app.route("/admin/events")
+# ADDED: admin events view page
+@app.route('/admin/events')
 @login_required
 def admin_events():
     if current_user.role != "admin":
@@ -1059,7 +966,8 @@ def admin_events():
     return render_template("admin_events.html", events=events)
 
 
-@app.route("/admin/mentors")
+# ADDED: admin mentors view page
+@app.route('/admin/mentors')
 @login_required
 def admin_mentors():
     if current_user.role != "admin":
@@ -1070,7 +978,8 @@ def admin_mentors():
     return render_template("admin_mentors.html", mentor_users=mentor_users)
 
 
-@app.route("/admin/event-attendees")
+# ADDED: admin event attendees view page
+@app.route('/admin/event-attendees')
 @login_required
 def admin_event_attendees():
     if current_user.role != "admin":
@@ -1088,7 +997,8 @@ def admin_event_attendees():
     return render_template("admin_event_attendees.html", attendees=attendees)
 
 
-@app.route("/admin/rsvps")
+# ADDED: admin RSVPs view page
+@app.route('/admin/rsvps')
 @login_required
 def admin_rsvps():
     if current_user.role != "admin":

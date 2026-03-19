@@ -16,7 +16,7 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
-    role = db.Column(db.String(50), nullable=False)
+    role = db.Column(db.String(50), nullable=False)  # student / alumni / mentor / ...
 
     profile_image = db.Column(db.String(255), default='default-profile.png')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -29,6 +29,9 @@ class User(UserMixin, db.Model):
     )
     mentor_profile = db.relationship(
         'MentorProfile', backref='user', uselist=False, cascade="all, delete-orphan"
+    )
+    mentor_applications = db.relationship(
+        'MentorApplication', backref='user', lazy=True, cascade="all, delete-orphan"
     )
 
     posts = db.relationship(
@@ -102,8 +105,23 @@ class MentorProfile(db.Model):
         primary_key=True
     )
 
-    expertise = db.Column(db.String(200), nullable=True)
-    availability = db.Column(db.String(100), nullable=True)
+    expertise = db.Column(db.String(100), nullable=True)
+
+
+# ────────────────────────────────────────────────
+# MENTOR APPLICATIONS
+# ────────────────────────────────────────────────
+class MentorApplication(db.Model):
+    __tablename__ = 'mentor_applications'
+
+    application_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+
+    status = db.Column(db.String(20), default='pending')  # pending / approved / rejected
+    expertise = db.Column(db.String(100), nullable=False)  # Information Technology / Business / Engineering
+    motivation = db.Column(db.Text, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 # ────────────────────────────────────────────────
@@ -176,7 +194,7 @@ class RSVP(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     event_id = db.Column(db.Integer, db.ForeignKey('events.event_id'), nullable=False)
 
-    response = db.Column(db.String(20), default='rsvp')  # rsvp / attending
+    response = db.Column(db.String(20), default='going')  # going / maybe / not_going
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     __table_args__ = (
