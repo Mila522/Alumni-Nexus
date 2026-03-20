@@ -1,204 +1,531 @@
 {% extends "base.html" %}
-{% block title %}User Profile{% endblock %}
+{% block title %}{{ user.name }} — Alumni Nexus{% endblock %}
+
 {% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
 <style>
-  .login-alert {
+  :root {
+    --navy:       #042C53;
+    --navy-mid:   #0C447C;
+    --blue:       #378ADD;
+    --blue-light: #85B7EB;
+    --blue-pale:  #EAF2FB;
+    --text:       #1A2B3C;
+    --muted:      #6B7F93;
+    --border:     #D9E8F5;
+    --white:      #FFFFFF;
+    --surface:    #F5F9FD;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--surface);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+  }
+
+  /* ── Flash alerts ── */
+  .flash-wrap {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #28a745;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 8px;
-    font-weight: bold;
-    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
+    top: 76px;
+    right: 24px;
     z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
-  .container {
-    width: 70%;
-    margin: auto;
-    margin-top: 40px;
+  .flash-alert {
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border-left: 4px solid var(--blue);
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(4,44,83,0.18);
+    animation: slideIn 0.3s ease;
   }
 
-  .profile-card {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
 
-  .profile-card img {
-    width: 150px;
-    height: 150px;
+  /* ── Page layout ── */
+  .profile-page {
+    max-width: 860px;
+    margin: 36px auto 60px;
+    padding: 0 20px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Hero card ── */
+  .hero-card {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(4,44,83,0.08);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .hero-banner {
+    height: 120px;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 50%, var(--blue) 100%);
+    position: relative;
+  }
+
+  .hero-banner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .hero-body {
+    padding: 0 32px 28px;
+    position: relative;
+  }
+
+  .avatar-wrap {
+    position: relative;
+    display: inline-block;
+    margin-top: -52px;
+    margin-bottom: 12px;
+  }
+
+  .avatar-wrap img {
+    width: 104px;
+    height: 104px;
     border-radius: 50%;
     object-fit: cover;
-    margin-bottom: 10px;
+    border: 4px solid var(--white);
+    box-shadow: 0 2px 12px rgba(4,44,83,0.15);
+    display: block;
   }
 
-  .name {
-    font-size: 28px;
-    font-weight: bold;
+  .hero-meta {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
   }
 
-  .headline {
-    font-size: 18px;
-    color: #555;
-    margin-top: 5px;
+  .hero-info { flex: 1; min-width: 0; }
+
+  .hero-name {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.7rem;
+    color: var(--navy);
+    margin: 0 0 4px;
+    line-height: 1.2;
   }
 
-  .section {
-    margin-top: 30px;
-    text-align: left;
+  .hero-headline {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin: 0 0 10px;
+    line-height: 1.5;
   }
 
-  .section h3 {
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 5px;
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge-mentor  { background: #FFF8E1; color: #B76E00; border: 1px solid #FFD97D; }
+  .badge-alumni  { background: var(--blue-pale); color: var(--navy-mid); border: 1px solid var(--border); }
+  .badge-student { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+  .badge-admin   { background: #FCE4EC; color: #880E4F; border: 1px solid #F48FB1; }
+
+  /* ── Action buttons ── */
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+  }
+
+  .btn-pf {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+  }
+
+  .btn-pf-primary {
+    background: var(--blue);
+    color: #fff;
+  }
+  .btn-pf-primary:hover { background: #185FA5; color: #fff; transform: translateY(-1px); }
+
+  .btn-pf-outline {
+    background: transparent;
+    color: var(--blue);
+    border: 1.5px solid var(--blue);
+  }
+  .btn-pf-outline:hover { background: var(--blue-pale); transform: translateY(-1px); }
+
+  .btn-pf-ghost {
+    background: var(--surface);
+    color: var(--text);
+    border: 1.5px solid var(--border);
+  }
+  .btn-pf-ghost:hover { border-color: var(--blue); color: var(--blue); transform: translateY(-1px); }
+
+  .btn-pf-success {
+    background: #2E7D32;
+    color: #fff;
+  }
+  .btn-pf-success:hover { background: #1B5E20; color: #fff; transform: translateY(-1px); }
+
+  .btn-pf:disabled, .btn-pf[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* ── Info cards ── */
+  .info-card {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(4,44,83,0.07);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+
+  .info-card h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--navy);
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--blue-pale);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .info-card h2 i {
+    color: var(--blue);
+    font-size: 1rem;
+  }
+
+  /* Info grid */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .info-item label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .info-item p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--text);
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  /* Full-width info rows */
+  .info-row {
+    margin-bottom: 18px;
+  }
+
+  .info-row:last-child { margin-bottom: 0; }
+
+  .info-row label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .info-row p {
+    margin: 0;
+    font-size: 0.93rem;
+    color: var(--text);
+    line-height: 1.65;
+  }
+
+  /* Tag pills */
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tag {
+    background: var(--blue-pale);
+    color: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 4px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  /* Mentorship request form inline */
+  .mentorship-form { display: inline; }
+  .mentorship-form button { margin: 0; }
+
+  /* Divider */
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
   }
 </style>
 {% endblock %}
 
 {% block content %}
 
+<!-- Flash messages -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-    {% for category, message in messages %}
-      <div class="login-alert">{{ message }}</div>
-    {% endfor %}
+    <div class="flash-wrap">
+      {% for category, message in messages %}
+        <div class="flash-alert">{{ message }}</div>
+      {% endfor %}
+    </div>
   {% endif %}
 {% endwith %}
 
-<div class="container">
-  <a href="{{ url_for('logout') }}" class="btn btn-outline-danger mb-3"> Logout </a>
+<div class="profile-page">
 
-  <div class="profile-card">
-    <img
-      src="{{ url_for('static', filename=user.profile_image) }}"
-      alt="Profile Picture"
-    />
+  <!-- ── Hero Card ── -->
+  <div class="hero-card">
+    <div class="hero-banner"></div>
+    <div class="hero-body">
 
-    <div class="name">{{ user.name }}</div>
+      <div class="avatar-wrap">
+        <img src="{{ url_for('static', filename=user.profile_image) }}" alt="{{ user.name }}">
+      </div>
 
-    {% if user.role == 'mentor' %}
-    <div class="mt-2">
-      <span class="badge bg-warning text-dark">⭐ Verified Mentor</span>
-    </div>
-    {% endif %}
+      <div class="hero-meta">
+        <div class="hero-info">
+          <h1 class="hero-name">{{ user.name }}</h1>
 
-    {% if user.role == 'alumni' and user.alumni_profile %}
-    <div class="headline">
-      {{ user.alumni_profile.headline }} | {{ user.alumni_profile.level_of_study }} | {{ user.alumni_profile.career_interest }}
-    </div>
-    {% endif %}
+          <!-- Role-specific headline -->
+          {% if user.role == 'alumni' and user.alumni_profile %}
+            <p class="hero-headline">{{ user.alumni_profile.headline }} &middot; {{ user.alumni_profile.level_of_study }} &middot; {{ user.alumni_profile.career_interest }}</p>
+          {% elif user.role == 'student' and user.student_profile %}
+            <p class="hero-headline">{{ user.student_profile.faculty }} Student &middot; Graduating {{ user.student_profile.graduation_year }} &middot; {{ user.student_profile.industry }}</p>
+          {% elif user.role == 'mentor' and user.mentor_profile %}
+            <p class="hero-headline">{{ user.mentor_profile.expertise or 'Mentor' }}</p>
+          {% endif %}
 
-    {% if user.role == 'student' and user.student_profile %}
-    <div class="headline">
-      {{ user.student_profile.faculty }} Student | Graduating {{ user.student_profile.graduation_year }} | {{ user.student_profile.industry }}
-    </div>
-    {% endif %}
+          <!-- Role badge -->
+          {% if user.role == 'mentor' %}
+            <span class="role-badge badge-mentor"><i class="bi bi-star-fill"></i> Verified Mentor</span>
+          {% elif user.role == 'alumni' %}
+            <span class="role-badge badge-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
+          {% elif user.role == 'student' %}
+            <span class="role-badge badge-student"><i class="bi bi-book-fill"></i> Student</span>
+          {% elif user.role == 'admin' %}
+            <span class="role-badge badge-admin"><i class="bi bi-shield-fill"></i> Admin</span>
+          {% endif %}
+        </div>
 
-    {% if user.role == 'mentor' and user.mentor_profile %}
-    <div class="headline">
-      {{ user.mentor_profile.expertise or 'Mentor' }} | {{ user.mentor_profile.availability or 'Availability not specified' }}
-    </div>
-    {% endif %}
+        <!-- Action buttons -->
+        <div class="hero-actions">
+          {% if current_user.user_id == user.user_id %}
+            <a href="{{ url_for('edit_profile') }}" class="btn-pf btn-pf-outline">
+              <i class="bi bi-pencil"></i> Edit Profile
+            </a>
 
-    <!-- ADD THIS SECTION HERE -->
-    <div class="mt-3">
-      {% if current_user.user_id == user.user_id %}
-      <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-primary">
-        Edit Profile
-      </a>
-      {% elif connection_status == "connected" %}
-      <button class="btn btn-success" disabled>Accepted</button>
-      <a
-        href="{{ url_for('message_page', user_id=user.user_id) }}"
-        class="btn btn-primary ms-2"
-      >
-        Message
-      </a>
-      {% elif connection_status == "none" %}
-      <button class="btn btn-outline-primary">Connect</button>
-      {% elif connection_status == "pending_sent" %}
-      <button class="btn btn-secondary" disabled>
-        Connection Request Sent
-      </button>
-      {% elif connection_status == "pending_received" %}
-      <button class="btn btn-warning" disabled>Pending Request</button>
-      {% endif %}
+          {% elif connection_status == "connected" %}
+            <button class="btn-pf btn-pf-ghost" disabled>
+              <i class="bi bi-check-circle-fill" style="color:#2E7D32"></i> Connected
+            </button>
+            <a href="{{ url_for('message_page', user_id=user.user_id) }}" class="btn-pf btn-pf-primary">
+              <i class="bi bi-chat-dots"></i> Message
+            </a>
 
-      {% if user.role == 'mentor' and current_user.role in ['student', 'alumni'] and current_user.user_id != user.user_id %}
-        {% if mentorship_status == 'none' or mentorship_status == 'rejected' %}
-        <form method="POST" action="{{ url_for('request_mentorship', mentor_id=user.user_id) }}">
-          <button type="submit" class="btn btn-success">Request Mentorship</button>
-        </form>
-        {% elif mentorship_status == 'pending' %}
-        <button class="btn btn-secondary" disabled>Mentorship Pending</button>
-        {% elif mentorship_status == 'accepted' %}
-        <a href="{{ url_for('message_page', user_id=user.user_id) }}" class="btn btn-success">Message Mentor</a>
-        {% endif %}
-      {% endif %}
+          {% elif connection_status == "none" %}
+            <button class="btn-pf btn-pf-primary" id="connectBtn" data-uid="{{ user.user_id }}" onclick="sendConnectionRequest(this.dataset.uid)">
+              <i class="bi bi-person-plus"></i> Connect
+            </button>
+
+          {% elif connection_status == "pending_sent" %}
+            <button class="btn-pf btn-pf-ghost" disabled>
+              <i class="bi bi-clock"></i> Request Sent
+            </button>
+
+          {% elif connection_status == "pending_received" %}
+            <button class="btn-pf btn-pf-ghost" disabled>
+              <i class="bi bi-hourglass-split"></i> Pending Request
+            </button>
+          {% endif %}
+
+          <!-- Mentorship button -->
+          {% if user.role == 'mentor' and current_user.role in ['student', 'alumni'] and current_user.user_id != user.user_id %}
+            {% if mentorship_status == 'none' or mentorship_status == 'rejected' %}
+              <form method="POST" action="{{ url_for('request_mentorship', mentor_id=user.user_id) }}" class="mentorship-form">
+                <button type="submit" class="btn-pf btn-pf-success">
+                  <i class="bi bi-person-hearts"></i> Request Mentorship
+                </button>
+              </form>
+            {% elif mentorship_status == 'pending' %}
+              <button class="btn-pf btn-pf-ghost" disabled>
+                <i class="bi bi-clock"></i> Mentorship Pending
+              </button>
+            {% elif mentorship_status == 'accepted' %}
+              <a href="{{ url_for('message_page', user_id=user.user_id) }}" class="btn-pf btn-pf-success">
+                <i class="bi bi-chat-heart"></i> Message Mentor
+              </a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+
     </div>
   </div>
 
+  <!-- ── Alumni Details ── -->
   {% if user.role == 'alumni' and user.alumni_profile %}
-  <div class="section">
-    <h3>Experience</h3>
-    <p>{{ user.alumni_profile.experience or "None" }}</p>
+  <div class="info-card">
+    <h2><i class="bi bi-person-lines-fill"></i> Professional Profile</h2>
 
-    <h3>Education</h3>
-    <p>{{ user.alumni_profile.education or "None" }}</p>
+    <div class="info-row">
+      <label>Experience</label>
+      <p>{{ user.alumni_profile.experience or "Not specified" }}</p>
+    </div>
+    <div class="section-divider"></div>
 
-    <h3>Certificates</h3>
-    <p>{{ user.alumni_profile.certifications or "None" }}</p>
+    <div class="info-row">
+      <label>Education</label>
+      <p>{{ user.alumni_profile.education or "Not specified" }}</p>
+    </div>
+    <div class="section-divider"></div>
 
-    <h3>Skills</h3>
-    <p>{{ user.alumni_profile.skills or "None" }}</p>
+    <div class="info-row">
+      <label>Certifications</label>
+      <p>{{ user.alumni_profile.certifications or "None listed" }}</p>
+    </div>
+    <div class="section-divider"></div>
+
+    <div class="info-row">
+      <label>Skills</label>
+      {% if user.alumni_profile.skills %}
+        <div class="tag-list">
+          {% for skill in user.alumni_profile.skills.split(',') %}
+            <span class="tag">{{ skill.strip() }}</span>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>No skills listed</p>
+      {% endif %}
+    </div>
   </div>
   {% endif %}
 
+  <!-- ── Student Details ── -->
   {% if user.role == 'student' and user.student_profile %}
-  <div class="section">
-    <h3>Student Information</h3>
-
-    <p><strong>Faculty:</strong> {{ user.student_profile.faculty }}</p>
-    <p><strong>Department:</strong> {{ user.student_profile.department }}</p>
-    <p><strong>Graduation Year:</strong> {{ user.student_profile.graduation_year }}</p>
-    <p><strong>Industry Interest:</strong> {{ user.student_profile.industry }}</p>
+  <div class="info-card">
+    <h2><i class="bi bi-mortarboard"></i> Academic Information</h2>
+    <div class="info-grid">
+      <div class="info-item">
+        <label>Faculty</label>
+        <p>{{ user.student_profile.faculty }}</p>
+      </div>
+      <div class="info-item">
+        <label>Department</label>
+        <p>{{ user.student_profile.department }}</p>
+      </div>
+      <div class="info-item">
+        <label>Graduation Year</label>
+        <p>{{ user.student_profile.graduation_year }}</p>
+      </div>
+      <div class="info-item">
+        <label>Industry Interest</label>
+        <p>{{ user.student_profile.industry }}</p>
+      </div>
+    </div>
   </div>
   {% endif %}
 
+  <!-- ── Mentor Details ── -->
   {% if user.role == 'mentor' and user.mentor_profile %}
-  <div class="section">
-    <h3>Mentor Information</h3>
-    <p><strong>Expertise:</strong> {{ user.mentor_profile.expertise }}</p>
-    <p><strong>Availability:</strong> {{ user.mentor_profile.availability }}</p>
+  <div class="info-card">
+    <h2><i class="bi bi-award"></i> Mentor Profile</h2>
+    <div class="info-grid">
+      <div class="info-item">
+        <label>Area of Expertise</label>
+        <p>{{ user.mentor_profile.expertise or "Not specified" }}</p>
+      </div>
+      <div class="info-item">
+        <label>Availability</label>
+        <p>{{ user.mentor_profile.availability or "Not specified" }}</p>
+      </div>
+    </div>
   </div>
   {% endif %}
+
 </div>
 
 <script>
+  // Auto-dismiss flash alerts
+  setTimeout(() => {
+    document.querySelectorAll('.flash-alert').forEach(el => {
+      el.style.transition = 'opacity 0.4s ease';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 400);
+    });
+  }, 4000);
+
   async function sendConnectionRequest(userId) {
     const btn = document.getElementById("connectBtn");
+    if (!btn) return;
 
     try {
-      const response = await fetch(`/api/connect/${userId}`, {
-        method: "POST",
-      });
-
+      const response = await fetch(`/api/connect/${userId}`, { method: "POST" });
       const data = await response.json();
 
       if (response.ok) {
-        btn.textContent = "Connection Request Sent";
-        btn.classList.remove("btn-outline-primary");
-        btn.classList.add("btn-secondary");
+        btn.innerHTML = '<i class="bi bi-clock"></i> Request Sent';
+        btn.classList.remove('btn-pf-primary');
+        btn.classList.add('btn-pf-ghost');
         btn.disabled = true;
       } else {
-        alert(
-          data.message || data.error || "Unable to send connection request",
-        );
+        alert(data.message || data.error || "Unable to send connection request");
       }
     } catch (error) {
       alert("Something went wrong while sending the request.");
@@ -209,48 +536,24 @@
     try {
       const response = await fetch(`/api/connection-status/${userId}`);
       const data = await response.json();
-
       const actionArea = document.getElementById("connection-action-area");
       if (!actionArea) return;
 
       if (data.status === "connected") {
         actionArea.innerHTML = `
-          <button class="btn btn-success" disabled>Accepted</button>
-          <a href="/messages/${userId}" class="btn btn-primary ms-2">Message</a>
-        `;
+          <button class="btn-pf btn-pf-ghost" disabled><i class="bi bi-check-circle-fill" style="color:#2E7D32"></i> Connected</button>
+          <a href="/messages/${userId}" class="btn-pf btn-pf-primary"><i class="bi bi-chat-dots"></i> Message</a>`;
       } else if (data.status === "pending_sent") {
-        actionArea.innerHTML = `
-          <button class="btn btn-secondary" disabled>Connection Request Sent</button>
-        `;
-      } else if (data.status === "pending_received") {
-        actionArea.innerHTML = `
-          <button class="btn btn-warning" disabled>Pending Request</button>
-        `;
+        actionArea.innerHTML = `<button class="btn-pf btn-pf-ghost" disabled><i class="bi bi-clock"></i> Request Sent</button>`;
       } else if (data.status === "none") {
-        actionArea.innerHTML = `
-          <button
-            class="btn btn-outline-primary"
-            id="connectBtn"
-            onclick="sendConnectionRequest(${userId})"
-          >
-            Connect
-          </button>
-        `;
+        actionArea.innerHTML = `<button class="btn-pf btn-pf-primary" id="connectBtn" data-uid="${userId}" onclick="sendConnectionRequest(this.dataset.uid)"><i class="bi bi-person-plus"></i> Connect</button>`;
       }
-    } catch (error) {
-      console.log("Could not refresh connection status");
-    }
+    } catch (e) {}
   }
 
   const actionArea = document.getElementById("connection-action-area");
   const userId = actionArea ? actionArea.dataset.userId : null;
-  const canPoll = actionArea ? actionArea.dataset.canPoll === "true" : false;
-
-  if (canPoll && userId) {
-    setInterval(() => {
-      refreshConnectionStatus(userId);
-    }, 5000);
-  }
+  if (userId) setInterval(() => refreshConnectionStatus(userId), 5000);
 </script>
 
 {% endblock %}

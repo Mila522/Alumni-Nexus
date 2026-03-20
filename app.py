@@ -22,7 +22,9 @@ app.secret_key = app.config.get("SECRET_KEY", "fallback_secret_key")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "login"
+# ── CHANGED: unauthenticated users go to home (landing page), not login ──
+login_manager.login_view = "home"
+login_manager.login_message = ""          # suppress the default flash message
 
 app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "gif"}
@@ -96,12 +98,10 @@ def get_connection_status(target_id):
         return "pending_received"
 
 
-# ── MODIFIED: now also allows messaging between accepted mentor/mentee pairs ──
 def are_users_connected(user1_id, user2_id):
     """Two users may message each other if they share an accepted Connection
     OR if one is a mentor and the other is their accepted mentee."""
 
-    # 1. Standard connection
     connection = Connection.query.filter(
         (
             ((Connection.sender_id == user1_id) & (Connection.receiver_id == user2_id)) |
@@ -112,7 +112,6 @@ def are_users_connected(user1_id, user2_id):
     if connection:
         return True
 
-    # 2. Accepted mentorship relationship (either direction)
     mentorship = MentorshipRequest.query.filter(
         (
             ((MentorshipRequest.student_id == user1_id) & (MentorshipRequest.mentor_id == user2_id)) |
@@ -126,10 +125,8 @@ def are_users_connected(user1_id, user2_id):
     return False
 
 
-# ── NEW: returns context about the relationship type for the message UI ──
 def get_conversation_context(user1_id, user2_id):
-    """Return a dict describing why these two users can talk.
-    Used by message.html to show 'Your Mentor' / 'Your Mentee' / 'Connection'."""
+    """Return a dict describing why these two users can talk."""
 
     mentorship = MentorshipRequest.query.filter(
         (
@@ -247,6 +244,11 @@ def send_message(user_id):
 # ────────────────────────────────────────────────
 @app.route('/')
 def home():
+    # ── CHANGED: authenticated users skip the landing page ──
+    if current_user.is_authenticated:
+        if current_user.role == "admin":
+            return redirect(url_for("admin_dashboard"))
+        return redirect(url_for("profile", user_id=current_user.user_id))
     return render_template("home.html")
 
 
@@ -300,6 +302,10 @@ def admin_new_event():
 # ────────────────────────────────────────────────
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    # ── CHANGED: already logged-in users skip registration ──
+    if current_user.is_authenticated:
+        return redirect(url_for("home"))
+
     if request.method == "POST":
         name = request.form.get("name")
         email = request.form.get("email")
@@ -408,6 +414,10 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    # ── CHANGED: already logged-in users skip login ──
+    if current_user.is_authenticated:
+        return redirect(url_for("home"))
+
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
@@ -420,12 +430,13 @@ def login():
 
         if user and check_password_hash(user.password, password):
             login_user(user)
-            flash(f"{user.name}, you've successfully logged in", "success")
+            flash(f"Welcome back, {user.name}!", "success")
 
+            # ── CHANGED: always go through home() which routes by role ──
             if user.role == "admin":
                 return redirect(url_for("admin_dashboard"))
 
-            return redirect(url_for('profile', user_id=user.user_id))
+            return redirect(url_for("profile", user_id=user.user_id))
         else:
             flash("Invalid email or password", "error")
             return redirect(url_for('login'))
@@ -438,7 +449,8 @@ def login():
 def logout():
     logout_user()
     flash("You have been logged out", "success")
-    return redirect(url_for("login"))
+    # ── CHANGED: logout returns to landing page ──
+    return redirect(url_for("home"))
 
 
 # ────────────────────────────────────────────────
@@ -832,7 +844,6 @@ def rsvp_event(event_id):
     return jsonify({"message": "RSVP successful"})
 
 
-# ── NEW: Mark Attending ────────────────────────────────────────────────────────
 @app.route("/api/events/<int:event_id>/attend", methods=["POST"])
 @login_required
 def attend_event(event_id):
@@ -858,7 +869,6 @@ def attend_event(event_id):
     return jsonify({"message": "Marked as attending"})
 
 
-# ── NEW: Cancel RSVP ──────────────────────────────────────────────────────────
 @app.route("/api/events/<int:event_id>/cancel-rsvp", methods=["POST"])
 @login_required
 def cancel_rsvp(event_id):
