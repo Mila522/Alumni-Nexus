@@ -9,7 +9,21 @@ from sqlalchemy import or_, func, case
 
 from config import Config
 from email_validator import validate_email, EmailNotValidError
-from models import db, User, StudentProfile, AlumniProfile, Connection, Message, MentorProfile, MentorshipRequest, Event, RSVP, Post, PostLike, PostComment
+from models import (
+    db,
+    User,
+    StudentProfile,
+    AlumniProfile,
+    Connection,
+    Message,
+    MentorProfile,
+    MentorshipRequest,
+    Event,
+    RSVP,
+    Post,
+    PostLike,
+    PostComment
+)
 
 
 app = Flask(__name__)
@@ -88,8 +102,8 @@ def get_connection_status(target_id):
 
     if conn.sender_id == current_user.user_id:
         return "pending_sent"
-    else:
-        return "pending_received"
+
+    return "pending_received"
 
 
 def are_users_connected(user1_id, user2_id):
@@ -104,99 +118,33 @@ def are_users_connected(user1_id, user2_id):
     return connection is not None
 
 
-@app.route("/messages/<int:user_id>")
-@login_required
-def message_page(user_id):
-    other_user = User.query.get_or_404(user_id)
+def get_mentorship_status(student_id, mentor_id):
+    mentorship_request = MentorshipRequest.query.filter_by(
+        student_id=student_id,
+        mentor_id=mentor_id
+    ).first()
 
-    if current_user.user_id == other_user.user_id:
-        flash("You cannot message yourself.", "error")
-        return redirect(url_for("profile", user_id=current_user.user_id))
+    if not mentorship_request:
+        return "none"
 
-    if not are_users_connected(current_user.user_id, other_user.user_id):
-        flash("You can only message users you are connected with.", "error")
-        return redirect(url_for("profile", user_id=other_user.user_id))
-
-    return render_template("message.html", other_user=other_user)
+    return mentorship_request.status
 
 
-@app.route("/api/messages/<int:user_id>", methods=["GET"])
-@login_required
-def get_conversation(user_id):
-    other_user = User.query.get_or_404(user_id)
-
-    if current_user.user_id == other_user.user_id:
-        return jsonify({"error": "You cannot message yourself"}), 400
-
-    if not are_users_connected(current_user.user_id, other_user.user_id):
-        return jsonify({"error": "You can only view conversations with connected users"}), 403
-
-    messages = Message.query.filter(
-        ((Message.sender_id == current_user.user_id) & (Message.receiver_id == other_user.user_id)) |
-        ((Message.sender_id == other_user.user_id) & (Message.receiver_id == current_user.user_id))
-    ).order_by(Message.sent_at.asc()).all()
-
-    results = []
-    for msg in messages:
-        results.append({
-            "message_id": msg.message_id,
-            "sender_id": msg.sender_id,
-            "receiver_id": msg.receiver_id,
-            "message_text": msg.message_text,
-            "sent_at": msg.sent_at.strftime("%Y-%m-%d %H:%M"),
-            "is_mine": msg.sender_id == current_user.user_id
-        })
-
-    return jsonify(results)
-
-
-@app.route("/api/messages/<int:user_id>", methods=["POST"])
-@login_required
-def send_message(user_id):
-    other_user = User.query.get_or_404(user_id)
-
-    if current_user.user_id == other_user.user_id:
-        return jsonify({"error": "You cannot message yourself"}), 400
-
-    if not are_users_connected(current_user.user_id, other_user.user_id):
-        return jsonify({"error": "You can only message users you are connected with"}), 403
-
-    data = request.get_json()
-    message_text = data.get("message_text", "").strip()
-
-    if not message_text:
-        return jsonify({"error": "Message cannot be empty"}), 400
-
-    new_message = Message(
-        sender_id=current_user.user_id,
-        receiver_id=other_user.user_id,
-        message_text=message_text
-    )
-
-    db.session.add(new_message)
-    db.session.commit()
-
-    return jsonify({
-        "message": "Message sent successfully",
-        "message_id": new_message.message_id
-    }), 201
-
-
-@app.route('/')
+@app.route("/")
 def home():
     return render_template("home.html")
 
 
-@app.route('/mynetwork')
+@app.route("/mynetwork")
 @login_required
 def mynetwork():
-    return render_template('mynetwork.html')
+    return render_template("mynetwork.html")
 
 
-@app.route('/pinboard')
+@app.route("/pinboard")
 @login_required
 def pinboard():
-    return render_template('pinboard.html')
+    return render_template("pinboard.html")
 
 
 @app.route("/events")
@@ -205,8 +153,59 @@ def events_page():
     return render_template("events.html")
 
 
-# ADDED: announcements page route
-@app.route('/announcements')
+@app.route("/mentorship")
+@login_required
+def mentorship():
+    mentors = User.query.filter_by(role="mentor").all()
+    return render_template("mentorship.html", mentors=mentors)
+
+
+@app.route("/mentorship/request/<int:mentor_id>", methods=["POST"])
+@login_required
+def request_mentorship(mentor_id):
+    if current_user.role not in ["student", "alumni"]:
+        flash("Only students and alumni can request mentorship.", "error")
+        return redirect(url_for("mentorship"))
+
+    mentor_user = User.query.get_or_404(mentor_id)
+
+    if mentor_user.role != "mentor":
+        flash("Selected user is not a mentor.", "error")
+        return redirect(url_for("mentorship"))
+
+    existing_request = MentorshipRequest.query.filter_by(
+        student_id=current_user.user_id,
+        mentor_id=mentor_id
+    ).first()
+
+    if existing_request:
+        flash("You have already sent a mentorship request to this mentor.", "error")
+        return redirect(url_for("mentorship"))
+
+    mentorship_request = MentorshipRequest(
+        student_id=current_user.user_id,
+        mentor_id=mentor_id,
+        status="pending"
+    )
+
+    db.session.add(mentorship_request)
+    db.session.commit()
+
+    flash("Mentorship request sent successfully.", "success")
+    return redirect(url_for("mentorship"))
+
+
+@app.route("/apply-mentor")
+@login_required
+def apply_mentor():
+    if current_user.role != "alumni":
+        flash("Only alumni can apply to become mentors.", "error")
+        return redirect(url_for("home"))
+
+    return render_template("apply_mentor.html")
+
+
+@app.route("/announcements")
 @login_required
 def announcements_page():
     if current_user.role != "admin":
@@ -256,8 +255,11 @@ def register():
             return redirect(url_for("register"))
 
         if role == "mentor":
-            flash("Mentors must be approved by the admin first. Please register as a student or alumni.", "error")
-            return redirect(url_for('register'))
+            flash(
+                "Mentors must be approved by the admin first. Please register as a student or alumni.",
+                "error"
+            )
+            return redirect(url_for("register"))
 
         if User.query.filter_by(email=email).first():
             flash("Email already registered", "error")
@@ -363,10 +365,10 @@ def login():
             if user.role == "admin":
                 return redirect(url_for("admin_dashboard"))
 
-            return redirect(url_for('profile', user_id=user.user_id))
-        else:
-            flash("Invalid email or password", "error")
-            return redirect(url_for('login'))
+            return redirect(url_for("profile", user_id=user.user_id))
+
+        flash("Invalid email or password", "error")
+        return redirect(url_for("login"))
 
     return render_template("login.html")
 
@@ -386,7 +388,11 @@ def profile(user_id):
     status = get_connection_status(user_id)
 
     mentorship_status = "none"
-    if user.role == "mentor" and current_user.user_id != user.user_id and current_user.role in ["student", "alumni"]:
+    if (
+        user.role == "mentor"
+        and current_user.user_id != user.user_id
+        and current_user.role in ["student", "alumni"]
+    ):
         mentorship_status = get_mentorship_status(current_user.user_id, user.user_id)
 
     return render_template(
@@ -449,13 +455,94 @@ def edit_profile():
             current_user.alumni_profile.linkedin_url = request.form.get("linkedin_url")
 
         elif current_user.role == "mentor" and current_user.mentor_profile:
-            current_user.mentor_profile.expertise = request.form.get("expertise", current_user.mentor_profile.expertise)
+            current_user.mentor_profile.expertise = request.form.get(
+                "expertise",
+                current_user.mentor_profile.expertise
+            )
 
         db.session.commit()
         flash("Profile updated successfully", "success")
         return redirect(url_for("profile", user_id=current_user.user_id))
 
     return render_template("edit_profile.html", user=current_user)
+
+
+@app.route("/messages/<int:user_id>")
+@login_required
+def message_page(user_id):
+    other_user = User.query.get_or_404(user_id)
+
+    if current_user.user_id == other_user.user_id:
+        flash("You cannot message yourself.", "error")
+        return redirect(url_for("profile", user_id=current_user.user_id))
+
+    if not are_users_connected(current_user.user_id, other_user.user_id):
+        flash("You can only message users you are connected with.", "error")
+        return redirect(url_for("profile", user_id=other_user.user_id))
+
+    return render_template("message.html", other_user=other_user)
+
+
+@app.route("/api/messages/<int:user_id>", methods=["GET"])
+@login_required
+def get_conversation(user_id):
+    other_user = User.query.get_or_404(user_id)
+
+    if current_user.user_id == other_user.user_id:
+        return jsonify({"error": "You cannot message yourself"}), 400
+
+    if not are_users_connected(current_user.user_id, other_user.user_id):
+        return jsonify({"error": "You can only view conversations with connected users"}), 403
+
+    messages = Message.query.filter(
+        ((Message.sender_id == current_user.user_id) & (Message.receiver_id == other_user.user_id)) |
+        ((Message.sender_id == other_user.user_id) & (Message.receiver_id == current_user.user_id))
+    ).order_by(Message.sent_at.asc()).all()
+
+    results = []
+    for msg in messages:
+        results.append({
+            "message_id": msg.message_id,
+            "sender_id": msg.sender_id,
+            "receiver_id": msg.receiver_id,
+            "message_text": msg.message_text,
+            "sent_at": msg.sent_at.strftime("%Y-%m-%d %H:%M"),
+            "is_mine": msg.sender_id == current_user.user_id
+        })
+
+    return jsonify(results)
+
+
+@app.route("/api/messages/<int:user_id>", methods=["POST"])
+@login_required
+def send_message(user_id):
+    other_user = User.query.get_or_404(user_id)
+
+    if current_user.user_id == other_user.user_id:
+        return jsonify({"error": "You cannot message yourself"}), 400
+
+    if not are_users_connected(current_user.user_id, other_user.user_id):
+        return jsonify({"error": "You can only message users you are connected with"}), 403
+
+    data = request.get_json(silent=True) or {}
+    message_text = data.get("message_text", "").strip()
+
+    if not message_text:
+        return jsonify({"error": "Message cannot be empty"}), 400
+
+    new_message = Message(
+        sender_id=current_user.user_id,
+        receiver_id=other_user.user_id,
+        message_text=message_text
+    )
+
+    db.session.add(new_message)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Message sent successfully",
+        "message_id": new_message.message_id
+    }), 201
 
 
 # ────────────────────────────────────────────────
@@ -506,7 +593,6 @@ def get_events():
     results = []
 
     for e in events:
-        my_rsvp = None
         user_status = None
 
         if current_user.role != "admin":
@@ -540,8 +626,6 @@ def get_events():
 @app.route("/api/events/<int:event_id>/rsvp", methods=["POST"])
 @login_required
 def rsvp_event(event_id):
-    user_id = current_user.user_id
-
     Event.query.get_or_404(event_id)
 
     existing_rsvp = RSVP.query.filter_by(
@@ -564,7 +648,7 @@ def rsvp_event(event_id):
     db.session.add(rsvp)
     db.session.commit()
 
-    return jsonify({"message": "RSVP successful"})
+    return jsonify({"message": "RSVP successful"}), 201
 
 
 # ────────────────────────────────────────────────
@@ -618,7 +702,10 @@ def get_posts():
     for p in posts:
         author = User.query.get(p.user_id)
         like_count = PostLike.query.filter_by(post_id=p.post_id).count()
-        comment_count = PostComment.query.filter_by(post_id=p.post_id, is_deleted=False).count()
+        comment_count = PostComment.query.filter_by(
+            post_id=p.post_id,
+            is_deleted=False
+        ).count()
         liked_by_me = PostLike.query.filter_by(
             post_id=p.post_id,
             user_id=current_user.user_id
@@ -629,7 +716,11 @@ def get_posts():
             "user_id": p.user_id,
             "name": author.name if author else "Deleted",
             "role": author.role if author else "",
-            "profile_image": author.profile_image if author and author.profile_image else "default-profile.png",
+            "profile_image": (
+                author.profile_image
+                if author and author.profile_image
+                else "default-profile.png"
+            ),
             "content": p.content,
             "image": p.image,
             "created_at": p.created_at.strftime("%Y-%m-%d %H:%M") if p.created_at else "",
@@ -655,11 +746,14 @@ def toggle_like(post_id):
         db.session.delete(like)
         db.session.commit()
         return jsonify({"action": "unliked"})
-    else:
-        new_like = PostLike(post_id=post.post_id, user_id=current_user.user_id)
-        db.session.add(new_like)
-        db.session.commit()
-        return jsonify({"action": "liked"})
+
+    new_like = PostLike(
+        post_id=post_id,
+        user_id=current_user.user_id
+    )
+    db.session.add(new_like)
+    db.session.commit()
+    return jsonify({"action": "liked"})
 
 
 @app.route("/api/posts/<int:post_id>/comment", methods=["POST"])
@@ -698,10 +792,14 @@ def get_post_comments(post_id):
     for c in comments:
         author = User.query.get(c.user_id)
         results.append({
-            "comment_id": getattr(c, "comment_id", getattr(c, "id", None)),
+            "comment_id": c.id,
             "user_id": c.user_id,
             "name": author.name if author else "Unknown",
-            "profile_image": author.profile_image if author and author.profile_image else "default-profile.png",
+            "profile_image": (
+                author.profile_image
+                if author and author.profile_image
+                else "default-profile.png"
+            ),
             "content": c.content,
             "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
         })
@@ -735,14 +833,17 @@ def connect_user(receiver_id):
     )
     db.session.add(connection)
     db.session.commit()
-    return jsonify({"message": "Connection request sent successfully"})
+    return jsonify({"message": "Connection request sent successfully"}), 201
 
 
 @app.route("/api/connection-requests", methods=["GET"])
 @login_required
 def get_connection_requests():
     user_id = current_user.user_id
-    requests = Connection.query.filter_by(receiver_id=user_id, status="pending").all()
+    requests = Connection.query.filter_by(
+        receiver_id=user_id,
+        status="pending"
+    ).all()
 
     result = []
     for req in requests:
@@ -751,6 +852,7 @@ def get_connection_requests():
             "id": req.connection_id,
             "name": sender.name if sender else "Unknown"
         })
+
     return jsonify(result)
 
 
@@ -852,9 +954,8 @@ def search_users():
     if faculty:
         users = users.filter(StudentProfile.faculty.ilike(f"%{faculty}%"))
 
-    if graduation_year:
-        if graduation_year.isdigit():
-            users = users.filter(StudentProfile.graduation_year == int(graduation_year))
+    if graduation_year and graduation_year.isdigit():
+        users = users.filter(StudentProfile.graduation_year == int(graduation_year))
 
     results = []
     for user in users.all():
@@ -905,7 +1006,7 @@ def my_connections():
     return jsonify(result)
 
 
-@app.route('/admin/dashboard')
+@app.route("/admin/dashboard")
 @login_required
 def admin_dashboard():
     if current_user.role != "admin":
@@ -930,8 +1031,7 @@ def admin_dashboard():
     )
 
 
-# ADDED: admin alumni view page
-@app.route('/admin/alumni')
+@app.route("/admin/alumni")
 @login_required
 def admin_alumni():
     if current_user.role != "admin":
@@ -942,8 +1042,7 @@ def admin_alumni():
     return render_template("admin_alumni.html", alumni_users=alumni_users)
 
 
-# ADDED: admin students view page
-@app.route('/admin/students')
+@app.route("/admin/students")
 @login_required
 def admin_students():
     if current_user.role != "admin":
@@ -954,8 +1053,7 @@ def admin_students():
     return render_template("admin_students.html", student_users=student_users)
 
 
-# ADDED: admin events view page
-@app.route('/admin/events')
+@app.route("/admin/events")
 @login_required
 def admin_events():
     if current_user.role != "admin":
@@ -966,8 +1064,35 @@ def admin_events():
     return render_template("admin_events.html", events=events)
 
 
-# ADDED: admin mentors view page
-@app.route('/admin/mentors')
+@app.route("/admin/remove-mentor/<int:user_id>", methods=["POST"])
+@login_required
+def remove_mentor(user_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for("home"))
+
+    user = User.query.get_or_404(user_id)
+
+    if user.role != "mentor":
+        flash("This user is not a mentor.", "error")
+        return redirect(url_for("admin_mentors"))
+
+    mentorship_requests = MentorshipRequest.query.filter_by(mentor_id=user.user_id).all()
+    for req in mentorship_requests:
+        db.session.delete(req)
+
+    mentor_profile = MentorProfile.query.filter_by(mentor_id=user.user_id).first()
+    if mentor_profile:
+        db.session.delete(mentor_profile)
+
+    user.role = "alumni"
+    db.session.commit()
+
+    flash("Mentor removed successfully.", "success")
+    return redirect(url_for("admin_mentors"))
+
+
+@app.route("/admin/mentors")
 @login_required
 def admin_mentors():
     if current_user.role != "admin":
@@ -978,8 +1103,7 @@ def admin_mentors():
     return render_template("admin_mentors.html", mentor_users=mentor_users)
 
 
-# ADDED: admin event attendees view page
-@app.route('/admin/event-attendees')
+@app.route("/admin/event-attendees")
 @login_required
 def admin_event_attendees():
     if current_user.role != "admin":
@@ -997,8 +1121,7 @@ def admin_event_attendees():
     return render_template("admin_event_attendees.html", attendees=attendees)
 
 
-# ADDED: admin RSVPs view page
-@app.route('/admin/rsvps')
+@app.route("/admin/rsvps")
 @login_required
 def admin_rsvps():
     if current_user.role != "admin":
