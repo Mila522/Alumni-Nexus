@@ -1,14 +1,63 @@
-{% extends "admin_ggbase.html" %} {% block content %}
-<div class="container py-5">
-  <h2 class="fw-bold mb-4">Event Attendees</h2>
+{% extends "admin_base.html" %} {% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<div class="att-wrap">
+
+  <!-- Header -->
+  <div class="att-header">
+    <div>
+      <h1 class="att-title">Event Attendees</h1>
+      <p class="att-sub">Members who have confirmed attendance at events.</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="att-btn-ghost">
+      <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+        <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Dashboard
+    </a>
+  </div>
 
   {% if attendees %}
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <table class="table">
+
+  <!-- Stats -->
+  <div class="att-stats">
+    <div class="att-stat-card att-stat--gold">
+      <div class="att-stat-num">{{ attendees|length }}</div>
+      <div class="att-stat-label">Total Attendees</div>
+    </div>
+    <div class="att-stat-card att-stat--green">
+      <div class="att-stat-num">{{ attendees|map(attribute='2.title')|unique|list|length }}</div>
+      <div class="att-stat-label">Events</div>
+    </div>
+    <div class="att-stat-card att-stat--blue">
+      <div class="att-stat-num">{{ attendees|map(attribute='1.email')|unique|list|length }}</div>
+      <div class="att-stat-label">Unique Members</div>
+    </div>
+  </div>
+
+  <!-- Table card -->
+  <div class="att-card">
+    <div class="att-card-header">
+      <div class="att-card-dot"></div>
+      <span>Attendee Registry</span>
+      <span class="att-badge">{{ attendees|length }} record{{ 's' if attendees|length != 1 else '' }}</span>
+    </div>
+
+    <!-- Search -->
+    <div class="att-search-wrap">
+      <svg viewBox="0 0 20 20" fill="none" width="15" height="15" class="att-search-icon">
+        <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="attSearch" class="att-search" placeholder="Search by name, email or event…">
+    </div>
+
+    <div class="att-table-wrap">
+      <table class="att-table" id="attTable">
         <thead>
           <tr>
-            <th>Name</th>
+            <th>Member</th>
             <th>Email</th>
             <th>Event</th>
           </tr>
@@ -16,17 +65,250 @@
         <tbody>
           {% for rsvp, user, event in attendees %}
           <tr>
-            <td>{{ user.name }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ event.title }}</td>
+            <td>
+              <div class="att-user">
+                <div class="att-avatar">{{ user.name[0]|upper }}</div>
+                <span class="att-name">{{ user.name }}</span>
+              </div>
+            </td>
+            <td>
+              <a href="mailto:{{ user.email }}" class="att-email">{{ user.email }}</a>
+            </td>
+            <td>
+              <span class="att-event-pill">
+                <svg viewBox="0 0 14 14" fill="none" width="10" height="10">
+                  <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                  <path d="M10 1v2.5M4 1v2.5M1 6h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                </svg>
+                {{ event.title }}
+              </span>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    <div class="att-table-foot">
+      <span id="attRowCount">Showing {{ attendees|length }} of {{ attendees|length }} records</span>
+    </div>
   </div>
+
   {% else %}
-  <div class="alert alert-info">No event attendees found.</div>
+
+  <!-- Empty state -->
+  <div class="att-empty">
+    <div class="att-empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+        <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M2 20c0-4 3.134-7 7-7h4c3.866 0 7 3 7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M16 11l1.5 1.5L20 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="att-empty-title">No attendees yet</p>
+    <p class="att-empty-sub">Attendees will appear here once members confirm their event attendance.</p>
+  </div>
+
   {% endif %}
+
 </div>
+
+<style>
+  :root {
+    --navy:      #0a1628;
+    --navy-mid:  #0f2044;
+    --navy-soft: #162a52;
+    --gold:      #f5c842;
+    --gold-pale: #fdf6d8;
+    --page-bg:   #f0f2f5;
+    --surf:      #ffffff;
+    --border:    #e2e5ea;
+    --text:      #0a1628;
+    --text2:     #4a5568;
+    --text3:     #9aa5b4;
+    --green:     #059669;
+    --blue:      #0ea5e9;
+    --r:         14px;
+    --ff: 'DM Sans', sans-serif;
+    --fd: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .att-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 52px 24px 80px;
+    font-family: var(--ff);
+  }
+
+  /* ── Header ── */
+  .att-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; margin-bottom: 36px; flex-wrap: wrap;
+  }
+  .att-title {
+    font-family: var(--fd); font-size: 1.85rem; font-weight: 800;
+    letter-spacing: -.035em; color: var(--navy); margin: 0 0 5px; line-height: 1.1;
+  }
+  .att-sub { font-size: .875rem; color: var(--text3); margin: 0; }
+
+  .att-btn-ghost {
+    display: inline-flex; align-items: center; gap: 6px;
+    text-decoration: none; font-size: .83rem; font-weight: 600; color: var(--text3);
+    padding: 9px 14px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surf); transition: color .15s, border-color .15s;
+    flex-shrink: 0; margin-top: 4px;
+  }
+  .att-btn-ghost:hover { color: var(--navy); border-color: var(--navy); }
+
+  /* ── Stats ── */
+  .att-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; margin-bottom: 28px;
+  }
+  .att-stat-card {
+    background: var(--surf); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 22px 24px;
+    box-shadow: 0 2px 10px rgba(10,22,40,.06);
+    animation: attUp .3s ease both; border-top: 3px solid var(--gold);
+  }
+  .att-stat--gold  { border-top-color: var(--gold); }
+  .att-stat--green { border-top-color: var(--green); animation-delay: 50ms; }
+  .att-stat--blue  { border-top-color: var(--blue);  animation-delay: 100ms; }
+
+  .att-stat-num {
+    font-family: var(--fd); font-size: 2.1rem; font-weight: 800;
+    color: var(--navy); line-height: 1; margin-bottom: 6px;
+  }
+  .att-stat-label {
+    font-size: .73rem; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+
+  /* ── Card ── */
+  .att-card {
+    background: var(--surf); border: 1px solid var(--border);
+    border-radius: var(--r); overflow: hidden;
+    box-shadow: 0 2px 20px rgba(10,22,40,.07);
+    animation: attUp .35s ease both;
+  }
+  @keyframes attUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .att-card-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+    font-family: var(--fd); font-size: .95rem; font-weight: 700; color: var(--navy);
+  }
+  .att-card-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .att-badge {
+    margin-left: auto; font-size: .65rem; font-weight: 700;
+    background: var(--navy); color: var(--gold);
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  /* ── Search ── */
+  .att-search-wrap {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 24px; border-bottom: 1px solid var(--border);
+    background: var(--page-bg);
+  }
+  .att-search-icon { color: var(--text3); flex-shrink: 0; }
+  .att-search {
+    flex: 1; border: none; background: none; outline: none;
+    font-family: var(--ff); font-size: .875rem; color: var(--text);
+  }
+  .att-search::placeholder { color: var(--text3); }
+
+  /* ── Table ── */
+  .att-table-wrap { overflow-x: auto; }
+  .att-table { width: 100%; border-collapse: collapse; }
+
+  .att-table thead tr { border-bottom: 1px solid var(--border); }
+  .att-table th {
+    padding: 12px 24px; text-align: left;
+    font-family: var(--fd); font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--text3);
+    white-space: nowrap;
+  }
+  .att-table tbody tr {
+    border-bottom: 1px solid var(--border); transition: background .15s;
+  }
+  .att-table tbody tr:last-child { border-bottom: none; }
+  .att-table tbody tr:hover { background: #fafbfc; }
+  .att-table td { padding: 14px 24px; vertical-align: middle; }
+
+  /* user cell */
+  .att-user { display: flex; align-items: center; gap: 10px; }
+  .att-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--navy); color: var(--gold);
+    font-family: var(--fd); font-size: .82rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .att-name { font-weight: 600; font-size: .875rem; color: var(--navy); }
+
+  .att-email {
+    font-size: .85rem; color: var(--blue); text-decoration: none; font-weight: 500;
+    transition: color .15s;
+  }
+  .att-email:hover { color: var(--navy); text-decoration: underline; }
+
+  .att-event-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d;
+    border-radius: 20px; padding: 4px 12px;
+    font-size: .76rem; font-weight: 600; white-space: nowrap;
+  }
+
+  /* footer */
+  .att-table-foot {
+    padding: 12px 24px; border-top: 1px solid var(--border);
+    background: var(--page-bg); font-size: .75rem; color: var(--text3); font-weight: 500;
+  }
+
+  /* ── Empty ── */
+  .att-empty {
+    background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+    padding: 64px 32px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    box-shadow: 0 2px 10px rgba(10,22,40,.05);
+  }
+  .att-empty-icon {
+    width: 58px; height: 58px; border-radius: 15px;
+    background: var(--gold-pale); border: 1px solid rgba(245,200,66,.4);
+    display: flex; align-items: center; justify-content: center; color: var(--navy);
+  }
+  .att-empty-title { font-family: var(--fd); font-size: 1.1rem; font-weight: 700; color: var(--navy); }
+  .att-empty-sub   { font-size: .875rem; color: var(--text3); max-width: 320px; line-height: 1.6; }
+
+  @media (max-width: 700px) {
+    .att-title  { font-size: 1.5rem; }
+    .att-header { flex-direction: column; gap: 12px; }
+    .att-stats  { grid-template-columns: 1fr 1fr; }
+    .att-stats .att-stat-card:last-child { grid-column: 1 / -1; }
+    .att-table th, .att-table td { padding: 12px 16px; }
+  }
+</style>
+
+<script>
+  document.getElementById('attSearch').addEventListener('input', function () {
+    const q     = this.value.toLowerCase();
+    const rows  = document.querySelectorAll('#attTable tbody tr');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const match = row.textContent.toLowerCase().includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    document.getElementById('attRowCount').textContent =
+      `Showing ${visible} of ${rows.length} record${rows.length !== 1 ? 's' : ''}`;
+  });
+</script>
+
 {% endblock %}

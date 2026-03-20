@@ -1,736 +1,442 @@
-{% extends "base.html" %} {% block content %}
-<div class="admin-layout">
-  <aside class="admin-sidebar">
-    <div class="brand">Alumni Nexus</div>
+{% extends "admin_base.html" %} {% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
 
-    <div class="admin-profile">
-      <div class="admin-avatar"></div>
+<div class="ea-root">
+
+  <!-- Top bar -->
+  <header class="ea-topbar">
+    <div class="ea-topbar-inner">
+      <div class="ea-topbar-left">
+        <a href="{{ url_for('admin_dashboard') }}" class="ea-back">
+          <svg viewBox="0 0 20 20" fill="none" width="16" height="16">
+            <path d="M12 15l-5-5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back to Dashboard
+        </a>
+        <span class="ea-sep">/</span>
+        <span class="ea-page-label">Event Analytics</span>
+      </div>
+      <div class="ea-topbar-right">
+        <span class="ea-badge">DUT Alumni Nexus</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page content -->
+  <main class="ea-main">
+
+    <!-- Page heading -->
+    <div class="ea-heading">
       <div>
-        <div class="admin-email">{{ current_user.email }}</div>
-        <div class="admin-role">Administrator</div>
+        <h1>Event Analytics</h1>
+        <p>Track engagement, attendance, and scheduling trends across all events.</p>
       </div>
     </div>
 
-    <div class="sidebar-section-title">Main</div>
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('admin_dashboard') }}" class="nav-item">Overview</a>
-      <a href="{{ url_for('admin_event_analytics') }}" class="nav-item active"
-        >Event Analytics</a
-      >
-    </nav>
-
-    <div class="sidebar-section-title">People</div>
-    <nav class="sidebar-nav">
-      <a href="#" class="nav-item">Registered Users</a>
-      <a href="#" class="nav-item">Mentor Applications</a>
-      <a href="{{ url_for('admin_mentors') }}" class="nav-item"
-        >Active Mentors</a
-      >
-      <a href="#" class="nav-item">Mentorship Requests</a>
-    </nav>
-
-    <div class="sidebar-section-title">Pinboard</div>
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('pinboard') }}" class="nav-item">Posts</a>
-    </nav>
-
-    <div class="sidebar-section-title">Events</div>
-    <nav class="sidebar-nav">
-      <a href="{{ url_for('admin_events') }}" class="nav-item">Manage Events</a>
-      <a href="{{ url_for('admin_event_attendees') }}" class="nav-item"
-        >Event Attendees</a
-      >
-      <a href="{{ url_for('admin_rsvps') }}" class="nav-item">All RSVPs</a>
-      <a href="{{ url_for('admin_event_analytics') }}" class="nav-item active"
-        >Analytics</a
-      >
-    </nav>
-
-    <div class="sidebar-footer">
-      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
-    </div>
-  </aside>
-
-  <main class="admin-main">
-    <div class="admin-topbar">
-      <h3 class="page-title">Event Analytics</h3>
-      <div class="topbar-text">DUT Alumni Nexus – Admin Portal</div>
+    <!-- KPI strip -->
+    <div class="ea-kpi-strip">
+      <div class="ea-kpi" style="--d:0ms">
+        <span class="ea-kpi-label">Total Events</span>
+        <span class="ea-kpi-value">{{ total_events }}</span>
+      </div>
+      <div class="ea-kpi-div"></div>
+      <div class="ea-kpi" style="--d:60ms">
+        <span class="ea-kpi-label">Upcoming</span>
+        <span class="ea-kpi-value" style="color:#16a34a">{{ upcoming_events }}</span>
+      </div>
+      <div class="ea-kpi-div"></div>
+      <div class="ea-kpi" style="--d:120ms">
+        <span class="ea-kpi-label">Past</span>
+        <span class="ea-kpi-value">{{ past_events }}</span>
+      </div>
+      <div class="ea-kpi-div"></div>
+      <div class="ea-kpi" style="--d:180ms">
+        <span class="ea-kpi-label">Total RSVPs</span>
+        <span class="ea-kpi-value">{{ total_rsvps }}</span>
+      </div>
+      <div class="ea-kpi-div"></div>
+      <div class="ea-kpi" style="--d:240ms">
+        <span class="ea-kpi-label">Attending</span>
+        <span class="ea-kpi-value">{{ total_attendees }}</span>
+      </div>
+      {% if most_popular_event %}
+      <div class="ea-kpi-div"></div>
+      <div class="ea-kpi ea-kpi--wide" style="--d:300ms">
+        <span class="ea-kpi-label">Top Event</span>
+        <span class="ea-kpi-value ea-kpi-value--sm" title="{{ most_popular_event.title }}">{{ most_popular_event.title }}</span>
+      </div>
+      {% endif %}
     </div>
 
-    <section class="admin-content">
-      <div class="overview-header">
-        <h1>Event Analytics Dashboard</h1>
-        <p>Track event engagement, attendance, and scheduling trends.</p>
-      </div>
-
-      <div class="stats-grid analytics-stats-grid">
-        <div class="stat-card">
-          <h6>Total Events</h6>
-          <h2>{{ total_events }}</h2>
-          <span>All events in the system</span>
+    <!-- Charts: row 1 — bar (wide) + donut -->
+    <div class="ea-charts-row ea-charts-row--split">
+      <div class="ea-card">
+        <div class="ea-card-head">
+          <span class="ea-card-title">RSVPs vs Attending</span>
+          <span class="ea-card-sub">per event</span>
         </div>
-
-        <div class="stat-card">
-          <h6>Upcoming Events</h6>
-          <h2>{{ upcoming_events }}</h2>
-          <span>Events still ahead</span>
-        </div>
-
-        <div class="stat-card">
-          <h6>Past Events</h6>
-          <h2>{{ past_events }}</h2>
-          <span>Completed events</span>
-        </div>
-
-        <div class="stat-card">
-          <h6>Total RSVPs</h6>
-          <h2>{{ total_rsvps }}</h2>
-          <span>Interest shown by users</span>
-        </div>
-
-        <div class="stat-card">
-          <h6>Total Attendees</h6>
-          <h2>{{ total_attendees }}</h2>
-          <span>Marked as attending</span>
-        </div>
-
-        <div class="stat-card highlight-card">
-          <h6>Top Event</h6>
-          <h2 class="small-title">
-            {% if most_popular_event %} {{ most_popular_event.title }} {% else
-            %} None {% endif %}
-          </h2>
-          <span>Most RSVPs received</span>
+        <div class="ea-chart-body">
+          <canvas id="cmpChart"></canvas>
         </div>
       </div>
 
-      <div class="featured-card">
-        <h4>Most Popular Event</h4>
-        {% if most_popular_event %}
-        <p><strong>Title:</strong> {{ most_popular_event.title }}</p>
-        <p>
-          <strong>Date:</strong>
-          {{ most_popular_event.event_date.strftime('%d %b %Y %H:%M') if
-          most_popular_event.event_date else 'No date' }}
-        </p>
-        <p>
-          <strong>Location:</strong> {{ most_popular_event.location or 'No
-          location' }}
-        </p>
-        <p><strong>RSVPs:</strong> {{ most_popular_event.rsvp_count }}</p>
-        {% else %}
-        <p class="muted-text">No event data available yet.</p>
-        {% endif %}
+      <div class="ea-card">
+        <div class="ea-card-head">
+          <span class="ea-card-title">Event Status</span>
+          <span class="ea-card-sub">upcoming / past</span>
+        </div>
+        <div class="ea-chart-body ea-chart-body--donut">
+          <canvas id="statusChart"></canvas>
+        </div>
       </div>
+    </div>
 
-      <div
-        id="chartErrorBox"
-        class="chart-error-box"
-        style="display: none"
-      ></div>
-
-      <div class="charts-grid">
-        <div class="chart-card">
-          <h5>RSVPs vs Attendees Per Event</h5>
-          <div class="chart-wrap">
-            <canvas id="eventComparisonChart"></canvas>
-          </div>
+    <!-- Charts: row 2 — equal halves -->
+    <div class="ea-charts-row ea-charts-row--equal">
+      <div class="ea-card">
+        <div class="ea-card-head">
+          <span class="ea-card-title">Events by Month</span>
+          <span class="ea-card-sub">scheduled over time</span>
         </div>
-
-        <div class="chart-card">
-          <h5>Scheduled Events By Month</h5>
-          <div class="chart-wrap">
-            <canvas id="monthlyEventsChart"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h5>Event Status Overview</h5>
-          <div class="chart-wrap">
-            <canvas id="eventStatusChart"></canvas>
-          </div>
-        </div>
-
-        <div class="chart-card">
-          <h5>Attendance Rate Per Event (%)</h5>
-          <div class="chart-wrap">
-            <canvas id="attendanceRateChart"></canvas>
-          </div>
+        <div class="ea-chart-body">
+          <canvas id="monthlyChart"></canvas>
         </div>
       </div>
 
-      <div class="table-card">
-        <div class="table-header-row">
-          <h4>Event Performance</h4>
+      <div class="ea-card">
+        <div class="ea-card-head">
+          <span class="ea-card-title">Attendance Rate</span>
+          <span class="ea-card-sub">% per event</span>
         </div>
-
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead>
-              <tr>
-                <th>Event</th>
-                <th>Date</th>
-                <th>Location</th>
-                <th>RSVPs</th>
-                <th>Attending</th>
-                <th>Attendance Rate</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for event in event_stats %}
-              <tr>
-                <td>{{ event.title }}</td>
-                <td>
-                  {{ event.event_date.strftime('%d %b %Y %H:%M') if
-                  event.event_date else 'No date' }}
-                </td>
-                <td>{{ event.location or 'No location' }}</td>
-                <td>{{ event.rsvp_count }}</td>
-                <td>{{ event.attending_count }}</td>
-                <td>
-                  {% if event.rsvp_count > 0 %} {{ ((event.attending_count /
-                  event.rsvp_count) * 100) | round(1) }}% {% else %} 0% {% endif
-                  %}
-                </td>
-                <td>
-                  {% if event.event_date and event.event_date >= now %}
-                  <span class="status-badge upcoming">Upcoming</span>
-                  {% else %}
-                  <span class="status-badge past">Past</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="7" class="text-center muted-text">
-                  No events found.
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="ea-chart-body">
+          <canvas id="rateChart"></canvas>
         </div>
       </div>
-    </section>
+    </div>
+
+    <!-- Performance table -->
+    <div class="ea-card ea-card--table">
+      <div class="ea-card-head">
+        <span class="ea-card-title">Event Performance</span>
+        <span class="ea-card-sub">{{ event_stats | length }} event{{ 's' if event_stats | length != 1 }}</span>
+      </div>
+      <div class="ea-table-scroll">
+        <table class="ea-table">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Date</th>
+              <th>Location</th>
+              <th>RSVPs</th>
+              <th>Attending</th>
+              <th>Rate</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for event in event_stats %}
+            <tr>
+              <td class="td-bold">{{ event.title }}</td>
+              <td class="td-dim">{{ event.event_date.strftime('%d %b %Y') if event.event_date else '—' }}</td>
+              <td class="td-dim">{{ event.location or '—' }}</td>
+              <td>{{ event.rsvp_count }}</td>
+              <td>{{ event.attending_count }}</td>
+              <td>
+                {% set rate = ((event.attending_count / event.rsvp_count) * 100) | round(1) if event.rsvp_count > 0 else 0 %}
+                <div class="ea-rate">
+                  <div class="ea-rate-track"><div class="ea-rate-fill" data-w="{{ rate }}"></div></div>
+                  <span class="ea-rate-pct">{{ rate }}%</span>
+                </div>
+              </td>
+              <td>
+                {% if event.event_date and event.event_date >= now %}
+                  <span class="ea-badge-pill ea-badge-green">Upcoming</span>
+                {% else %}
+                  <span class="ea-badge-pill ea-badge-gray">Past</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" class="td-empty">No events found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </main>
 </div>
 
-<!-- Safe JSON data blocks -->
-<script id="event-titles-data" type="application/json">
-  {{ event_titles | tojson }}
-</script>
-<script id="rsvp-counts-data" type="application/json">
-  {{ rsvp_counts | tojson }}
-</script>
-<script id="attending-counts-data" type="application/json">
-  {{ attending_counts | tojson }}
-</script>
-<script id="monthly-labels-data" type="application/json">
-  {{ monthly_labels | tojson }}
-</script>
-<script id="monthly-counts-data" type="application/json">
-  {{ monthly_counts | tojson }}
-</script>
-<script id="attendance-rates-data" type="application/json">
-  {{ attendance_rates | tojson }}
-</script>
-<script id="status-labels-data" type="application/json">
-  {{ status_labels | tojson }}
-</script>
-<script id="status-counts-data" type="application/json">
-  {{ status_counts | tojson }}
-</script>
+<!-- JSON data blobs -->
+<script id="d-titles"    type="application/json">{{ event_titles     | tojson }}</script>
+<script id="d-rsvps"     type="application/json">{{ rsvp_counts      | tojson }}</script>
+<script id="d-attending" type="application/json">{{ attending_counts | tojson }}</script>
+<script id="d-mlabels"   type="application/json">{{ monthly_labels   | tojson }}</script>
+<script id="d-mcounts"   type="application/json">{{ monthly_counts   | tojson }}</script>
+<script id="d-rates"     type="application/json">{{ attendance_rates | tojson }}</script>
+<script id="d-slabels"   type="application/json">{{ status_labels    | tojson }}</script>
+<script id="d-scounts"   type="application/json">{{ status_counts    | tojson }}</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    function getJson(id) {
-      const el = document.getElementById(id);
-      if (!el) return [];
-      try {
-        return JSON.parse(el.textContent);
-      } catch (error) {
-        showChartError("Failed to read chart data from the page.");
-        console.error("JSON parse error for", id, error);
-        return [];
+document.addEventListener('DOMContentLoaded', function () {
+  // Apply rate-bar widths from data-w attribute (keeps Jinja2 out of style="")
+  document.querySelectorAll('.ea-rate-fill').forEach(el => {
+    el.style.width = (el.dataset.w || 0) + '%';
+  });
+
+  const get = id => { try { return JSON.parse(document.getElementById(id).textContent); } catch { return []; } };
+
+  const titles    = get('d-titles');
+  const rsvps     = get('d-rsvps');
+  const attending = get('d-attending');
+  const mLabels   = get('d-mlabels');
+  const mCounts   = get('d-mcounts');
+  const rates     = get('d-rates');
+  const sLabels   = get('d-slabels');
+  const sCounts   = get('d-scounts');
+
+  Chart.defaults.font.family = "'DM Sans', sans-serif";
+  Chart.defaults.font.size   = 12;
+  Chart.defaults.color       = '#71717a';
+
+  const gridCfg  = { color: 'rgba(0,0,0,0.05)', drawBorder: false };
+  const ticksCfg = { padding: 8 };
+
+  // 1. Grouped bar — RSVPs vs Attending
+  new Chart(document.getElementById('cmpChart'), {
+    type: 'bar',
+    data: {
+      labels: titles,
+      datasets: [
+        { label: 'RSVPs',     data: rsvps,     backgroundColor: '#e0e7ff', borderColor: '#818cf8', borderWidth: 1.5, borderRadius: 5 },
+        { label: 'Attending', data: attending, backgroundColor: '#111018', borderColor: '#111018', borderWidth: 1.5, borderRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { boxWidth: 10, padding: 16 } } },
+      scales: {
+        x: { grid: { display: false }, ticks: ticksCfg },
+        y: { grid: gridCfg, ticks: ticksCfg, beginAtZero: true }
       }
-    }
-
-    function showChartError(message) {
-      const box = document.getElementById("chartErrorBox");
-      if (!box) return;
-      box.style.display = "block";
-      box.textContent = message;
-    }
-
-    if (typeof Chart === "undefined") {
-      showChartError(
-        "Charts could not load. Chart.js did not load from the internet/CDN.",
-      );
-      return;
-    }
-
-    const eventTitles = getJson("event-titles-data");
-    const rsvpCounts = getJson("rsvp-counts-data");
-    const attendingCounts = getJson("attending-counts-data");
-    const monthlyLabels = getJson("monthly-labels-data");
-    const monthlyCounts = getJson("monthly-counts-data");
-    const attendanceRates = getJson("attendance-rates-data");
-    const statusLabels = getJson("status-labels-data");
-    const statusCounts = getJson("status-counts-data");
-
-    try {
-      const eventComparisonCanvas = document.getElementById(
-        "eventComparisonChart",
-      );
-      if (eventComparisonCanvas) {
-        new Chart(eventComparisonCanvas, {
-          type: "bar",
-          data: {
-            labels: eventTitles,
-            datasets: [
-              {
-                label: "RSVPs",
-                data: rsvpCounts,
-                backgroundColor: "rgba(54, 162, 235, 0.7)",
-                borderColor: "rgba(54, 162, 235, 1)",
-                borderWidth: 1,
-              },
-              {
-                label: "Attending",
-                data: attendingCounts,
-                backgroundColor: "rgba(75, 192, 192, 0.7)",
-                borderColor: "rgba(75, 192, 192, 1)",
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { precision: 0 },
-              },
-            },
-          },
-        });
-      }
-
-      const monthlyEventsCanvas = document.getElementById("monthlyEventsChart");
-      if (monthlyEventsCanvas) {
-        new Chart(monthlyEventsCanvas, {
-          type: "line",
-          data: {
-            labels: monthlyLabels,
-            datasets: [
-              {
-                label: "Scheduled Events",
-                data: monthlyCounts,
-                borderColor: "rgba(153, 102, 255, 1)",
-                backgroundColor: "rgba(153, 102, 255, 0.2)",
-                tension: 0.3,
-                fill: true,
-                borderWidth: 2,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: { precision: 0 },
-              },
-            },
-          },
-        });
-      }
-
-      const eventStatusCanvas = document.getElementById("eventStatusChart");
-      if (eventStatusCanvas) {
-        new Chart(eventStatusCanvas, {
-          type: "doughnut",
-          data: {
-            labels: statusLabels,
-            datasets: [
-              {
-                data: statusCounts,
-                backgroundColor: [
-                  "rgba(75, 192, 192, 0.8)",
-                  "rgba(201, 203, 207, 0.8)",
-                ],
-                borderColor: [
-                  "rgba(75, 192, 192, 1)",
-                  "rgba(201, 203, 207, 1)",
-                ],
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true },
-            },
-          },
-        });
-      }
-
-      const attendanceRateCanvas = document.getElementById(
-        "attendanceRateChart",
-      );
-      if (attendanceRateCanvas) {
-        new Chart(attendanceRateCanvas, {
-          type: "bar",
-          data: {
-            labels: eventTitles,
-            datasets: [
-              {
-                label: "Attendance Rate %",
-                data: attendanceRates,
-                backgroundColor: "rgba(255, 159, 64, 0.7)",
-                borderColor: "rgba(255, 159, 64, 1)",
-                borderWidth: 1,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { display: true },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                max: 100,
-              },
-            },
-          },
-        });
-      }
-    } catch (error) {
-      showChartError(
-        "Charts failed to render. Open browser console for the exact error.",
-      );
-      console.error("Chart render error:", error);
     }
   });
+
+  // 2. Donut — status
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+      labels: sLabels,
+      datasets: [{ data: sCounts, backgroundColor: ['#111018', '#e5e5e7'], borderWidth: 0, hoverOffset: 6 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '70%',
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 18 } } }
+    }
+  });
+
+  // 3. Line — monthly
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'line',
+    data: {
+      labels: mLabels,
+      datasets: [{
+        label: 'Events',
+        data: mCounts,
+        borderColor: '#111018', backgroundColor: 'rgba(17,16,24,0.07)',
+        tension: 0.4, fill: true, borderWidth: 2,
+        pointBackgroundColor: '#111018', pointRadius: 4, pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: ticksCfg },
+        y: { grid: gridCfg, ticks: ticksCfg, beginAtZero: true }
+      }
+    }
+  });
+
+  // 4. Bar — attendance rate
+  new Chart(document.getElementById('rateChart'), {
+    type: 'bar',
+    data: {
+      labels: titles,
+      datasets: [{
+        label: 'Rate %', data: rates,
+        backgroundColor: '#dcfce7', borderColor: '#16a34a', borderWidth: 1.5, borderRadius: 5
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: ticksCfg },
+        y: { grid: gridCfg, beginAtZero: true, max: 100,
+             ticks: { callback: v => v + '%', padding: 8 } }
+      }
+    }
+  });
+});
 </script>
 
 <style>
-  .admin-layout {
-    display: flex;
-    min-height: 100vh;
-    background: #f5f6f8;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .admin-sidebar {
-    width: 280px;
-    background: #111;
-    color: white;
-    padding: 24px 0;
-    display: flex;
-    flex-direction: column;
-  }
+:root {
+  --text-primary:   #111018;
+  --text-secondary: #71717a;
+  --text-muted:     #a1a1aa;
+  --surface:        #ffffff;
+  --bg:             #f7f7f8;
+  --border:         #e5e5e7;
+  --radius:         12px;
+  --font-display:   'Syne', sans-serif;
+  --font-body:      'DM Sans', sans-serif;
+}
 
-  .brand {
-    font-size: 2rem;
-    font-weight: 700;
-    padding: 0 24px;
-    margin-bottom: 24px;
-  }
+body { font-family: var(--font-body); color: var(--text-primary); background: var(--bg); }
 
-  .admin-profile {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 0 24px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 20px;
-  }
+/* ── Root wrapper ── */
+.ea-root { min-height: 100vh; background: var(--bg); display: flex; flex-direction: column; }
 
-  .admin-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #2c2c2c;
-  }
+/* ── Top bar ── */
+.ea-topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 20;
+}
+.ea-topbar-inner {
+  max-width: 1400px; margin: 0 auto;
+  padding: 0 40px; height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ea-topbar-left { display: flex; align-items: center; gap: 10px; }
 
-  .admin-email {
-    font-size: 0.95rem;
-    font-weight: 600;
-    word-break: break-word;
-  }
+/* Back button */
+.ea-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .83rem; font-weight: 600; color: var(--text-primary);
+  text-decoration: none;
+  background: var(--bg); border: 1px solid var(--border);
+  padding: 6px 14px 6px 10px; border-radius: 8px;
+  transition: background .15s, border-color .15s, transform .15s;
+}
+.ea-back:hover { background: #efefef; border-color: #c4c4c6; transform: translateX(-2px); color: var(--text-primary); }
+.ea-back svg { flex-shrink: 0; }
 
-  .admin-role {
-    font-size: 0.8rem;
-    opacity: 0.8;
-    text-transform: uppercase;
-  }
+.ea-sep { color: var(--border); font-size: .75rem; }
+.ea-page-label { font-size: .83rem; font-weight: 600; color: var(--text-primary); }
+.ea-badge {
+  font-size: .75rem; font-weight: 600; color: var(--text-muted);
+  background: var(--bg); padding: 5px 12px;
+  border-radius: 20px; border: 1px solid var(--border);
+  font-family: var(--font-display); letter-spacing: .02em;
+}
 
-  .sidebar-section-title {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    opacity: 0.6;
-    padding: 0 24px;
-    margin: 18px 0 8px;
-    letter-spacing: 1px;
-  }
+/* ── Main ── */
+.ea-main { flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; padding: 40px 40px 60px; }
 
-  .sidebar-nav {
-    display: flex;
-    flex-direction: column;
-  }
+/* ── Page heading ── */
+.ea-heading { margin-bottom: 28px; }
+.ea-heading h1 { font-family: var(--font-display); font-size: 2rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 5px; }
+.ea-heading p  { color: var(--text-secondary); font-size: .9rem; font-weight: 300; }
 
-  .nav-item {
-    color: white;
-    text-decoration: none;
-    padding: 14px 24px;
-    display: block;
-    transition: 0.2s;
-  }
+/* ── KPI strip ── */
+.ea-kpi-strip {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); display: flex; align-items: stretch;
+  margin-bottom: 24px; overflow: hidden; padding: 0 4px;
+}
+.ea-kpi {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 20px 26px; gap: 5px; flex: 1;
+  animation: ea-up .4s ease both; animation-delay: var(--d, 0ms);
+}
+.ea-kpi--wide { flex: 1.5; }
+.ea-kpi-div   { width: 1px; background: var(--border); margin: 14px 0; flex-shrink: 0; }
+.ea-kpi-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .09em; font-weight: 700; color: var(--text-muted); }
+.ea-kpi-value {
+  font-family: var(--font-display); font-size: 1.65rem;
+  font-weight: 700; letter-spacing: -.04em; color: var(--text-primary); line-height: 1;
+}
+.ea-kpi-value--sm { font-size: .95rem; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 
-  .nav-item:hover,
-  .nav-item.active {
-    background: rgba(255, 255, 255, 0.08);
-    color: white;
-  }
+/* ── Charts ── */
+.ea-charts-row { display: grid; gap: 16px; margin-bottom: 16px; }
+.ea-charts-row--split { grid-template-columns: 2fr 1fr; }
+.ea-charts-row--equal { grid-template-columns: 1fr 1fr; }
 
-  .sidebar-footer {
-    margin-top: auto;
-    padding: 24px;
-  }
+.ea-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.ea-card--table { gap: 0; padding: 0; overflow: hidden; margin-top: 16px; }
+.ea-card--table .ea-card-head { padding: 20px 24px 0; }
 
-  .logout-btn {
-    color: white;
-    text-decoration: none;
-    display: inline-block;
-  }
+.ea-card-head { display: flex; align-items: baseline; gap: 8px; }
+.ea-card-title { font-family: var(--font-display); font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+.ea-card-sub   { font-size: .75rem; color: var(--text-muted); }
 
-  .admin-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
+.ea-chart-body         { position: relative; height: 260px; }
+.ea-chart-body--donut  { height: 260px; }
+.ea-chart-body canvas  { width: 100% !important; height: 100% !important; }
 
-  .admin-topbar {
-    background: white;
-    padding: 22px 32px;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+/* ── Table ── */
+.ea-table-scroll { overflow-x: auto; margin-top: 16px; }
+.ea-table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+.ea-table thead tr { background: var(--bg); }
+.ea-table th {
+  text-align: left; padding: 11px 20px;
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--text-muted);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.ea-table td {
+  padding: 13px 20px; border-bottom: 1px solid var(--border);
+  vertical-align: middle; color: var(--text-primary);
+}
+.ea-table tbody tr:last-child td { border-bottom: none; }
+.ea-table tbody tr:hover { background: #fafafa; }
+.td-bold  { font-weight: 600; }
+.td-dim   { color: var(--text-secondary); }
+.td-empty { text-align: center; color: var(--text-muted); padding: 40px; }
 
-  .page-title {
-    margin: 0;
-    font-weight: 700;
-  }
+/* Rate bar */
+.ea-rate       { display: flex; align-items: center; gap: 10px; }
+.ea-rate-track { flex: 1; height: 5px; background: var(--bg); border-radius: 99px; overflow: hidden; min-width: 56px; }
+.ea-rate-fill  { height: 100%; background: #111018; border-radius: 99px; }
+.ea-rate-pct   { font-size: .78rem; color: var(--text-secondary); white-space: nowrap; min-width: 36px; text-align: right; }
 
-  .topbar-text {
-    color: #6b7280;
-    font-size: 0.95rem;
-  }
+/* Badges */
+.ea-badge-pill  { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; letter-spacing: .02em; }
+.ea-badge-green { background: #dcfce7; color: #16a34a; }
+.ea-badge-gray  { background: #f3f4f6; color: #6b7280; }
 
-  .admin-content {
-    padding: 36px 32px;
-  }
+/* Animation */
+@keyframes ea-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  .overview-header h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-
-  .overview-header p {
-    color: #6b7280;
-    margin-bottom: 30px;
-  }
-
-  .analytics-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 22px;
-    margin-bottom: 32px;
-  }
-
-  .stat-card {
-    background: white;
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    min-height: 150px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .stat-card h6 {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    color: #6b7280;
-    margin-bottom: 12px;
-  }
-
-  .stat-card h2 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .stat-card span {
-    color: #6b7280;
-    font-size: 0.95rem;
-  }
-
-  .small-title {
-    font-size: 1.2rem !important;
-    line-height: 1.4;
-  }
-
-  .highlight-card {
-    border: 1px solid #111;
-  }
-
-  .featured-card,
-  .chart-card,
-  .table-card {
-    background: white;
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  }
-
-  .featured-card {
-    margin-bottom: 32px;
-  }
-
-  .featured-card h4,
-  .table-card h4,
-  .chart-card h5 {
-    font-weight: 700;
-    margin-bottom: 16px;
-  }
-
-  .featured-card p {
-    margin-bottom: 8px;
-  }
-
-  .muted-text {
-    color: #6b7280;
-  }
-
-  .chart-error-box {
-    background: #fff3cd;
-    color: #664d03;
-    border: 1px solid #ffecb5;
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 20px;
-    font-weight: 600;
-  }
-
-  .charts-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 22px;
-    margin-bottom: 32px;
-  }
-
-  .chart-card {
-    min-height: 380px;
-  }
-
-  .chart-wrap {
-    position: relative;
-    width: 100%;
-    height: 300px;
-  }
-
-  .chart-wrap canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-  }
-
-  .table-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 18px;
-  }
-
-  .table {
-    margin-bottom: 0;
-  }
-
-  .table thead th {
-    background: #f8f9fa;
-    color: #111;
-    font-weight: 600;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .status-badge {
-    display: inline-block;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .status-badge.upcoming {
-    background: #e8f7ee;
-    color: #1f7a3d;
-  }
-
-  .status-badge.past {
-    background: #ececec;
-    color: #555;
-  }
-
-  @media (max-width: 1100px) {
-    .analytics-stats-grid,
-    .charts-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (max-width: 768px) {
-    .admin-layout {
-      flex-direction: column;
-    }
-
-    .admin-sidebar {
-      width: 100%;
-    }
-
-    .admin-topbar {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-
-    .analytics-stats-grid,
-    .charts-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .admin-content {
-      padding: 24px 16px;
-    }
-  }
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .ea-charts-row--split { grid-template-columns: 1fr; }
+  .ea-charts-row--equal { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .ea-main         { padding: 24px 16px 48px; }
+  .ea-topbar-inner { padding: 0 16px; }
+  .ea-kpi-strip    { flex-wrap: wrap; }
+  .ea-kpi          { padding: 14px 18px; min-width: 40%; }
+  .ea-kpi-div      { display: none; }
+  .ea-heading h1   { font-size: 1.6rem; }
+}
+@media (max-width: 480px) {
+  .ea-kpi { min-width: 100%; }
+}
 </style>
 {% endblock %}

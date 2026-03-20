@@ -1,146 +1,355 @@
-{% extends "base.html" %} {% block title %}Edit Profile{% endblock %} {% block
-content %}
-<div class="container py-5" style="max-width: 800px">
-  <h2 class="mb-4">Edit Profile</h2>
+{% extends "base.html" %} {% block title %}Edit Profile{% endblock %} {% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<div class="ep-root">
+
+  <!-- Header -->
+  <div class="ep-header">
+    <div>
+      <h1 class="ep-title">Edit Profile</h1>
+      <p class="ep-sub">Keep your information up to date.</p>
+    </div>
+    <a href="{{ url_for('profile', user_id=user.user_id) }}" class="ep-btn-ghost">
+      <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+        <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      View Profile
+    </a>
+  </div>
 
   <form method="POST" enctype="multipart/form-data">
-    <div class="mb-4 text-center">
-      <img
-        src="{{ url_for('static', filename=user.profile_image) }}"
-        class="rounded-circle mb-3"
-        width="120"
-        height="120"
-      />
-      <input
-        type="file"
-        name="profile_image"
-        class="form-control form-control-sm"
-        accept="image/*"
-      />
+
+    <!-- ── Avatar upload ── -->
+    <div class="ep-avatar-card">
+      <div class="ep-avatar-wrap">
+        <img
+          src="{{ url_for('static', filename=user.profile_image) }}"
+          class="ep-avatar-img" id="avatarPreview" alt="Profile photo"
+        />
+        <label class="ep-avatar-overlay" for="profileImageInput">
+          <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+            <path d="M4 14l3-3 2 2 4-4 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="2" y="4" width="16" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/>
+            <circle cx="7" cy="9" r="1.5" fill="currentColor" opacity=".5"/>
+          </svg>
+          Change Photo
+        </label>
+        <input type="file" name="profile_image" id="profileImageInput" accept="image/*" style="display:none">
+      </div>
+      <div class="ep-avatar-info">
+        <div class="ep-avatar-name">{{ user.name }}</div>
+        <div class="ep-avatar-role">{{ user.role | capitalize }}</div>
+        <p class="ep-avatar-hint">JPG, PNG or GIF · Max 2MB</p>
+      </div>
     </div>
 
-    <div class="mb-3">
-      <label class="form-label">Name</label>
-      <input
-        type="text"
-        name="name"
-        class="form-control"
-        value="{{ user.name }}"
-        required
-      />
-    </div>
-
-    <!-- Common fields end here – role specific below -->
-
-    {% if user.role == 'student' and user.student_profile %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h5>Student Details</h5>
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label>Faculty</label
-            ><input
-              name="faculty"
-              class="form-control"
-              value="{{ user.student_profile.faculty }}"
-            />
-          </div>
-          <div class="col-md-6">
-            <label>Department</label
-            ><input
-              name="department"
-              class="form-control"
-              value="{{ user.student_profile.department }}"
-            />
-          </div>
-          <div class="col-md-6">
-            <label>Graduation Year</label
-            ><input
-              name="graduation_year"
-              class="form-control"
-              value="{{ user.student_profile.graduation_year }}"
-            />
-          </div>
-          <div class="col-md-6">
-            <label>Industry Interest</label
-            ><input
-              name="industry"
-              class="form-control"
-              value="{{ user.student_profile.industry }}"
-            />
-          </div>
+    <!-- ── Basic Info ── -->
+    <div class="ep-card">
+      <div class="ep-card-header">
+        <div class="ep-card-dot ep-dot--navy"></div>
+        <span>Basic Information</span>
+      </div>
+      <div class="ep-card-body">
+        <div class="ep-field">
+          <label class="ep-label" for="nameInput">Full Name</label>
+          <input type="text" name="name" id="nameInput" class="ep-input"
+            value="{{ user.name }}" placeholder="Your full name" required />
         </div>
       </div>
     </div>
-    {% endif %} {% if user.role == 'alumni' and user.alumni_profile %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h5>Alumni Details</h5>
-        <div class="mb-3">
-          <label>Headline</label
-          ><input
-            name="headline"
-            class="form-control"
-            value="{{ user.alumni_profile.headline }}"
-          />
-        </div>
-        <div class="mb-3">
-          <label>Experience</label
-          ><textarea name="experience" class="form-control" rows="4">
-{{ user.alumni_profile.experience }}</textarea
-          >
-        </div>
-        <div class="mb-3">
-          <label>Career Interest</label
-          ><input
-            name="career_interest"
-            class="form-control"
-            value="{{ user.alumni_profile.career_interest }}"
-          />
-        </div>
-        <div class="mb-3">
-          <label>Level of Study</label
-          ><input
-            name="level_of_study"
-            class="form-control"
-            value="{{ user.alumni_profile.level_of_study }}"
-          />
-        </div>
-        <div class="mb-3">
-          <label>Education</label
-          ><textarea name="education" class="form-control" rows="3">
-{{ user.alumni_profile.education or '' }}</textarea
-          >
-        </div>
-        <div class="mb-3">
-          <label>Skills (comma separated)</label
-          ><input
-            name="skills"
-            class="form-control"
-            value="{{ user.alumni_profile.skills or '' }}"
-          />
-        </div>
-        <div class="mb-3">
-          <label>Certifications</label
-          ><textarea name="certifications" class="form-control" rows="2">
-{{ user.alumni_profile.certifications or '' }}</textarea
-          >
-        </div>
-        <div class="mb-3">
-          <label>LinkedIn URL</label
-          ><input
-            name="linkedin_url"
-            class="form-control"
-            value="{{ user.alumni_profile.linkedin_url or '' }}"
-          />
+
+    <!-- ── Student Details ── -->
+    {% if user.role == 'student' and user.student_profile %}
+    <div class="ep-card">
+      <div class="ep-card-header">
+        <div class="ep-card-dot ep-dot--blue"></div>
+        <span>Student Details</span>
+      </div>
+      <div class="ep-card-body">
+        <div class="ep-grid-2">
+          <div class="ep-field">
+            <label class="ep-label">Faculty</label>
+            <input name="faculty" class="ep-input"
+              value="{{ user.student_profile.faculty }}" placeholder="e.g. Engineering" />
+          </div>
+          <div class="ep-field">
+            <label class="ep-label">Department</label>
+            <input name="department" class="ep-input"
+              value="{{ user.student_profile.department }}" placeholder="e.g. Computer Science" />
+          </div>
+          <div class="ep-field">
+            <label class="ep-label">Graduation Year</label>
+            <input name="graduation_year" class="ep-input"
+              value="{{ user.student_profile.graduation_year }}" placeholder="e.g. 2026" />
+          </div>
+          <div class="ep-field">
+            <label class="ep-label">Industry Interest</label>
+            <input name="industry" class="ep-input"
+              value="{{ user.student_profile.industry }}" placeholder="e.g. Technology" />
+          </div>
         </div>
       </div>
     </div>
     {% endif %}
 
-    <button type="submit" class="btn btn-primary btn-lg w-100">
+    <!-- ── Alumni Details ── -->
+    {% if user.role == 'alumni' and user.alumni_profile %}
+    <div class="ep-card">
+      <div class="ep-card-header">
+        <div class="ep-card-dot ep-dot--gold"></div>
+        <span>Alumni Details</span>
+      </div>
+      <div class="ep-card-body">
+
+        <div class="ep-field">
+          <label class="ep-label">Headline</label>
+          <input name="headline" class="ep-input"
+            value="{{ user.alumni_profile.headline }}"
+            placeholder="e.g. Software Engineer at Google" />
+        </div>
+
+        <div class="ep-grid-2">
+          <div class="ep-field">
+            <label class="ep-label">Career Interest</label>
+            <input name="career_interest" class="ep-input"
+              value="{{ user.alumni_profile.career_interest }}"
+              placeholder="e.g. Product Management" />
+          </div>
+          <div class="ep-field">
+            <label class="ep-label">Level of Study</label>
+            <input name="level_of_study" class="ep-input"
+              value="{{ user.alumni_profile.level_of_study }}"
+              placeholder="e.g. Postgraduate" />
+          </div>
+        </div>
+
+        <div class="ep-field">
+          <label class="ep-label">Experience</label>
+          <textarea name="experience" class="ep-input ep-textarea" rows="4"
+            placeholder="Describe your work experience…">{{ user.alumni_profile.experience }}</textarea>
+        </div>
+
+        <div class="ep-field">
+          <label class="ep-label">Education</label>
+          <textarea name="education" class="ep-input ep-textarea" rows="3"
+            placeholder="Your educational background…">{{ user.alumni_profile.education or '' }}</textarea>
+        </div>
+
+        <div class="ep-field">
+          <label class="ep-label">Skills
+            <span class="ep-label-hint">comma separated</span>
+          </label>
+          <input name="skills" class="ep-input"
+            value="{{ user.alumni_profile.skills or '' }}"
+            placeholder="e.g. Python, Leadership, Data Analysis" />
+        </div>
+
+        <div class="ep-field">
+          <label class="ep-label">Certifications</label>
+          <textarea name="certifications" class="ep-input ep-textarea" rows="2"
+            placeholder="Any certifications or awards…">{{ user.alumni_profile.certifications or '' }}</textarea>
+        </div>
+
+        <div class="ep-field">
+          <label class="ep-label">
+            <svg viewBox="0 0 16 16" fill="none" width="12" height="12" style="margin-right:4px;vertical-align:middle">
+              <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.4"/>
+              <path d="M5 8h6M5 5h2M5 11h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+            LinkedIn URL
+          </label>
+          <input name="linkedin_url" class="ep-input"
+            value="{{ user.alumni_profile.linkedin_url or '' }}"
+            placeholder="https://linkedin.com/in/yourname" />
+        </div>
+
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Save button ── -->
+    <button type="submit" class="ep-save-btn">
+      <svg viewBox="0 0 16 16" fill="none" width="15" height="15">
+        <path d="M3 8l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
       Save Changes
     </button>
+
   </form>
 </div>
+
+<style>
+:root {
+  --navy:      #0a1628;
+  --navy-mid:  #0f2044;
+  --gold:      #f5c842;
+  --gold-pale: #fdf6d8;
+  --page-bg:   #f0f2f5;
+  --surf:      #ffffff;
+  --border:    #e2e5ea;
+  --text:      #0a1628;
+  --text2:     #4a5568;
+  --text3:     #9aa5b4;
+  --green:     #059669;
+  --blue:      #0ea5e9;
+  --r:         14px;
+  --ff: 'DM Sans', sans-serif;
+  --fd: 'Syne', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--page-bg); font-family: var(--ff); color: var(--text); }
+
+.ep-root {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 48px 20px 80px;
+}
+
+/* ── Header ── */
+.ep-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; margin-bottom: 32px; flex-wrap: wrap;
+}
+.ep-title {
+  font-family: var(--fd); font-size: 1.85rem; font-weight: 800;
+  letter-spacing: -.035em; color: var(--navy); margin: 0 0 5px; line-height: 1.1;
+}
+.ep-sub { font-size: .875rem; color: var(--text3); }
+
+.ep-btn-ghost {
+  display: inline-flex; align-items: center; gap: 6px;
+  text-decoration: none; font-size: .83rem; font-weight: 600; color: var(--text3);
+  padding: 9px 14px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--surf); transition: color .15s, border-color .15s;
+  flex-shrink: 0; margin-top: 4px;
+}
+.ep-btn-ghost:hover { color: var(--navy); border-color: var(--navy); }
+
+/* ── Avatar card ── */
+.ep-avatar-card {
+  background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 24px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  box-shadow: 0 2px 12px rgba(10,22,40,.07); margin-bottom: 20px;
+  border-top: 3px solid var(--gold);
+  animation: epUp .3s ease both;
+}
+.ep-avatar-wrap { position: relative; flex-shrink: 0; }
+.ep-avatar-img {
+  width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
+  border: 3px solid var(--gold); display: block;
+}
+.ep-avatar-overlay {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: rgba(10,22,40,.55); color: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; font-size: .62rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; opacity: 0; cursor: pointer;
+  transition: opacity .2s;
+}
+.ep-avatar-wrap:hover .ep-avatar-overlay { opacity: 1; }
+.ep-avatar-info { flex: 1; }
+.ep-avatar-name { font-family: var(--fd); font-size: 1.05rem; font-weight: 700; color: var(--navy); }
+.ep-avatar-role {
+  display: inline-block; margin: 5px 0 8px;
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  background: var(--gold-pale); color: #92700a;
+  border: 1px solid rgba(245,200,66,.5); padding: 3px 10px; border-radius: 20px;
+}
+.ep-avatar-hint { font-size: .75rem; color: var(--text3); }
+
+/* ── Section cards ── */
+.ep-card {
+  background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+  overflow: hidden; box-shadow: 0 2px 12px rgba(10,22,40,.06);
+  margin-bottom: 20px; animation: epUp .3s ease both;
+}
+.ep-card-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 15px 22px; border-bottom: 1px solid var(--border);
+  font-family: var(--fd); font-size: .88rem; font-weight: 700; color: var(--navy);
+  background: #fafbfc;
+}
+.ep-card-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ep-dot--navy { background: var(--navy); }
+.ep-dot--gold { background: var(--gold); }
+.ep-dot--blue { background: var(--blue); }
+.ep-dot--green { background: var(--green); }
+
+.ep-card-body { padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+
+/* ── Grid ── */
+.ep-grid-2 {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+}
+
+/* ── Fields ── */
+.ep-field { display: flex; flex-direction: column; gap: 7px; }
+.ep-label {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--text2); font-family: var(--fd);
+  display: flex; align-items: center; gap: 4px;
+}
+.ep-label-hint {
+  font-size: .65rem; font-weight: 500; text-transform: none; letter-spacing: 0;
+  color: var(--text3); font-family: var(--ff);
+}
+.ep-input {
+  border: 1.5px solid var(--border); border-radius: 9px;
+  padding: 10px 14px; font-family: var(--ff); font-size: .875rem;
+  color: var(--text); background: #fafaf9; outline: none; width: 100%;
+  transition: border-color .18s, box-shadow .18s;
+}
+.ep-input::placeholder { color: var(--text3); }
+.ep-input:focus {
+  border-color: var(--navy-mid);
+  box-shadow: 0 0 0 3px rgba(10,22,40,.07);
+  background: #fff;
+}
+.ep-textarea { resize: vertical; min-height: 90px; line-height: 1.65; }
+
+/* ── Save button ── */
+.ep-save-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 13px;
+  background: var(--navy); color: var(--gold);
+  border: none; border-radius: 11px; cursor: pointer;
+  font-family: var(--fd); font-size: .95rem; font-weight: 700;
+  box-shadow: 0 4px 18px rgba(10,22,40,.2);
+  transition: background .15s, transform .15s, box-shadow .15s;
+  margin-top: 8px;
+}
+.ep-save-btn:hover {
+  background: var(--navy-mid);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(10,22,40,.25);
+}
+.ep-save-btn:active { transform: translateY(0); }
+
+@keyframes epUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .ep-title  { font-size: 1.5rem; }
+  .ep-header { flex-direction: column; gap: 10px; }
+  .ep-grid-2 { grid-template-columns: 1fr; }
+  .ep-avatar-card { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
+<script>
+  // Live avatar preview
+  document.getElementById('profileImageInput').addEventListener('change', function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => document.getElementById('avatarPreview').src = e.target.result;
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+
 {% endblock %}

@@ -12,7 +12,6 @@
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
 
-  /* My Connections — individual connection rows outlined in navy */
   #connections-container .connection {
     border: 1.5px solid #0a1628;
     border-radius: 8px;
@@ -25,7 +24,6 @@
     box-shadow: 0 2px 8px rgba(10, 22, 40, 0.12);
   }
 
-  /* Message button — solid navy */
   #connections-container .btn-primary {
     background-color: #0a1628 !important;
     border-color: #0a1628 !important;
@@ -37,7 +35,6 @@
     border-color: #1e3a5f !important;
   }
 
-  /* Search inputs & selects — navy outline */
   #search-box,
   #role-filter,
   #industry-filter,
@@ -55,7 +52,6 @@
     outline: none;
   }
 
-  /* Search button — solid gold */
   .card .btn-primary[onclick="searchUsers()"] {
     background-color: #c9a84c !important;
     border-color: #c9a84c !important;
@@ -196,6 +192,67 @@
 </div>
 
 <script>
+  /* ── Avatar helpers ─────────────────────────────────────── */
+  function getInitials(name) {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : parts[0][0].toUpperCase();
+  }
+
+  function avatarColors(name) {
+    const palette = [
+      ["#0a1628", "#c9a84c"],
+      ["#1e3a5f", "#e2b93d"],
+      ["#2c4a7c", "#f0d080"],
+      ["#0d2b4e", "#b8962e"],
+      ["#163354", "#d4a840"],
+    ];
+    let hash = 0;
+    for (let i = 0; i < (name || "").length; i++) hash += name.charCodeAt(i);
+    const [bg, fg] = palette[hash % palette.length];
+    return { bg, fg };
+  }
+
+  function fallbackAvatar(initials, bg, fg) {
+    const div = document.createElement("div");
+    div.className =
+      "profile-circle mx-auto mb-3 d-flex align-items-center justify-content-center";
+    div.style.cssText = `width:72px;height:72px;border-radius:50%;background:${bg};color:${fg};font-size:1.4rem;font-weight:700;border:2px solid #c9a84c;letter-spacing:1px;`;
+    div.textContent = initials;
+    return div;
+  }
+
+  function avatarHtml(user) {
+    /* Matches Flask's url_for('static', filename=user.profile_image) */
+    const pic = user.profile_image
+      ? `/static/${user.profile_image}`
+      : null;
+
+    const initials = getInitials(user.name);
+    const { bg, fg } = avatarColors(user.name);
+
+    if (pic) {
+      /* Real image — fall back to initials if the URL is broken */
+      return `<img
+        src="${pic}"
+        alt="${user.name}"
+        class="profile-circle mx-auto mb-3 d-block"
+        style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #c9a84c;"
+        onerror="this.replaceWith(fallbackAvatar('${initials}','${bg}','${fg}'))"
+      />`;
+    }
+
+    /* No image URL — render initials avatar */
+    return `<div
+      class="profile-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+      style="width:72px;height:72px;border-radius:50%;background:${bg};color:${fg};font-size:1.4rem;font-weight:700;border:2px solid #c9a84c;letter-spacing:1px;">
+      ${initials}
+    </div>`;
+  }
+  /* ─────────────────────────────────────────────────────────── */
+
   async function searchUsers() {
     const q = document.getElementById("search-box").value;
     const role = document.getElementById("role-filter").value;
@@ -214,7 +271,7 @@
       container.innerHTML += `
         <div class="col-md-6 col-xl-4">
             <div class="suggestion-card text-center p-3">
-                <div class="profile-circle mx-auto mb-3"></div>
+                ${avatarHtml(user)}
                 <h6>${user.name}</h6>
                 <small>${user.industry || user.email}</small>
                 <button
@@ -243,7 +300,7 @@
       container.innerHTML += `
         <div class="col-md-6 col-xl-4">
             <div class="suggestion-card text-center p-3">
-                <div class="profile-circle mx-auto mb-3"></div>
+                ${avatarHtml(user)}
                 <h6>${user.name}</h6>
                 <small>${user.industry}</small>
                 <button
