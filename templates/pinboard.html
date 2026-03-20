@@ -1,268 +1,739 @@
 {% extends "base.html" %} {% block content %}
-<div class="container py-5">
-  <div class="mb-4">
-    <h2 class="fw-bold">Events</h2>
-    <p class="text-muted">Discover and join upcoming alumni events.</p>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<div class="pb-root">
+
+  <!-- Page header -->
+  <div class="pb-page-header">
+    <div>
+      <h1 class="pb-page-title">Pinboard</h1>
+      <p class="pb-page-sub">Stay informed with announcements, events and community posts.</p>
+    </div>
+    {% if current_user.role in ['alumni', 'admin'] %}
+    <button class="pb-new-btn" id="toggleCreateBtn">
+      <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+        <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      New Post
+    </button>
+    {% endif %}
   </div>
 
-  {% if current_user.role == "admin" %}
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <h5 class="mb-3">Create Event</h5>
-
-      <input
-        id="eventTitle"
-        class="form-control mb-3"
-        placeholder="Event Title"
-      />
-
+  <!-- Create post form -->
+  {% if current_user.role in ['alumni', 'admin'] %}
+  <div class="pb-card pb-create-card" id="createPostCard" style="display:none">
+    <div class="pb-create-top">
+      <img src="{{ url_for('static', filename=current_user.profile_image) }}" class="pb-avatar" alt="">
       <textarea
-        id="eventDescription"
-        class="form-control mb-3"
-        placeholder="Event Description"
+        id="postContent"
+        class="pb-create-input"
+        placeholder="{% if current_user.role == 'admin' %}Write an announcement for the community…{% else %}Share something with the community…{% endif %}"
+        rows="3"
       ></textarea>
-
-      <input
-        id="eventLocation"
-        class="form-control mb-3"
-        placeholder="Location"
-      />
-
-      <input
-        id="eventDate"
-        type="datetime-local"
-        class="form-control mb-3"
-        step="60"
-      />
-
-      <button id="createEventBtn" type="button" class="btn btn-primary">
-        Create Event
-      </button>
+    </div>
+    <div class="pb-create-footer">
+      <label class="pb-attach-btn" for="postImage">
+        <svg viewBox="0 0 20 20" fill="none" width="15" height="15">
+          <rect x="3" y="5" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.6"/>
+          <circle cx="7.5" cy="9.5" r="1.5" fill="currentColor" opacity=".5"/>
+          <path d="M3 15l4-4 3 3 3-3 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="attachLabel">Image</span>
+        <input type="file" id="postImage" accept="image/*" style="display:none">
+      </label>
+      <div style="display:flex;gap:8px">
+        <button class="pb-cancel-btn" id="cancelPostBtn">Cancel</button>
+        <button class="pb-post-btn" id="submitPostBtn">
+          <span id="postBtnLabel">{% if current_user.role == 'admin' %}Post Announcement{% else %}Post{% endif %}</span>
+        </button>
+      </div>
     </div>
   </div>
   {% endif %}
 
-  <div id="eventsContainer"></div>
+  <!-- ── Tab Navigation ── -->
+  <div class="pb-tabs">
+    <button class="pb-tab pb-tab--active" data-tab="announcements">
+      <span class="pb-tab-dot pb-dot--admin"></span>
+      Announcements
+      <span class="pb-tab-count" id="tabAnnCount"></span>
+    </button>
+    <button class="pb-tab" data-tab="events">
+      <span class="pb-tab-dot pb-dot--event"></span>
+      Events
+      <span class="pb-tab-count" id="tabEvtCount"></span>
+    </button>
+    <button class="pb-tab" data-tab="myfeed">
+      <span class="pb-tab-dot pb-dot--alumni"></span>
+      My Feed
+      <span class="pb-tab-count" id="tabFeedCount"></span>
+    </button>
+    <div class="pb-tab-ink" id="tabInk"></div>
+  </div>
+
+  <!-- ── Announcements Panel ── -->
+  <div class="pb-panel pb-panel--active" id="panel-announcements">
+    <div id="announcementsContainer">
+      <div class="pb-loading">Loading announcements…</div>
+    </div>
+  </div>
+
+  <!-- ── Events Panel ── -->
+  <div class="pb-panel" id="panel-events">
+    <div id="eventsContainer">
+      <div class="pb-loading">Loading events…</div>
+    </div>
+  </div>
+
+  <!-- ── My Feed Panel ── -->
+  <div class="pb-panel" id="panel-myfeed">
+    <div id="communityContainer">
+      <div class="pb-loading">Loading posts…</div>
+    </div>
+  </div>
+
 </div>
 
+<!-- Comment modal -->
+<div class="pb-overlay" id="commentModal" style="display:none">
+  <div class="pb-modal">
+    <div class="pb-modal-head">
+      <span class="pb-modal-title">Comments</span>
+      <button class="pb-modal-close" id="closeModal">✕</button>
+    </div>
+    <div class="pb-modal-body" id="modalCommentsList"></div>
+    <div class="pb-modal-foot">
+      <input id="commentInput" class="pb-modal-input" placeholder="Write a comment…">
+      <button class="pb-modal-send" id="sendCommentBtn">Send</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── Brand palette from Alumni Nexus ── */
+:root {
+  --navy:      #0a1628;
+  --navy-mid:  #0f2044;
+  --navy-soft: #162a52;
+  --gold:      #f5c842;
+  --gold-dim:  #f0b800;
+  --gold-pale: #fdf6d8;
+  --page-bg:   #f0f2f5;
+  --surf:      #ffffff;
+  --border:    #e2e5ea;
+  --text:      #0a1628;
+  --text2:     #4a5568;
+  --text3:     #9aa5b4;
+  --blue-tag:  #0ea5e9;
+  --green-tag: #059669;
+  --r:         14px;
+  --ff: 'DM Sans', sans-serif;
+  --fd: 'Syne', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--ff); background: var(--page-bg); color: var(--text); }
+
+/* ── Root ── */
+.pb-root {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 20px 100px;
+}
+
+/* ── Page header ── */
+.pb-page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; margin-bottom: 32px;
+}
+.pb-page-title {
+  font-family: var(--fd); font-size: 2.1rem; font-weight: 800;
+  letter-spacing: -.04em; line-height: 1.05; color: var(--navy);
+  margin-bottom: 6px;
+}
+.pb-page-title span { color: var(--gold-dim); }
+.pb-page-sub { font-size: .875rem; color: var(--text3); }
+
+.pb-new-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--navy); color: var(--gold);
+  border: none; font-size: .83rem; font-weight: 700;
+  font-family: var(--ff); padding: 10px 18px;
+  border-radius: 10px; cursor: pointer; flex-shrink: 0; margin-top: 4px;
+  transition: background .15s, transform .15s, box-shadow .15s;
+  box-shadow: 0 4px 14px rgba(10,22,40,.18);
+}
+.pb-new-btn:hover {
+  background: var(--navy-soft);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(10,22,40,.22);
+}
+
+/* ── Create card ── */
+.pb-card {
+  background: var(--surf); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+  box-shadow: 0 2px 12px rgba(10,22,40,.07);
+}
+.pb-create-card { margin-bottom: 28px; animation: pbUp .3s ease both; }
+.pb-create-top  { display: flex; gap: 12px; padding: 18px 18px 12px; }
+.pb-avatar    { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid var(--gold); }
+.pb-avatar-sm { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid var(--border); }
+
+.pb-create-input {
+  flex: 1; border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 10px 14px; font-family: var(--ff); font-size: .9rem;
+  color: var(--text); background: var(--page-bg); resize: vertical;
+  outline: none; min-height: 80px; line-height: 1.65;
+  transition: border-color .18s, box-shadow .18s;
+}
+.pb-create-input::placeholder { color: var(--text3); }
+.pb-create-input:focus {
+  border-color: var(--navy-mid);
+  box-shadow: 0 0 0 3px rgba(10,22,40,.08);
+  background: #fff;
+}
+.pb-create-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 18px 14px; border-top: 1px solid var(--border); background: var(--page-bg);
+}
+.pb-attach-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: .78rem; font-weight: 600; color: var(--text2);
+  cursor: pointer; padding: 6px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surf);
+  transition: border-color .15s; user-select: none;
+}
+.pb-attach-btn:hover { border-color: var(--navy); color: var(--navy); }
+
+.pb-post-btn {
+  background: var(--navy); color: var(--gold);
+  border: none; border-radius: 9px; padding: 9px 22px;
+  font-size: .85rem; font-weight: 700; font-family: var(--ff);
+  cursor: pointer; transition: background .15s, transform .15s;
+  box-shadow: 0 3px 10px rgba(10,22,40,.15);
+}
+.pb-post-btn:hover    { background: var(--navy-soft); transform: translateY(-1px); }
+.pb-post-btn:disabled { opacity: .6; pointer-events: none; }
+
+.pb-cancel-btn {
+  background: none; border: 1px solid var(--border); color: var(--text2);
+  border-radius: 9px; padding: 9px 16px;
+  font-size: .85rem; font-weight: 600; font-family: var(--ff);
+  cursor: pointer; transition: border-color .15s;
+}
+.pb-cancel-btn:hover { border-color: var(--navy); color: var(--navy); }
+
+/* ── Tabs ── */
+.pb-tabs {
+  position: relative; display: flex; gap: 2px;
+  background: var(--surf); border: 1px solid var(--border);
+  border-radius: 13px; padding: 5px; margin-bottom: 22px;
+  box-shadow: 0 2px 10px rgba(10,22,40,.07);
+}
+.pb-tab {
+  position: relative; z-index: 1; flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--ff); font-size: .82rem; font-weight: 600;
+  color: var(--text3); padding: 10px 12px; border-radius: 9px;
+  transition: color .2s; white-space: nowrap;
+}
+.pb-tab--active { color: var(--navy); }
+
+.pb-tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.pb-dot--admin  { background: #6366f1; }
+.pb-dot--alumni { background: var(--blue-tag); }
+.pb-dot--event  { background: var(--green-tag); }
+
+.pb-tab-count {
+  font-size: .65rem; font-weight: 700;
+  background: #eef0f4; color: var(--text3);
+  padding: 2px 7px; border-radius: 20px; min-width: 20px; text-align: center;
+  transition: background .2s, color .2s;
+}
+.pb-tab--active .pb-tab-count {
+  background: var(--navy); color: var(--gold);
+}
+
+/* sliding pill */
+.pb-tab-ink {
+  position: absolute; top: 5px; left: 5px; bottom: 5px;
+  background: var(--gold-pale);
+  border: 1px solid rgba(245,200,66,.4);
+  border-radius: 9px;
+  transition: transform .25s cubic-bezier(.4,0,.2,1), width .25s cubic-bezier(.4,0,.2,1);
+  pointer-events: none; z-index: 0;
+}
+
+/* panels */
+.pb-panel { display: none; animation: pbUp .28s ease both; }
+.pb-panel--active { display: block; }
+
+/* ── Post card ── */
+.pb-post {
+  background: var(--surf); border: 1px solid var(--border);
+  border-radius: var(--r); margin-bottom: 14px; overflow: hidden;
+  box-shadow: 0 2px 10px rgba(10,22,40,.06); animation: pbUp .28s ease both;
+  transition: box-shadow .2s, transform .2s;
+}
+.pb-post:hover { box-shadow: 0 6px 22px rgba(10,22,40,.1); transform: translateY(-2px); }
+.pb-post--admin { border-top: 3px solid var(--gold); }
+
+.pb-post-head { display: flex; align-items: center; gap: 10px; padding: 15px 18px 9px; }
+.pb-post-meta { flex: 1; min-width: 0; }
+.pb-post-name { font-weight: 600; font-size: .875rem; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pb-post-time { font-size: .72rem; color: var(--text3); margin-top: 2px; }
+
+.pb-role-badge {
+  font-size: .62rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; padding: 3px 10px; border-radius: 20px; flex-shrink: 0;
+}
+.pb-badge--admin  { background: var(--gold-pale); color: #92700a; border: 1px solid rgba(245,200,66,.5); }
+.pb-badge--alumni { background: #e0f2fe; color: #0369a1; }
+
+.pb-post-body {
+  padding: 2px 18px 14px; font-size: .9rem; line-height: 1.7;
+  color: var(--text2); white-space: pre-wrap; word-break: break-word;
+}
+.pb-post-img {
+  width: 100%; max-height: 380px; object-fit: cover; display: block;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.pb-post-actions {
+  display: flex; gap: 4px; padding: 8px 12px;
+  border-top: 1px solid var(--border); background: var(--page-bg);
+}
+.pb-act {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .78rem; font-weight: 600; color: var(--text2);
+  background: none; border: none; cursor: pointer;
+  padding: 6px 11px; border-radius: 7px; font-family: var(--ff);
+  transition: background .15s, color .15s;
+}
+.pb-act:hover      { background: rgba(10,22,40,.06); color: var(--navy); }
+.pb-act--liked     { color: #dc2626; }
+.pb-act--liked:hover { background: #fff0f0; }
+
+/* ── Event card ── */
+.pb-event-card {
+  background: var(--surf); border: 1px solid var(--border);
+  border-top: 3px solid var(--green-tag);
+  border-radius: var(--r); margin-bottom: 14px; overflow: hidden;
+  box-shadow: 0 2px 10px rgba(10,22,40,.06); animation: pbUp .28s ease both;
+  transition: box-shadow .2s, transform .2s;
+}
+.pb-event-card:hover { box-shadow: 0 6px 22px rgba(10,22,40,.1); transform: translateY(-2px); }
+
+.pb-event-head { padding: 16px 18px 10px; }
+.pb-event-name {
+  font-family: var(--fd); font-size: 1rem; font-weight: 700;
+  color: var(--navy); letter-spacing: -.02em;
+}
+.pb-event-body {
+  font-size: .875rem; color: var(--text2); line-height: 1.65;
+  padding: 0 18px 10px;
+}
+.pb-event-meta { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 18px 14px; }
+.pb-meta-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--page-bg); border: 1px solid var(--border);
+  border-radius: 20px; padding: 4px 11px;
+  font-size: .74rem; font-weight: 500; color: var(--text2); white-space: nowrap;
+}
+.pb-meta-pill--green { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+
+.pb-rsvp-area {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 10px 18px 14px; border-top: 1px solid var(--border); background: var(--page-bg);
+}
+.pb-rsvp-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border-radius: 8px; padding: 7px 15px;
+  font-size: .8rem; font-weight: 700; font-family: var(--ff);
+  cursor: pointer; border: 1.5px solid var(--border);
+  transition: all .15s ease;
+}
+.pb-rsvp-btn--default { background: var(--navy); color: var(--gold); border-color: var(--navy); }
+.pb-rsvp-btn--default:hover { background: var(--navy-soft); transform: translateY(-1px); }
+.pb-rsvp-btn--success { background: #16a34a; color: #fff; border-color: #16a34a; }
+.pb-rsvp-btn--success:hover { background: #15803d; transform: translateY(-1px); }
+.pb-rsvp-btn--danger  { background: #fff; color: #dc2626; border-color: #fca5a5; }
+.pb-rsvp-btn--danger:hover  { background: #fef2f2; transform: translateY(-1px); }
+.pb-rsvp-btn--muted   { background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; cursor: default; pointer-events: none; }
+
+/* ── Empty / loading ── */
+.pb-empty, .pb-loading {
+  text-align: center; padding: 40px 20px; color: var(--text3);
+  font-size: .875rem; background: var(--surf);
+  border: 1px solid var(--border); border-radius: var(--r);
+  box-shadow: 0 2px 10px rgba(10,22,40,.05);
+}
+.pb-empty-icon {
+  width: 50px; height: 50px; border-radius: 13px;
+  background: var(--page-bg); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3); margin: 0 auto 12px;
+}
+
+/* ── Modal ── */
+.pb-overlay {
+  position: fixed; inset: 0; background: rgba(10,22,40,.5);
+  z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+@media(min-width:600px){ .pb-overlay { align-items: center; } }
+
+.pb-modal {
+  background: var(--surf); border-radius: 18px 18px 0 0;
+  width: 100%; max-width: 540px; max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 -8px 50px rgba(10,22,40,.2);
+}
+@media(min-width:600px){ .pb-modal { border-radius: 18px; } }
+
+.pb-modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 17px 20px; border-bottom: 1px solid var(--border);
+}
+.pb-modal-title { font-family: var(--fd); font-size: 1rem; font-weight: 700; color: var(--navy); }
+.pb-modal-close {
+  background: var(--page-bg); border: 1px solid var(--border); cursor: pointer;
+  font-size: .8rem; color: var(--text3); padding: 5px 9px;
+  border-radius: 7px; transition: color .15s, background .15s;
+}
+.pb-modal-close:hover { color: var(--navy); background: #e5e8ee; }
+
+.pb-modal-body {
+  flex: 1; overflow-y: auto; padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.pb-comment     { display: flex; gap: 10px; align-items: flex-start; }
+.pb-cmnt-bubble { background: var(--page-bg); border-radius: 11px; padding: 10px 14px; flex: 1; border: 1px solid var(--border); }
+.pb-cmnt-name   { font-size: .78rem; font-weight: 700; color: var(--navy); margin-bottom: 3px; }
+.pb-cmnt-text   { font-size: .85rem; color: var(--text2); line-height: 1.5; }
+.pb-cmnt-time   { font-size: .68rem; color: var(--text3); margin-top: 5px; }
+.pb-no-cmnt     { text-align: center; color: var(--text3); font-size: .85rem; padding: 24px 0; }
+
+.pb-modal-foot {
+  display: flex; gap: 8px; padding: 14px 16px;
+  border-top: 1px solid var(--border); background: var(--page-bg);
+}
+.pb-modal-input {
+  flex: 1; border: 1.5px solid var(--border); border-radius: 9px;
+  padding: 10px 14px; font-family: var(--ff); font-size: .875rem; outline: none;
+  background: var(--surf); color: var(--text);
+  transition: border-color .18s;
+}
+.pb-modal-input:focus { border-color: var(--navy-mid); }
+.pb-modal-send {
+  background: var(--navy); color: var(--gold); border: none;
+  border-radius: 9px; padding: 10px 20px;
+  font-size: .85rem; font-weight: 700; font-family: var(--ff);
+  cursor: pointer; transition: background .15s;
+}
+.pb-modal-send:hover { background: var(--navy-soft); }
+
+@keyframes pbUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media(max-width:600px){
+  .pb-root { padding: 28px 14px 70px; }
+  .pb-page-title { font-size: 1.65rem; }
+  .pb-page-header { flex-direction: column; gap: 10px; }
+  .pb-tab { font-size: .76rem; padding: 9px 8px; gap: 5px; }
+}
+</style>
+
 <script>
-  const USER_ROLE = "{{ current_user.role }}";
+let activePostId = null;
 
-  async function createEvent() {
-    try {
-      const title = document.getElementById("eventTitle")?.value.trim() || "";
-      const description =
-        document.getElementById("eventDescription")?.value.trim() || "";
-      const location =
-        document.getElementById("eventLocation")?.value.trim() || "";
-      const date = document.getElementById("eventDate")?.value || "";
+/* ── helpers ── */
+function timeAgo(s) {
+  if (!s) return '';
+  const d = Math.floor((Date.now() - new Date(s).getTime()) / 1000);
+  if (d < 60)    return 'just now';
+  if (d < 3600)  return Math.floor(d/60)   + 'm ago';
+  if (d < 86400) return Math.floor(d/3600) + 'h ago';
+  return Math.floor(d/86400) + 'd ago';
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function imgSrc(p){ return p ? '/static/' + p : '/static/default-profile.png'; }
+function fmtDate(s){ if(!s) return ''; return new Date(s).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'}); }
+function fmtTime(s){ if(!s) return ''; return new Date(s).toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'}); }
 
-      if (!title || !description || !location || !date) {
-        alert("Please fill in all fields.");
-        return;
-      }
+/* ── Tab init ── */
+function initTabs() {
+  const tabs = document.querySelectorAll('.pb-tab');
+  const ink  = document.getElementById('tabInk');
 
-      const response = await fetch("/api/events", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          description,
-          location,
-          event_date: date,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        alert(result.error || result.message || "Failed to create event");
-        return;
-      }
-
-      alert(result.message || "Event created successfully");
-
-      document.getElementById("eventTitle").value = "";
-      document.getElementById("eventDescription").value = "";
-      document.getElementById("eventLocation").value = "";
-      document.getElementById("eventDate").value = "";
-
-      loadEvents();
-    } catch (error) {
-      alert("Something went wrong while creating the event.");
-    }
+  function moveInk(tab) {
+    const tr = document.querySelector('.pb-tabs').getBoundingClientRect();
+    const r  = tab.getBoundingClientRect();
+    ink.style.width     = r.width + 'px';
+    ink.style.transform = `translateX(${r.left - tr.left - 5}px)`;
   }
 
-  async function rsvpEvent(eventId) {
-    try {
-      const response = await fetch(`/api/events/${eventId}/rsvp`, {
-        method: "POST",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        alert(result.message || result.error || "Failed to RSVP");
-        loadEvents();
-        return;
-      }
-
-      loadEvents();
-    } catch (error) {
-      alert("Something went wrong while sending your RSVP.");
-    }
-  }
-
-  async function attendEvent(eventId) {
-    try {
-      const response = await fetch(`/api/events/${eventId}/attend`, {
-        method: "POST",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        alert(result.message || result.error || "Failed to mark attending");
-        loadEvents();
-        return;
-      }
-
-      loadEvents();
-    } catch (error) {
-      alert("Something went wrong while marking attendance.");
-    }
-  }
-
-  async function cancelRsvp(eventId) {
-    try {
-      const response = await fetch(`/api/events/${eventId}/cancel-rsvp`, {
-        method: "POST",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        alert(result.message || result.error || "Failed to cancel RSVP");
-        loadEvents();
-        return;
-      }
-
-      loadEvents();
-    } catch (error) {
-      alert("Something went wrong while cancelling your RSVP.");
-    }
-  }
-
-  function buildActionButtons(event) {
-    if (USER_ROLE === "admin") {
-      return `<span class="badge bg-secondary">Admin cannot RSVP</span>`;
-    }
-
-    if (event.user_status === "rsvp") {
-      return `
-        <button
-          type="button"
-          class="btn btn-success btn-sm me-2"
-          onclick="attendEvent(${event.event_id})"
-        >
-          Attending
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger btn-sm"
-          onclick="cancelRsvp(${event.event_id})"
-        >
-          Cancel RSVP
-        </button>
-      `;
-    }
-
-    if (event.user_status === "attending") {
-      return `
-        <button
-          type="button"
-          class="btn btn-success btn-sm me-2"
-          disabled
-        >
-          You are Attending
-        </button>
-        <button
-          type="button"
-          class="btn btn-danger btn-sm"
-          onclick="cancelRsvp(${event.event_id})"
-        >
-          Cancel RSVP
-        </button>
-      `;
-    }
-
-    return `
-      <button
-        type="button"
-        class="btn btn-primary btn-sm"
-        onclick="rsvpEvent(${event.event_id})"
-      >
-        RSVP
-      </button>
-    `;
-  }
-
-  async function loadEvents() {
-    try {
-      const response = await fetch("/api/events");
-      const events = await response.json();
-
-      const container = document.getElementById("eventsContainer");
-      container.innerHTML = "";
-
-      if (!Array.isArray(events) || events.length === 0) {
-        container.innerHTML = `
-          <div class="alert alert-info">No events available.</div>
-        `;
-        return;
-      }
-
-      events.forEach((event) => {
-        const actionButtons = buildActionButtons(event);
-
-        container.innerHTML += `
-          <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h5>${event.title}</h5>
-              <p>${event.description || ""}</p>
-              <div class="text-muted mb-2">📍 ${event.location || ""}</div>
-              <div class="text-muted mb-2">
-                📅 ${event.date ? new Date(event.date).toLocaleString() : ""}
-              </div>
-              <div class="text-muted mb-1">
-                Total RSVPs: <strong>${event.rsvp_count}</strong>
-              </div>
-              <div class="text-muted mb-3">
-                Total Attending: <strong>${event.attending_count}</strong>
-              </div>
-
-              <div class="d-flex flex-wrap gap-2">
-                ${actionButtons}
-              </div>
-            </div>
-          </div>
-        `;
-      });
-    } catch (error) {
-      document.getElementById("eventsContainer").innerHTML = `
-        <div class="alert alert-danger">Failed to load events.</div>
-      `;
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    const createBtn = document.getElementById("createEventBtn");
-    if (createBtn) {
-      createBtn.addEventListener("click", createEvent);
-    }
-    loadEvents();
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('pb-tab--active'));
+      tab.classList.add('pb-tab--active');
+      document.querySelectorAll('.pb-panel').forEach(p => p.classList.remove('pb-panel--active'));
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('pb-panel--active');
+      moveInk(tab);
+    });
   });
+
+  const first = document.querySelector('.pb-tab--active');
+  if (first) moveInk(first);
+  window.addEventListener('resize', () => { const a = document.querySelector('.pb-tab--active'); if(a) moveInk(a); });
+}
+
+/* ── Render post ── */
+function renderPost(p) {
+  const isAdmin = p.role === 'admin';
+  const badge   = isAdmin
+    ? `<span class="pb-role-badge pb-badge--admin">Announcement</span>`
+    : `<span class="pb-role-badge pb-badge--alumni">Alumni</span>`;
+  const photo = p.image ? `<img src="/static/${esc(p.image)}" class="pb-post-img" alt="" loading="lazy">` : '';
+  const liked = p.liked_by_me;
+
+  return `
+    <div class="pb-post ${isAdmin ? 'pb-post--admin' : ''}" id="post-${p.post_id}">
+      <div class="pb-post-head">
+        <img src="${esc(imgSrc(p.profile_image))}" class="pb-avatar-sm" alt="">
+        <div class="pb-post-meta">
+          <div class="pb-post-name">${esc(p.name)}</div>
+          <div class="pb-post-time">${timeAgo(p.created_at)}</div>
+        </div>
+        ${badge}
+      </div>
+      <div class="pb-post-body">${esc(p.content)}</div>
+      ${photo}
+      <div class="pb-post-actions">
+        <button class="pb-act ${liked ? 'pb-act--liked' : ''}" onclick="toggleLike(${p.post_id})">
+          <svg viewBox="0 0 20 20" fill="${liked ? 'currentColor' : 'none'}" width="14" height="14">
+            <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+              stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+          ${p.like_count} Like${p.like_count !== 1 ? 's' : ''}
+        </button>
+        <button class="pb-act" onclick="openComments(${p.post_id})">
+          <svg viewBox="0 0 20 20" fill="none" width="14" height="14">
+            <path d="M17 10c0 3.866-3.134 7-7 7a6.978 6.978 0 01-3.5-.935L3 17l.935-3.5A6.978 6.978 0 013 10c0-3.866 3.134-7 7-7s7 3.134 7 7z"
+              stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          </svg>
+          ${p.comment_count} Comment${p.comment_count !== 1 ? 's' : ''}
+        </button>
+      </div>
+    </div>`;
+}
+
+/* ── Render event ── */
+function renderEvent(ev) {
+  const rawDate = ev.event_date || ev.date || null;
+  const dateStr = fmtDate(rawDate);
+  const timeStr = fmtTime(rawDate);
+  const USER_ROLE = '{{ current_user.role }}';
+
+  let rsvpHtml = '';
+  if (USER_ROLE === 'admin') {
+    rsvpHtml = `<span class="pb-meta-pill">Admin view</span>`;
+  } else if (ev.user_status === 'attending') {
+    rsvpHtml = `
+      <button class="pb-rsvp-btn pb-rsvp-btn--muted" disabled>✓ Attending</button>
+      <button class="pb-rsvp-btn pb-rsvp-btn--danger" onclick="cancelRsvp(${ev.event_id})">Cancel RSVP</button>`;
+  } else if (ev.user_status === 'rsvp') {
+    rsvpHtml = `
+      <button class="pb-rsvp-btn pb-rsvp-btn--success" onclick="attendEvent(${ev.event_id})">Mark Attending</button>
+      <button class="pb-rsvp-btn pb-rsvp-btn--danger"  onclick="cancelRsvp(${ev.event_id})">Cancel RSVP</button>`;
+  } else {
+    rsvpHtml = `
+      <button class="pb-rsvp-btn pb-rsvp-btn--default" onclick="rsvpEvent(${ev.event_id})">
+        <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="2" y="2" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/>
+        </svg>
+        RSVP
+      </button>`;
+  }
+
+  return `
+    <div class="pb-event-card">
+      <div class="pb-event-head">
+        <div class="pb-event-name">${esc(ev.title)}</div>
+      </div>
+      ${ev.description ? `<div class="pb-event-body">${esc(ev.description)}</div>` : ''}
+      <div class="pb-event-meta">
+        ${ev.location ? `<span class="pb-meta-pill">
+          <svg viewBox="0 0 16 16" fill="none" width="10" height="10"><path d="M8 1.5A4.5 4.5 0 0112.5 6c0 3-4.5 8.5-4.5 8.5S3.5 9 3.5 6A4.5 4.5 0 018 1.5z" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="6" r="1.5" fill="currentColor"/></svg>
+          ${esc(ev.location)}</span>` : ''}
+        ${dateStr ? `
+          <span class="pb-meta-pill">
+            <svg viewBox="0 0 16 16" fill="none" width="10" height="10"><rect x="2" y="3" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M11 1.5v3M5 1.5v3M2 7h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            ${dateStr}
+          </span>
+          <span class="pb-meta-pill">
+            <svg viewBox="0 0 16 16" fill="none" width="10" height="10"><circle cx="8" cy="8" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            ${timeStr}
+          </span>` : ''}
+        <span class="pb-meta-pill">RSVPs: ${ev.rsvp_count || 0}</span>
+        <span class="pb-meta-pill pb-meta-pill--green">Attending: ${ev.attending_count || 0}</span>
+      </div>
+      <div class="pb-rsvp-area">${rsvpHtml}</div>
+    </div>`;
+}
+
+/* ── Load posts ── */
+async function loadPosts() {
+  try {
+    const res   = await fetch('/api/posts');
+    const posts = await res.json();
+    const admin  = posts.filter(p => p.role === 'admin');
+    const alumni = posts.filter(p => p.role !== 'admin');
+
+    const annEl   = document.getElementById('announcementsContainer');
+    const commEl  = document.getElementById('communityContainer');
+    const annCnt  = document.getElementById('tabAnnCount');
+    const feedCnt = document.getElementById('tabFeedCount');
+
+    annEl.innerHTML  = admin.length  ? admin.map(renderPost).join('')  : `<div class="pb-empty">No announcements yet.</div>`;
+    commEl.innerHTML = alumni.length ? alumni.map(renderPost).join('') : `<div class="pb-empty">No community posts yet.</div>`;
+    if (annCnt)  annCnt.textContent  = admin.length  || '';
+    if (feedCnt) feedCnt.textContent = alumni.length || '';
+  } catch {
+    document.getElementById('announcementsContainer').innerHTML = `<div class="pb-empty">Failed to load.</div>`;
+    document.getElementById('communityContainer').innerHTML     = `<div class="pb-empty">Failed to load.</div>`;
+  }
+}
+
+/* ── Load events ── */
+async function loadEvents() {
+  const container = document.getElementById('eventsContainer');
+  const evtCnt    = document.getElementById('tabEvtCount');
+  container.innerHTML = '<div class="pb-loading">Loading events…</div>';
+  try {
+    const res    = await fetch('/api/events');
+    const events = await res.json().catch(() => []);
+    if (!Array.isArray(events) || !events.length) {
+      container.innerHTML = `<div class="pb-empty">
+        <div class="pb-empty-icon"><svg viewBox="0 0 24 24" fill="none" width="24" height="24"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M16 3v4M8 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        No events yet.</div>`;
+      if (evtCnt) evtCnt.textContent = '';
+      return;
+    }
+    container.innerHTML = events.map(renderEvent).join('');
+    if (evtCnt) evtCnt.textContent = events.length || '';
+  } catch {
+    container.innerHTML = `<div class="pb-empty">Failed to load events.</div>`;
+  }
+}
+
+/* ── RSVP actions ── */
+async function rsvpEvent(id) {
+  try { const r = await fetch(`/api/events/${id}/rsvp`,{method:'POST'}); const d = await r.json().catch(()=>{}); if(!r.ok) alert(d?.message||'Failed'); else alert(d?.message||'RSVP successful!'); loadEvents(); } catch { alert('Error.'); }
+}
+async function attendEvent(id) {
+  try { await fetch(`/api/events/${id}/attend`,{method:'POST'}); loadEvents(); } catch { alert('Error.'); }
+}
+async function cancelRsvp(id) {
+  try { await fetch(`/api/events/${id}/cancel-rsvp`,{method:'POST'}); loadEvents(); } catch { alert('Error.'); }
+}
+
+/* ── Like ── */
+async function toggleLike(postId) {
+  try { const r = await fetch(`/api/posts/${postId}/like`,{method:'POST'}); if(r.ok) loadPosts(); } catch {}
+}
+
+/* ── Comments ── */
+async function openComments(postId) {
+  activePostId = postId;
+  document.getElementById('commentModal').style.display = 'flex';
+  document.getElementById('commentInput').value = '';
+  await loadComments(postId);
+}
+async function loadComments(postId) {
+  const list = document.getElementById('modalCommentsList');
+  list.innerHTML = '<div class="pb-no-cmnt">Loading…</div>';
+  try {
+    const res  = await fetch(`/api/posts/${postId}/comments`);
+    const data = await res.json();
+    if (!data.length) { list.innerHTML = '<div class="pb-no-cmnt">No comments yet. Be the first!</div>'; return; }
+    list.innerHTML = data.map(c => `
+      <div class="pb-comment">
+        <img src="${esc(imgSrc(c.profile_image))}" class="pb-avatar-sm" alt="">
+        <div class="pb-cmnt-bubble">
+          <div class="pb-cmnt-name">${esc(c.name)}</div>
+          <div class="pb-cmnt-text">${esc(c.content)}</div>
+          <div class="pb-cmnt-time">${timeAgo(c.created_at)}</div>
+        </div>
+      </div>`).join('');
+    list.scrollTop = list.scrollHeight;
+  } catch { list.innerHTML = '<div class="pb-no-cmnt">Could not load comments.</div>'; }
+}
+async function sendComment() {
+  if (!activePostId) return;
+  const input = document.getElementById('commentInput');
+  const content = input.value.trim();
+  if (!content) return;
+  try {
+    const res = await fetch(`/api/posts/${activePostId}/comment`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content})});
+    if (res.ok) { input.value = ''; await loadComments(activePostId); loadPosts(); }
+  } catch {}
+}
+
+document.getElementById('closeModal').addEventListener('click', () => { document.getElementById('commentModal').style.display='none'; activePostId=null; });
+document.getElementById('commentModal').addEventListener('click', e => { if(e.target===document.getElementById('commentModal')){ document.getElementById('commentModal').style.display='none'; activePostId=null; } });
+document.getElementById('sendCommentBtn').addEventListener('click', sendComment);
+document.getElementById('commentInput').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendComment();} });
+
+/* ── Create post ── */
+const toggleBtn  = document.getElementById('toggleCreateBtn');
+const createCard = document.getElementById('createPostCard');
+const cancelBtn  = document.getElementById('cancelPostBtn');
+if (toggleBtn) toggleBtn.addEventListener('click', () => { createCard.style.display='block'; createCard.scrollIntoView({behavior:'smooth',block:'nearest'}); });
+if (cancelBtn) cancelBtn.addEventListener('click', () => { createCard.style.display='none'; });
+
+const imageInput  = document.getElementById('postImage');
+const attachLabel = document.getElementById('attachLabel');
+if (imageInput) imageInput.addEventListener('change', () => {
+  const f = imageInput.files[0];
+  if (attachLabel) attachLabel.textContent = f ? f.name.slice(0,18)+(f.name.length>18?'…':'') : 'Image';
+});
+
+async function submitPost() {
+  const btn      = document.getElementById('submitPostBtn');
+  const label    = document.getElementById('postBtnLabel');
+  const textarea = document.getElementById('postContent');
+  const content  = textarea?.value.trim();
+  if (!content) { textarea.style.borderColor='#f87171'; textarea.focus(); setTimeout(()=>textarea.style.borderColor='',1400); return; }
+  btn.disabled = true; label.textContent = 'Posting…';
+  try {
+    const fd = new FormData();
+    fd.append('content', content);
+    if (imageInput?.files[0]) fd.append('image', imageInput.files[0]);
+    const res  = await fetch('/api/posts',{method:'POST',body:fd});
+    const data = await res.json();
+    if (!res.ok) { alert(data.error||'Failed to post'); return; }
+    textarea.value = '';
+    if (imageInput)  imageInput.value = '';
+    if (attachLabel) attachLabel.textContent = 'Image';
+    if (createCard)  createCard.style.display = 'none';
+    loadPosts();
+  } catch { alert('Something went wrong.'); }
+  finally { btn.disabled=false; label.textContent=btn.dataset.defaultLabel||'Post'; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTabs();
+  const btn = document.getElementById('submitPostBtn');
+  if (btn) { btn.dataset.defaultLabel = btn.querySelector('#postBtnLabel').textContent; btn.addEventListener('click', submitPost); }
+  loadPosts();
+  loadEvents();
+});
 </script>
+
 {% endblock %}

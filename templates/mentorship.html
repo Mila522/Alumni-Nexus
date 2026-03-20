@@ -1,218 +1,632 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container py-5" style="background:#fff9fc; min-height:100vh;">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 
-  <div class="p-5 mb-4 border shadow-sm bg-white">
-    <h1 class="fw-bold">Mentorship Hub</h1>
-    <p class="text-muted">
-      Connect with experienced alumni and mentors for career guidance and growth.
-    </p>
-
-    <div class="d-flex gap-2 mt-3 flex-wrap">
-      <a href="#mentors-section" class="btn btn-primary">Find a Mentor</a>
-      <a href="#requests-section" class="btn btn-outline-secondary">My Requests</a>
-
-      {% if current_user.role == 'alumni' %}
-        <a href="{{ url_for('apply_mentor') }}" class="btn btn-outline-dark">Apply to be a Mentor</a>
-      {% endif %}
+<!-- ── Hero (full bleed, outside root) ── -->
+  <div class="mh-hero">
+    <div class="mh-hero-inner">
+      <div class="mh-hero-text">
+        <h1 class="mh-hero-title">Mentorship <span>Hub</span></h1>
+        <p class="mh-hero-sub">Connect with experienced alumni and mentors for career guidance and growth.</p>
+        <div class="mh-hero-actions">
+          <a href="#mentors-section" class="mh-btn mh-btn--primary">
+            <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+              <circle cx="6" cy="5" r="3" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M2 14c0-3 1.8-5 4-5h4c2.2 0 4 2 4 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+              <path d="M11 7l1.5 1.5L15 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Find a Mentor
+          </a>
+          <a href="#requests-section" class="mh-btn mh-btn--ghost">My Requests</a>
+          {% if current_user.role == 'alumni' %}
+          <a href="{{ url_for('apply_mentor') }}" class="mh-btn mh-btn--outline">Apply to be a Mentor</a>
+          {% endif %}
+        </div>
+        {% if current_user.role == 'alumni' %}
+        <p class="mh-hero-note">Alumni can apply to become mentors and wait for admin approval.</p>
+        {% endif %}
+      </div>
+      <div class="mh-hero-graphic">
+        <div class="mh-graphic-ring mh-ring-1"></div>
+        <div class="mh-graphic-ring mh-ring-2"></div>
+        <div class="mh-graphic-icon">
+          <svg viewBox="0 0 48 48" fill="none" width="40" height="40">
+            <circle cx="16" cy="16" r="8" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M4 40c0-6 5-11 12-11h16c7 0 12 5 12 11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M32 20l3 3 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
     </div>
-
-    {% if current_user.role == 'alumni' %}
-    <p class="text-muted small mt-3 mb-0">
-      Alumni can apply to become mentors and wait for admin approval.
-    </p>
-    {% endif %}
   </div>
 
+  <!-- ── Mentor Application Status (alumni only) ── -->
   {% if current_user.role == 'alumni' %}
-  <div class="p-4 border bg-white mb-4 shadow-sm">
-    <h5 class="fw-bold mb-3">Mentor Application Status</h5>
-
-    {% if latest_application %}
-      {% if latest_application.status == 'pending' %}
-        <span class="badge bg-secondary">Pending</span>
-        <p class="text-muted mt-2 mb-0">Your mentor application is currently under review.</p>
-      {% elif latest_application.status == 'approved' %}
-        <span class="badge bg-success">Approved</span>
-        <p class="text-muted mt-2 mb-0">Your mentor application was approved.</p>
-      {% elif latest_application.status == 'rejected' %}
-        <span class="badge bg-danger">Rejected</span>
-        <p class="text-muted mt-2">Your mentor application was rejected. You can apply again.</p>
-        <a href="{{ url_for('apply_mentor') }}" class="btn btn-warning btn-sm">Apply Again</a>
+  <div class="mh-section">
+    <div class="mh-section-header">
+      <span class="mh-section-dot mh-dot--gold"></span>
+      <h2 class="mh-section-title">Application Status</h2>
+      <span class="mh-section-line"></span>
+    </div>
+    <div class="mh-status-card">
+      {% if latest_application %}
+        {% if latest_application.status == 'pending' %}
+        <div class="mh-status-icon mh-status-icon--pending">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="mh-status-body">
+          <span class="mh-status-badge mh-badge--pending">Pending Review</span>
+          <p class="mh-status-text">Your mentor application is currently under review by our admin team.</p>
+        </div>
+        {% elif latest_application.status == 'approved' %}
+        <div class="mh-status-icon mh-status-icon--approved">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M8 12l3 3 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="mh-status-body">
+          <span class="mh-status-badge mh-badge--approved">Approved</span>
+          <p class="mh-status-text">Congratulations! Your mentor application has been approved.</p>
+        </div>
+        {% elif latest_application.status == 'rejected' %}
+        <div class="mh-status-icon mh-status-icon--rejected">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="mh-status-body">
+          <span class="mh-status-badge mh-badge--rejected">Rejected</span>
+          <p class="mh-status-text">Your mentor application was not approved this time. You're welcome to apply again.</p>
+          <a href="{{ url_for('apply_mentor') }}" class="mh-btn mh-btn--primary mh-btn--sm">Apply Again</a>
+        </div>
+        {% endif %}
+      {% else %}
+        <div class="mh-status-icon mh-status-icon--none">
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22">
+            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="mh-status-body">
+          <p class="mh-status-text">You have not submitted a mentor application yet.</p>
+          <a href="{{ url_for('apply_mentor') }}" class="mh-btn mh-btn--primary mh-btn--sm">Apply Now</a>
+        </div>
       {% endif %}
-    {% else %}
-      <p class="text-muted mb-0">You have not submitted a mentor application yet.</p>
-    {% endif %}
+    </div>
   </div>
   {% endif %}
 
+  <!-- ── My Mentor ── -->
   {% if accepted_mentor %}
-  <div class="p-4 border bg-white mb-4 shadow-sm">
-    <h5 class="fw-bold mb-3">My Mentor</h5>
-    <div class="d-flex align-items-center">
+  <div class="mh-section">
+    <div class="mh-section-header">
+      <span class="mh-section-dot mh-dot--green"></span>
+      <h2 class="mh-section-title">My Mentor</h2>
+      <span class="mh-section-line"></span>
+    </div>
+    <div class="mh-mentor-spotlight">
       <img
         src="{{ url_for('static', filename=accepted_mentor.profile_image) }}"
-        class="rounded-circle me-3"
-        width="80"
-        height="80"
-        style="object-fit: cover"
-        alt="My Mentor"
+        class="mh-spotlight-img" alt="My Mentor"
       >
-      <div>
-        <h6 class="fw-bold mb-1">{{ accepted_mentor.name }}</h6>
-        <p class="text-muted mb-2">
+      <div class="mh-spotlight-body">
+        <div class="mh-spotlight-name">{{ accepted_mentor.name }}</div>
+        <div class="mh-spotlight-role">
           {{ accepted_mentor.mentor_profile.expertise if accepted_mentor.mentor_profile else 'Mentor' }}
-        </p>
-        <a href="{{ url_for('profile', user_id=accepted_mentor.user_id) }}" class="btn btn-outline-primary btn-sm">View Profile</a>
-        <a href="{{ url_for('message_page', user_id=accepted_mentor.user_id) }}" class="btn btn-primary btn-sm">Message</a>
+        </div>
+        <span class="mh-verified-badge">
+          <svg viewBox="0 0 14 14" fill="none" width="11" height="11">
+            <path d="M2 7l4 4 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Verified Mentor
+        </span>
+      </div>
+      <div class="mh-spotlight-actions">
+        <a href="{{ url_for('profile', user_id=accepted_mentor.user_id) }}" class="mh-btn mh-btn--ghost">View Profile</a>
+        <a href="{{ url_for('message_page', user_id=accepted_mentor.user_id) }}" class="mh-btn mh-btn--primary">
+          <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+            <path d="M14 10c0 2.2-1.8 4-4 4H6L2 15l.9-3A4 4 0 012 9V7c0-2.2 1.8-4 4-4h4c2.2 0 4 1.8 4 4v3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          Message
+        </a>
       </div>
     </div>
   </div>
   {% endif %}
 
-  <div id="mentors-section" class="p-4 border bg-white mb-4 shadow-sm">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-      <h5 class="fw-bold mb-0">Available Mentors</h5>
+  <!-- ── Available Mentors ── -->
+  <div id="mentors-section" class="mh-section">
+    <div class="mh-section-header">
+      <span class="mh-section-dot mh-dot--blue"></span>
+      <h2 class="mh-section-title">Available Mentors</h2>
+      <span class="mh-section-line"></span>
+    </div>
 
-      <form method="GET" action="{{ url_for('mentorship') }}" class="d-flex gap-2">
-        <select name="expertise" class="form-select">
+    <!-- Filter -->
+    <form method="GET" action="{{ url_for('mentorship') }}" class="mh-filter-form">
+      <div class="mh-filter-wrap">
+        <svg viewBox="0 0 16 16" fill="none" width="14" height="14" class="mh-filter-icon">
+          <path d="M2 4h12M5 8h6M7 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <select name="expertise" class="mh-select">
           <option value="">All Expertise</option>
           <option value="Information Technology" {% if selected_expertise == "Information Technology" %}selected{% endif %}>Information Technology</option>
           <option value="Business" {% if selected_expertise == "Business" %}selected{% endif %}>Business</option>
           <option value="Engineering" {% if selected_expertise == "Engineering" %}selected{% endif %}>Engineering</option>
         </select>
-        <button type="submit" class="btn btn-outline-primary">Filter</button>
-      </form>
-    </div>
+      </div>
+      <button type="submit" class="mh-btn mh-btn--primary">Filter</button>
+    </form>
 
-    <div class="row g-4">
-      {% if mentors %}
-        {% for mentor in mentors %}
-        <div class="col-md-4">
-          <div class="p-3 border shadow-sm h-100">
-            <div class="d-flex align-items-center mb-3">
-              <img
-                src="{{ url_for('static', filename=mentor.profile_image) }}"
-                class="rounded-circle me-3"
-                width="80"
-                height="80"
-                style="object-fit: cover"
-                alt="Mentor"
-              >
-              <div>
-                <h6 class="fw-bold mb-0">{{ mentor.name }}</h6>
-                <small class="text-muted">{{ mentor.expertise or "Mentor" }}</small><br>
-                <span class="badge bg-warning text-dark">⭐ Verified Mentor</span>
-              </div>
-            </div>
-
-            <div class="d-flex gap-2 flex-wrap">
-              <a href="{{ url_for('profile', user_id=mentor.user_id) }}" class="btn btn-outline-secondary btn-sm">
-                View
-              </a>
-
-              {% if current_user.role in ['student', 'alumni'] and current_user.user_id != mentor.user_id %}
-              <form method="POST" action="{{ url_for('request_mentorship', mentor_id=mentor.user_id) }}">
-                <button type="submit" class="btn btn-primary btn-sm">Request</button>
-              </form>
-              {% endif %}
-            </div>
+    {% if mentors %}
+    <div class="mh-mentors-grid">
+      {% for mentor in mentors %}
+      <div class="mh-mentor-card">
+        <div class="mh-mentor-top">
+          <img
+            src="{{ url_for('static', filename=mentor.profile_image) }}"
+            class="mh-mentor-img" alt="Mentor"
+          >
+          <div class="mh-mentor-info">
+            <div class="mh-mentor-name">{{ mentor.name }}</div>
+            <div class="mh-mentor-expertise">{{ mentor.expertise or "Mentor" }}</div>
+            <span class="mh-verified-badge">
+              <svg viewBox="0 0 14 14" fill="none" width="10" height="10">
+                <path d="M2 7l4 4 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Verified
+            </span>
           </div>
         </div>
-        {% endfor %}
-      {% else %}
-        <div class="col-12">
-          <div class="alert alert-info mb-0">No mentors found for this expertise.</div>
+        <div class="mh-mentor-actions">
+          <a href="{{ url_for('profile', user_id=mentor.user_id) }}" class="mh-btn mh-btn--ghost mh-btn--sm">View Profile</a>
+          {% if current_user.role in ['student', 'alumni'] and current_user.user_id != mentor.user_id %}
+          <form method="POST" action="{{ url_for('request_mentorship', mentor_id=mentor.user_id) }}" style="margin:0">
+            <button type="submit" class="mh-btn mh-btn--primary mh-btn--sm">Request</button>
+          </form>
+          {% endif %}
         </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div id="requests-section" class="p-4 border bg-white mb-4 shadow-sm">
-    <h5 class="fw-bold mb-3">My Mentorship Requests</h5>
-
-    {% if my_requests %}
-      {% for req in my_requests %}
-      <div class="p-3 border mb-3">
-        <h6 class="fw-bold">{{ req.mentor_name }}</h6>
-        <small class="text-muted">
-          Requested on {{ req.request_date.strftime('%d %B %Y') if req.request_date else '' }}
-        </small><br>
-
-        {% if req.status == 'pending' %}
-          <span class="badge bg-secondary mt-2">Pending</span>
-        {% elif req.status == 'accepted' %}
-          <span class="badge bg-success mt-2">Accepted</span>
-        {% elif req.status == 'rejected' %}
-          <span class="badge bg-danger mt-2">Rejected</span>
-        {% endif %}
       </div>
       {% endfor %}
+    </div>
     {% else %}
-      <div class="alert alert-light border mb-0">
-        You have not sent any mentorship requests yet.
+    <div class="mh-empty">
+      <div class="mh-empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
+          <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M2 20c0-4 3-7 7-7h6c4 0 7 3 7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
       </div>
+      No mentors found for this expertise.
+    </div>
     {% endif %}
   </div>
 
-  {% if current_user.role == 'mentor' %}
-  <div class="p-4 border bg-white mb-4 shadow-sm">
-    <h5 class="fw-bold mb-3">Mentor Dashboard Summary</h5>
+  <!-- ── My Mentorship Requests ── -->
+  <div id="requests-section" class="mh-section">
+    <div class="mh-section-header">
+      <span class="mh-section-dot mh-dot--navy"></span>
+      <h2 class="mh-section-title">My Requests</h2>
+      <span class="mh-section-line"></span>
+    </div>
 
-    <div class="row g-3 mb-4">
-      <div class="col-md-4">
-        <div class="border p-3 text-center">
-          <h4 class="fw-bold">{{ pending_requests_count }}</h4>
-          <p class="text-muted mb-0">Pending Requests</p>
+    {% if my_requests %}
+    <div class="mh-requests-list">
+      {% for req in my_requests %}
+      <div class="mh-request-card">
+        <div class="mh-request-left">
+          <div class="mh-request-avatar">{{ req.mentor_name[0]|upper }}</div>
+          <div>
+            <div class="mh-request-name">{{ req.mentor_name }}</div>
+            <div class="mh-request-date">
+              Requested {{ req.request_date.strftime('%d %B %Y') if req.request_date else '' }}
+            </div>
+          </div>
+        </div>
+        <div>
+          {% if req.status == 'pending' %}
+            <span class="mh-status-badge mh-badge--pending">Pending</span>
+          {% elif req.status == 'accepted' %}
+            <span class="mh-status-badge mh-badge--approved">Accepted</span>
+          {% elif req.status == 'rejected' %}
+            <span class="mh-status-badge mh-badge--rejected">Rejected</span>
+          {% endif %}
         </div>
       </div>
-      <div class="col-md-4">
-        <div class="border p-3 text-center">
-          <h4 class="fw-bold">{{ accepted_requests_count }}</h4>
-          <p class="text-muted mb-0">Accepted Requests</p>
-        </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="mh-empty">
+      <div class="mh-empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
+          <path d="M20 12V8H4v4M4 12v8h16v-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M12 4v8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
       </div>
-      <div class="col-md-4">
-        <div class="border p-3 text-center">
-          <h4 class="fw-bold">{{ mentees_count }}</h4>
-          <p class="text-muted mb-0">Current Mentees</p>
-        </div>
+      You haven't sent any mentorship requests yet.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Mentor Dashboard (mentor role only) ── -->
+  {% if current_user.role == 'mentor' %}
+  <div class="mh-section">
+    <div class="mh-section-header">
+      <span class="mh-section-dot mh-dot--gold"></span>
+      <h2 class="mh-section-title">Mentor Dashboard</h2>
+      <span class="mh-section-line"></span>
+    </div>
+
+    <!-- Stats -->
+    <div class="mh-mentor-stats">
+      <div class="mh-mstat mh-mstat--gold">
+        <div class="mh-mstat-num">{{ pending_requests_count }}</div>
+        <div class="mh-mstat-label">Pending Requests</div>
+      </div>
+      <div class="mh-mstat mh-mstat--green">
+        <div class="mh-mstat-num">{{ accepted_requests_count }}</div>
+        <div class="mh-mstat-label">Accepted</div>
+      </div>
+      <div class="mh-mstat mh-mstat--blue">
+        <div class="mh-mstat-num">{{ mentees_count }}</div>
+        <div class="mh-mstat-label">Current Mentees</div>
       </div>
     </div>
 
-    <h6 class="fw-bold mb-3">Incoming Requests</h6>
+    <!-- Incoming requests -->
+    <div class="mh-subsection-title">Incoming Requests</div>
 
     {% if incoming_requests %}
+    <div class="mh-requests-list">
       {% for req in incoming_requests %}
-      <div class="p-3 border mb-3">
-        <h6 class="fw-bold mb-1">{{ req.student_name }}</h6>
-        <small class="text-muted">
-          Requested on {{ req.request_date.strftime('%d %B %Y') if req.request_date else '' }}
-        </small><br>
-
-        {% if req.status == 'pending' %}
-        <div class="d-flex gap-2 mt-3">
-          <form method="POST" action="{{ url_for('accept_mentorship_request', request_id=req.request_id) }}">
-            <button type="submit" class="btn btn-success btn-sm">Accept</button>
-          </form>
-          <form method="POST" action="{{ url_for('reject_mentorship_request', request_id=req.request_id) }}">
-            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
-          </form>
+      <div class="mh-request-card">
+        <div class="mh-request-left">
+          <div class="mh-request-avatar mh-avatar--green">{{ req.student_name[0]|upper }}</div>
+          <div>
+            <div class="mh-request-name">{{ req.student_name }}</div>
+            <div class="mh-request-date">
+              Requested {{ req.request_date.strftime('%d %B %Y') if req.request_date else '' }}
+            </div>
+          </div>
         </div>
-        {% elif req.status == 'accepted' %}
-          <span class="badge bg-success mt-2">Accepted</span>
-        {% elif req.status == 'rejected' %}
-          <span class="badge bg-danger mt-2">Rejected</span>
-        {% endif %}
+        <div class="mh-request-actions">
+          {% if req.status == 'pending' %}
+          <form method="POST" action="{{ url_for('accept_mentorship_request', request_id=req.request_id) }}" style="margin:0">
+            <button type="submit" class="mh-btn mh-btn--success mh-btn--sm">Accept</button>
+          </form>
+          <form method="POST" action="{{ url_for('reject_mentorship_request', request_id=req.request_id) }}" style="margin:0">
+            <button type="submit" class="mh-btn mh-btn--danger mh-btn--sm">Reject</button>
+          </form>
+          {% elif req.status == 'accepted' %}
+            <span class="mh-status-badge mh-badge--approved">Accepted</span>
+          {% elif req.status == 'rejected' %}
+            <span class="mh-status-badge mh-badge--rejected">Rejected</span>
+          {% endif %}
+        </div>
       </div>
       {% endfor %}
+    </div>
     {% else %}
-      <div class="alert alert-light border mb-0">No incoming mentorship requests yet.</div>
+    <div class="mh-empty">
+      <div class="mh-empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      No incoming mentorship requests yet.
+    </div>
     {% endif %}
   </div>
   {% endif %}
 
 </div>
+
+<style>
+:root {
+  --navy:      #0a1628;
+  --navy-mid:  #0f2044;
+  --navy-soft: #162a52;
+  --gold:      #f5c842;
+  --gold-dim:  #d4a800;
+  --gold-pale: #fdf6d8;
+  --page-bg:   #f0f2f5;
+  --surf:      #ffffff;
+  --border:    #e2e5ea;
+  --text:      #0a1628;
+  --text2:     #4a5568;
+  --text3:     #9aa5b4;
+  --green:     #059669;
+  --blue:      #0ea5e9;
+  --r:         14px;
+  --ff: 'DM Sans', sans-serif;
+  --fd: 'Syne', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--page-bg); font-family: var(--ff); color: var(--text); overflow-x: hidden; }
+html { overflow-x: hidden; }
+
+.mh-root { max-width: 960px; margin: 0 auto; padding: 0 20px 80px; overflow-x: hidden; }
+
+/* ── Hero ── */
+.mh-hero {
+  background: var(--navy);
+  border-radius: 0 0 24px 24px;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  margin-top: 0;
+  margin-bottom: 40px;
+  width: 100vw;
+  padding: 52px 40px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.mh-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 80% 50%, rgba(245,200,66,.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+.mh-hero-inner {
+  max-width: 920px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between; gap: 32px;
+}
+.mh-hero-text { flex: 1; }
+.mh-hero-title {
+  font-family: var(--fd); font-size: 2.6rem; font-weight: 800;
+  letter-spacing: -.04em; color: #fff; margin-bottom: 12px; line-height: 1.05;
+}
+.mh-hero-title span { color: var(--gold); }
+.mh-hero-sub { font-size: .95rem; color: rgba(255,255,255,.65); max-width: 480px; line-height: 1.65; margin-bottom: 24px; }
+.mh-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.mh-hero-note  { font-size: .78rem; color: rgba(255,255,255,.4); margin-top: 14px; }
+
+/* hero graphic */
+.mh-hero-graphic {
+  width: 130px; height: 130px; flex-shrink: 0;
+  position: relative; display: flex; align-items: center; justify-content: center;
+}
+.mh-graphic-ring {
+  position: absolute; border-radius: 50%;
+  border: 1.5px solid rgba(245,200,66,.2);
+}
+.mh-ring-1 { width: 130px; height: 130px; animation: spin 18s linear infinite; }
+.mh-ring-2 { width: 90px;  height: 90px;  animation: spin 12s linear infinite reverse; }
+.mh-graphic-icon {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: rgba(245,200,66,.15); border: 1.5px solid rgba(245,200,66,.3);
+  display: flex; align-items: center; justify-content: center; color: var(--gold);
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── Buttons ── */
+.mh-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--ff); font-weight: 700; border: none;
+  cursor: pointer; text-decoration: none; border-radius: 9px;
+  padding: 10px 20px; font-size: .84rem;
+  transition: background .15s, transform .15s, box-shadow .15s;
+}
+.mh-btn:hover { transform: translateY(-1px); }
+.mh-btn--sm   { padding: 7px 14px; font-size: .79rem; }
+
+.mh-btn--primary {
+  background: var(--gold); color: var(--navy);
+  box-shadow: 0 4px 14px rgba(245,200,66,.35);
+}
+.mh-btn--primary:hover { background: #f0d030; box-shadow: 0 6px 18px rgba(245,200,66,.45); }
+
+.mh-btn--ghost {
+  background: rgba(255,255,255,.1); color: #fff;
+  border: 1px solid rgba(255,255,255,.2);
+}
+.mh-btn--ghost:hover { background: rgba(255,255,255,.18); color: #fff; }
+
+.mh-btn--outline {
+  background: transparent; color: rgba(255,255,255,.8);
+  border: 1.5px solid rgba(255,255,255,.3);
+}
+.mh-btn--outline:hover { border-color: var(--gold); color: var(--gold); }
+
+/* inside white sections, ghost needs dark style */
+.mh-section .mh-btn--ghost {
+  background: var(--page-bg); color: var(--text2);
+  border: 1px solid var(--border);
+}
+.mh-section .mh-btn--ghost:hover { border-color: var(--navy); color: var(--navy); }
+
+.mh-btn--success { background: #16a34a; color: #fff; }
+.mh-btn--success:hover { background: #15803d; }
+.mh-btn--danger  { background: #dc2626; color: #fff; }
+.mh-btn--danger:hover  { background: #b91c1c; }
+
+/* ── Section layout ── */
+.mh-section { margin-bottom: 40px; }
+.mh-section-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+}
+.mh-section-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.mh-dot--gold  { background: var(--gold-dim); }
+.mh-dot--green { background: var(--green); }
+.mh-dot--blue  { background: var(--blue); }
+.mh-dot--navy  { background: var(--navy); }
+.mh-section-title {
+  font-family: var(--fd); font-size: 1rem; font-weight: 700;
+  color: var(--navy); white-space: nowrap;
+}
+.mh-section-line { flex: 1; height: 1px; background: var(--border); }
+
+/* ── Application status card ── */
+.mh-status-card {
+  background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 22px 24px; display: flex; align-items: flex-start; gap: 16px;
+  box-shadow: 0 2px 10px rgba(10,22,40,.06); animation: mhUp .3s ease both;
+}
+.mh-status-icon {
+  width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.mh-status-icon--pending  { background: #fef9c3; color: #a16207; }
+.mh-status-icon--approved { background: #f0fdf4; color: var(--green); }
+.mh-status-icon--rejected { background: #fff5f5; color: #dc2626; }
+.mh-status-icon--none     { background: var(--page-bg); color: var(--text3); }
+.mh-status-body { flex: 1; }
+.mh-status-text { font-size: .875rem; color: var(--text2); margin: 8px 0 12px; line-height: 1.55; }
+
+.mh-status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: .7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; padding: 4px 12px; border-radius: 20px;
+}
+.mh-badge--pending  { background: #fef9c3; color: #a16207; border: 1px solid #fde68a; }
+.mh-badge--approved { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.mh-badge--rejected { background: #fff5f5; color: #dc2626; border: 1px solid #fecaca; }
+
+/* ── My mentor spotlight ── */
+.mh-mentor-spotlight {
+  background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 16px 20px; display: inline-flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  box-shadow: 0 2px 12px rgba(10,22,40,.07); animation: mhUp .3s ease both;
+  border-left: 4px solid var(--gold); max-width: 460px;
+}
+.mh-spotlight-img {
+  width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--gold); flex-shrink: 0;
+}
+.mh-spotlight-body { flex: 1; min-width: 0; }
+.mh-spotlight-name { font-family: var(--fd); font-size: 1.05rem; font-weight: 700; color: var(--navy); }
+.mh-spotlight-role { font-size: .85rem; color: var(--text2); margin: 3px 0 8px; }
+.mh-spotlight-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* verified badge */
+.mh-verified-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--gold-pale); color: #92700a;
+  border: 1px solid rgba(245,200,66,.5);
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  padding: 3px 10px; border-radius: 20px;
+}
+
+/* ── Filter form ── */
+.mh-filter-form {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 22px; flex-wrap: wrap;
+}
+.mh-filter-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surf); border: 1.5px solid var(--border); border-radius: 9px;
+  padding: 0 14px; flex: 1; max-width: 300px;
+}
+.mh-filter-icon { color: var(--text3); flex-shrink: 0; }
+.mh-select {
+  border: none; background: none; outline: none; flex: 1;
+  font-family: var(--ff); font-size: .875rem; color: var(--text);
+  padding: 10px 0; cursor: pointer;
+}
+
+/* ── Mentors grid ── */
+.mh-mentors-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;
+}
+.mh-mentor-card {
+  background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+  overflow: hidden; box-shadow: 0 2px 10px rgba(10,22,40,.06);
+  animation: mhUp .28s ease both;
+  transition: box-shadow .2s, transform .2s;
+}
+.mh-mentor-card:hover { box-shadow: 0 8px 24px rgba(10,22,40,.11); transform: translateY(-3px); }
+
+.mh-mentor-top { display: flex; align-items: flex-start; gap: 14px; padding: 18px 18px 14px; }
+.mh-mentor-img {
+  width: 58px; height: 58px; border-radius: 50%; object-fit: cover;
+  border: 2.5px solid var(--gold); flex-shrink: 0;
+}
+.mh-mentor-info { flex: 1; min-width: 0; }
+.mh-mentor-name { font-family: var(--fd); font-weight: 700; font-size: .9rem; color: var(--navy); margin-bottom: 2px; }
+.mh-mentor-expertise { font-size: .78rem; color: var(--text2); margin-bottom: 6px; }
+
+.mh-mentor-actions {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 10px 18px 14px; border-top: 1px solid var(--border); background: var(--page-bg);
+}
+
+/* ── Requests list ── */
+.mh-requests-list { display: flex; flex-direction: column; gap: 10px; max-width: 560px; }
+.mh-request-card {
+  background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px 16px; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(10,22,40,.05); animation: mhUp .28s ease both;
+  transition: box-shadow .2s;
+}
+.mh-request-card:hover { box-shadow: 0 5px 16px rgba(10,22,40,.09); }
+.mh-request-left { display: flex; align-items: center; gap: 12px; }
+.mh-request-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--navy); color: var(--gold);
+  font-family: var(--fd); font-size: .78rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.mh-avatar--green { background: var(--green); color: #fff; }
+.mh-request-name { font-weight: 600; font-size: .875rem; color: var(--navy); }
+.mh-request-date { font-size: .73rem; color: var(--text3); margin-top: 2px; }
+.mh-request-actions { display: flex; gap: 8px; }
+
+/* ── Mentor stats ── */
+.mh-mentor-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px;
+}
+.mh-mstat {
+  background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 20px 22px; text-align: center; border-top: 3px solid var(--gold);
+  box-shadow: 0 2px 10px rgba(10,22,40,.06); animation: mhUp .3s ease both;
+}
+.mh-mstat--gold  { border-top-color: var(--gold); }
+.mh-mstat--green { border-top-color: var(--green); animation-delay: 50ms; }
+.mh-mstat--blue  { border-top-color: var(--blue);  animation-delay: 100ms; }
+.mh-mstat-num    { font-family: var(--fd); font-size: 2rem; font-weight: 800; color: var(--navy); }
+.mh-mstat-label  { font-size: .73rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-top: 4px; }
+
+.mh-subsection-title {
+  font-family: var(--fd); font-size: .82rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; color: var(--text3);
+  margin-bottom: 14px;
+}
+
+/* ── Empty state ── */
+.mh-empty {
+  background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 40px 24px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  color: var(--text3); font-size: .875rem;
+  box-shadow: 0 2px 8px rgba(10,22,40,.04);
+}
+.mh-empty-icon {
+  width: 50px; height: 50px; border-radius: 13px;
+  background: var(--gold-pale); border: 1px solid rgba(245,200,66,.35);
+  display: flex; align-items: center; justify-content: center; color: var(--navy);
+}
+
+@keyframes mhUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 700px) {
+  .mh-hero { padding: 36px 20px 32px; border-radius: 0 0 18px 18px; }
+  .mh-hero-title { font-size: 1.9rem; }
+  .mh-hero-graphic { display: none; }
+  .mh-mentors-grid { grid-template-columns: 1fr; }
+  .mh-mentor-stats { grid-template-columns: 1fr 1fr; }
+  .mh-mentor-stats .mh-mstat:last-child { grid-column: 1 / -1; }
+  .mh-mentor-spotlight { flex-direction: column; align-items: flex-start; }
+}
+</style>
 
 {% endblock %}

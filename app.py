@@ -9,7 +9,11 @@ from sqlalchemy import or_, func, case
 
 from config import Config
 from email_validator import validate_email, EmailNotValidError
-from models import db, User, StudentProfile, AlumniProfile, Connection, Message, MentorProfile, MentorshipRequest, Event, RSVP, Post, PostLike, PostComment
+from models import (
+    db, User, StudentProfile, AlumniProfile, Connection, Message,
+    MentorProfile, MentorApplication, MentorshipRequest,
+    Event, RSVP, Post, PostLike, PostComment
+)
 
 
 app = Flask(__name__)
@@ -100,10 +104,28 @@ def are_users_connected(user1_id, user2_id):
         ) &
         (Connection.status == "accepted")
     ).first()
-
     return connection is not None
 
 
+def get_mentorship_status(student_id, mentor_id):
+    """
+    Returns the mentorship request status between a student/alumni and a mentor.
+    Possible values: 'none', 'pending', 'accepted', 'rejected'
+    """
+    req = MentorshipRequest.query.filter_by(
+        student_id=student_id,
+        mentor_id=mentor_id
+    ).first()
+
+    if not req:
+        return "none"
+
+    return req.status
+
+
+# ────────────────────────────────────────────────
+# MESSAGES
+# ────────────────────────────────────────────────
 @app.route("/messages/<int:user_id>")
 @login_required
 def message_page(user_id):
@@ -182,6 +204,9 @@ def send_message(user_id):
     }), 201
 
 
+# ────────────────────────────────────────────────
+# PAGES
+# ────────────────────────────────────────────────
 @app.route('/')
 def home():
     return render_template("home.html")
@@ -205,14 +230,12 @@ def events_page():
     return render_template("events.html")
 
 
-# ADDED: announcements page route
 @app.route('/announcements')
 @login_required
 def announcements_page():
     if current_user.role != "admin":
         flash("Access denied.", "error")
         return redirect(url_for("home"))
-
     return render_template("announcements.html")
 
 
@@ -222,7 +245,6 @@ def admin_new_post():
     if current_user.role != "admin":
         flash("Access denied.", "error")
         return redirect(url_for("home"))
-
     return redirect(url_for("announcements_page"))
 
 
@@ -232,10 +254,12 @@ def admin_new_event():
     if current_user.role != "admin":
         flash("Access denied.", "error")
         return redirect(url_for("home"))
-
     return redirect(url_for("events_page"))
 
 
+# ────────────────────────────────────────────────
+# AUTH
+# ────────────────────────────────────────────────
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -379,6 +403,9 @@ def logout():
     return redirect(url_for("login"))
 
 
+# ────────────────────────────────────────────────
+# PROFILE
+# ────────────────────────────────────────────────
 @app.route("/profile/<int:user_id>")
 @login_required
 def profile(user_id):
@@ -421,11 +448,9 @@ def edit_profile():
             current_user.student_profile.department = request.form.get(
                 "department", current_user.student_profile.department
             )
-
             gy = request.form.get("graduation_year")
             if gy and gy.isdigit():
                 current_user.student_profile.graduation_year = int(gy)
-
             current_user.student_profile.industry = request.form.get(
                 "industry", current_user.student_profile.industry
             )
@@ -449,13 +474,227 @@ def edit_profile():
             current_user.alumni_profile.linkedin_url = request.form.get("linkedin_url")
 
         elif current_user.role == "mentor" and current_user.mentor_profile:
-            current_user.mentor_profile.expertise = request.form.get("expertise", current_user.mentor_profile.expertise)
+            current_user.mentor_profile.expertise = request.form.get(
+                "expertise", current_user.mentor_profile.expertise
+            )
 
         db.session.commit()
         flash("Profile updated successfully", "success")
         return redirect(url_for("profile", user_id=current_user.user_id))
 
     return render_template("edit_profile.html", user=current_user)
+
+
+# ────────────────────────────────────────────────
+# MENTORSHIP
+# ────────────────────────────────────────────────
+@app.route('/mentorship')
+@login_required
+def mentorship():
+    selected_expertise = request.args.get('expertise', '')
+
+    # ── Available mentors ────────────────────────────────────────────────────
+    # Join User → MentorProfile so we can filter by expertise and attach it
+    mentor_query = (
+        db.session.query(User, MentorProfile)
+        .join(MentorProfile, MentorProfile.mentor_id == User.user_id)
+        .filter(User.role == 'mentor')
+    )
+
+    if selected_expertise:
+        mentor_query = mentor_query.filter(MentorProfile.expertise == selected_expertise)
+
+    # Attach .expertise directly onto each User object so the template can do
+    # {{ mentor.expertise }} without going through mentor_profile
+    mentors = []
+    for user_obj, mp in mentor_query.all():
+        user_obj.expertise = mp.expertise if mp else None
+        mentors.append(user_obj)
+
+    # ── My mentorship requests (sent by current user) ────────────────────────
+    my_requests_raw = MentorshipRequest.query.filter_by(
+        student_id=current_user.user_id
+    ).order_by(MentorshipRequest.request_date.desc()).all()
+
+    my_requests = []
+    for req in my_requests_raw:
+        mentor_user = User.query.get(req.mentor_id)
+        req.mentor_name = mentor_user.name if mentor_user else "Unknown"
+        my_requests.append(req)
+
+    # ── Accepted mentor (the mentor this user is currently paired with) ──────
+    accepted_mentor = None
+    accepted_req = MentorshipRequest.query.filter_by(
+        student_id=current_user.user_id,
+        status='accepted'
+    ).first()
+    if accepted_req:
+        accepted_mentor = User.query.get(accepted_req.mentor_id)
+
+    # ── Latest mentor application (for alumni status display) ────────────────
+    latest_application = None
+    if current_user.role == 'alumni':
+        latest_application = (
+            MentorApplication.query
+            .filter_by(user_id=current_user.user_id)
+            .order_by(MentorApplication.application_id.desc())
+            .first()
+        )
+
+    # ── Mentor dashboard data (only populated when viewer is a mentor) ────────
+    pending_requests_count = 0
+    accepted_requests_count = 0
+    mentees_count = 0
+    incoming_requests = []
+
+    if current_user.role == 'mentor':
+        pending_requests_count = MentorshipRequest.query.filter_by(
+            mentor_id=current_user.user_id,
+            status='pending'
+        ).count()
+
+        accepted_requests_count = MentorshipRequest.query.filter_by(
+            mentor_id=current_user.user_id,
+            status='accepted'
+        ).count()
+
+        mentees_count = accepted_requests_count
+
+        incoming_raw = (
+            MentorshipRequest.query
+            .filter_by(mentor_id=current_user.user_id)
+            .order_by(MentorshipRequest.request_date.desc())
+            .all()
+        )
+
+        for req in incoming_raw:
+            student = User.query.get(req.student_id)
+            req.student_name = student.name if student else "Unknown"
+            incoming_requests.append(req)
+
+    return render_template(
+        'mentorship.html',
+        mentors=mentors,
+        my_requests=my_requests,
+        accepted_mentor=accepted_mentor,
+        latest_application=latest_application,
+        selected_expertise=selected_expertise,
+        pending_requests_count=pending_requests_count,
+        accepted_requests_count=accepted_requests_count,
+        mentees_count=mentees_count,
+        incoming_requests=incoming_requests
+    )
+
+
+@app.route('/apply-mentor', methods=["GET", "POST"])
+@login_required
+def apply_mentor():
+    if current_user.role != 'alumni':
+        flash("Only alumni can apply to become a mentor.", "error")
+        return redirect(url_for('mentorship'))
+
+    if request.method == "POST":
+        expertise = request.form.get("expertise", "").strip()
+        motivation = request.form.get("motivation", "").strip()
+
+        if not expertise:
+            flash("Please select an area of expertise.", "error")
+            return redirect(url_for('apply_mentor'))
+
+        # Block duplicate pending applications
+        existing = MentorApplication.query.filter_by(
+            user_id=current_user.user_id,
+            status='pending'
+        ).first()
+
+        if existing:
+            flash("You already have a pending application. Please wait for a decision.", "warning")
+            return redirect(url_for('mentorship'))
+
+        application = MentorApplication(
+            user_id=current_user.user_id,
+            expertise=expertise,
+            motivation=motivation,
+            status='pending'
+        )
+        db.session.add(application)
+        db.session.commit()
+
+        flash("Your mentor application has been submitted and is under review.", "success")
+        return redirect(url_for('mentorship'))
+
+    return render_template('apply_mentor.html')
+
+
+@app.route('/request-mentorship/<int:mentor_id>', methods=["POST"])
+@login_required
+def request_mentorship(mentor_id):
+    if current_user.role not in ['student', 'alumni']:
+        flash("Only students and alumni can request mentorship.", "error")
+        return redirect(url_for('mentorship'))
+
+    mentor = User.query.get_or_404(mentor_id)
+
+    if mentor.role != 'mentor':
+        flash("This user is not a mentor.", "error")
+        return redirect(url_for('mentorship'))
+
+    if mentor_id == current_user.user_id:
+        flash("You cannot request mentorship from yourself.", "error")
+        return redirect(url_for('mentorship'))
+
+    # Prevent duplicate requests
+    existing = MentorshipRequest.query.filter_by(
+        student_id=current_user.user_id,
+        mentor_id=mentor_id
+    ).first()
+
+    if existing:
+        flash("You have already sent a request to this mentor.", "warning")
+        return redirect(url_for('mentorship'))
+
+    req = MentorshipRequest(
+        student_id=current_user.user_id,
+        mentor_id=mentor_id,
+        status='pending'
+    )
+    db.session.add(req)
+    db.session.commit()
+
+    flash(f"Mentorship request sent to {mentor.name}.", "success")
+    return redirect(url_for('mentorship'))
+
+
+@app.route('/mentorship/accept/<int:request_id>', methods=["POST"])
+@login_required
+def accept_mentorship_request(request_id):
+    req = MentorshipRequest.query.get_or_404(request_id)
+
+    if req.mentor_id != current_user.user_id:
+        flash("Unauthorized.", "error")
+        return redirect(url_for('mentorship'))
+
+    req.status = 'accepted'
+    db.session.commit()
+
+    flash("Mentorship request accepted.", "success")
+    return redirect(url_for('mentorship'))
+
+
+@app.route('/mentorship/reject/<int:request_id>', methods=["POST"])
+@login_required
+def reject_mentorship_request(request_id):
+    req = MentorshipRequest.query.get_or_404(request_id)
+
+    if req.mentor_id != current_user.user_id:
+        flash("Unauthorized.", "error")
+        return redirect(url_for('mentorship'))
+
+    req.status = 'rejected'
+    db.session.commit()
+
+    flash("Mentorship request rejected.", "info")
+    return redirect(url_for('mentorship'))
 
 
 # ────────────────────────────────────────────────
@@ -506,7 +745,6 @@ def get_events():
     results = []
 
     for e in events:
-        my_rsvp = None
         user_status = None
 
         if current_user.role != "admin":
@@ -540,8 +778,6 @@ def get_events():
 @app.route("/api/events/<int:event_id>/rsvp", methods=["POST"])
 @login_required
 def rsvp_event(event_id):
-    user_id = current_user.user_id
-
     Event.query.get_or_404(event_id)
 
     existing_rsvp = RSVP.query.filter_by(
@@ -618,7 +854,7 @@ def get_posts():
     for p in posts:
         author = User.query.get(p.user_id)
         like_count = PostLike.query.filter_by(post_id=p.post_id).count()
-        comment_count = PostComment.query.filter_by(post_id=p.post_id, is_deleted=False).count()
+        comment_count = PostComment.query.filter_by(post_id=p.post_id).count()
         liked_by_me = PostLike.query.filter_by(
             post_id=p.post_id,
             user_id=current_user.user_id
@@ -656,7 +892,7 @@ def toggle_like(post_id):
         db.session.commit()
         return jsonify({"action": "unliked"})
     else:
-        new_like = PostLike(post_id=post.post_id, user_id=current_user.user_id)
+        new_like = PostLike(post_id=post_id, user_id=current_user.user_id)
         db.session.add(new_like)
         db.session.commit()
         return jsonify({"action": "liked"})
@@ -690,15 +926,14 @@ def get_post_comments(post_id):
     Post.query.get_or_404(post_id)
 
     comments = PostComment.query.filter_by(
-        post_id=post_id,
-        is_deleted=False
+        post_id=post_id
     ).order_by(PostComment.created_at.asc()).all()
 
     results = []
     for c in comments:
         author = User.query.get(c.user_id)
         results.append({
-            "comment_id": getattr(c, "comment_id", getattr(c, "id", None)),
+            "comment_id": c.id,
             "user_id": c.user_id,
             "name": author.name if author else "Unknown",
             "profile_image": author.profile_image if author and author.profile_image else "default-profile.png",
@@ -742,10 +977,10 @@ def connect_user(receiver_id):
 @login_required
 def get_connection_requests():
     user_id = current_user.user_id
-    requests = Connection.query.filter_by(receiver_id=user_id, status="pending").all()
+    pending = Connection.query.filter_by(receiver_id=user_id, status="pending").all()
 
     result = []
-    for req in requests:
+    for req in pending:
         sender = User.query.get(req.sender_id)
         result.append({
             "id": req.connection_id,
@@ -905,6 +1140,9 @@ def my_connections():
     return jsonify(result)
 
 
+# ────────────────────────────────────────────────
+# ADMIN — DASHBOARD & VIEWS
+# ────────────────────────────────────────────────
 @app.route('/admin/dashboard')
 @login_required
 def admin_dashboard():
@@ -930,7 +1168,6 @@ def admin_dashboard():
     )
 
 
-# ADDED: admin alumni view page
 @app.route('/admin/alumni')
 @login_required
 def admin_alumni():
@@ -942,7 +1179,6 @@ def admin_alumni():
     return render_template("admin_alumni.html", alumni_users=alumni_users)
 
 
-# ADDED: admin students view page
 @app.route('/admin/students')
 @login_required
 def admin_students():
@@ -954,7 +1190,6 @@ def admin_students():
     return render_template("admin_students.html", student_users=student_users)
 
 
-# ADDED: admin events view page
 @app.route('/admin/events')
 @login_required
 def admin_events():
@@ -966,7 +1201,9 @@ def admin_events():
     return render_template("admin_events.html", events=events)
 
 
-# ADDED: admin mentors view page
+# ────────────────────────────────────────────────
+# ADMIN — MENTOR MANAGEMENT
+# ────────────────────────────────────────────────
 @app.route('/admin/mentors')
 @login_required
 def admin_mentors():
@@ -975,10 +1212,86 @@ def admin_mentors():
         return redirect(url_for("home"))
 
     mentor_users = User.query.filter_by(role="mentor").all()
-    return render_template("admin_mentors.html", mentor_users=mentor_users)
+
+    applications = (
+        db.session.query(MentorApplication, User)
+        .join(User, MentorApplication.user_id == User.user_id)
+        .order_by(MentorApplication.application_id.desc())
+        .all()
+    )
+
+    return render_template(
+        "admin_mentors.html",
+        mentor_users=mentor_users,
+        applications=applications
+    )
 
 
-# ADDED: admin event attendees view page
+@app.route('/admin/mentors/approve/<int:application_id>', methods=["POST"])
+@login_required
+def approve_mentor_application(application_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for("home"))
+
+    application = MentorApplication.query.get_or_404(application_id)
+    user = User.query.get_or_404(application.user_id)
+
+    application.status = "approved"
+    user.role = "mentor"
+
+    if not user.mentor_profile:
+        mentor_profile = MentorProfile(
+            mentor_id=user.user_id,
+            expertise=application.expertise
+        )
+        db.session.add(mentor_profile)
+
+    db.session.commit()
+
+    flash(f"{user.name} has been approved as a mentor.", "success")
+    return redirect(url_for("admin_mentors"))
+
+
+@app.route('/admin/mentors/reject/<int:application_id>', methods=["POST"])
+@login_required
+def reject_mentor_application(application_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for("home"))
+
+    application = MentorApplication.query.get_or_404(application_id)
+    user = User.query.get_or_404(application.user_id)
+
+    application.status = "rejected"
+    db.session.commit()
+
+    flash(f"{user.name}'s mentor application has been rejected.", "info")
+    return redirect(url_for("admin_mentors"))
+
+
+@app.route('/admin/mentors/remove/<int:user_id>', methods=["POST"])
+@login_required
+def remove_mentor(user_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for("home"))
+
+    user = User.query.get_or_404(user_id)
+    user.role = "alumni"
+
+    if user.mentor_profile:
+        db.session.delete(user.mentor_profile)
+
+    db.session.commit()
+
+    flash(f"{user.name} has been removed as a mentor.", "success")
+    return redirect(url_for("admin_mentors"))
+
+
+# ────────────────────────────────────────────────
+# ADMIN — EVENT ATTENDEES & RSVPs
+# ────────────────────────────────────────────────
 @app.route('/admin/event-attendees')
 @login_required
 def admin_event_attendees():
@@ -997,7 +1310,6 @@ def admin_event_attendees():
     return render_template("admin_event_attendees.html", attendees=attendees)
 
 
-# ADDED: admin RSVPs view page
 @app.route('/admin/rsvps')
 @login_required
 def admin_rsvps():
@@ -1014,6 +1326,9 @@ def admin_rsvps():
     return render_template("admin_rsvps.html", rsvps=rsvps)
 
 
+# ────────────────────────────────────────────────
+# ADMIN — EVENT ANALYTICS
+# ────────────────────────────────────────────────
 @app.route("/admin/event-analytics")
 @login_required
 def admin_event_analytics():

@@ -1,35 +1,345 @@
-{% extends "base.html" %} {% block content %}
-<div class="container py-5">
-  <h2 class="fw-bold mb-4">All Events</h2>
+{% extends "admin_base.html" %} {% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<div class="ev-wrap">
+
+  <!-- Header -->
+  <div class="ev-header">
+    <div>
+      <h1 class="ev-title">All Events</h1>
+      <p class="ev-sub">Overview of every event created on the platform.</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="ev-btn-ghost">
+      <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+        <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Dashboard
+    </a>
+  </div>
 
   {% if events %}
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <table class="table">
+
+  <!-- Stats -->
+  <div class="ev-stats">
+    <div class="ev-stat-card ev-stat--gold">
+      <div class="ev-stat-num">{{ events|length }}</div>
+      <div class="ev-stat-label">Total Events</div>
+    </div>
+    <div class="ev-stat-card ev-stat--green">
+      <div class="ev-stat-num">
+        {{ events|selectattr('event_date')|list|length }}
+      </div>
+      <div class="ev-stat-label">Scheduled</div>
+    </div>
+    <div class="ev-stat-card ev-stat--blue">
+      <div class="ev-stat-num">
+        {{ events|map(attribute='location')|unique|list|length }}
+      </div>
+      <div class="ev-stat-label">Locations</div>
+    </div>
+  </div>
+
+  <!-- Table card -->
+  <div class="ev-card">
+    <div class="ev-card-header">
+      <div class="ev-card-dot"></div>
+      <span>Event Registry</span>
+      <span class="ev-badge">{{ events|length }} event{{ 's' if events|length != 1 else '' }}</span>
+    </div>
+
+    <!-- Search -->
+    <div class="ev-search-wrap">
+      <svg viewBox="0 0 20 20" fill="none" width="15" height="15" class="ev-search-icon">
+        <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="evSearch" class="ev-search" placeholder="Search by title, location or date…">
+    </div>
+
+    <div class="ev-table-wrap">
+      <table class="ev-table" id="evTable">
         <thead>
           <tr>
-            <th>Title</th>
+            <th>Event</th>
             <th>Location</th>
-            <th>Date</th>
+            <th>Date &amp; Time</th>
           </tr>
         </thead>
         <tbody>
           {% for event in events %}
           <tr>
-            <td>{{ event.title }}</td>
-            <td>{{ event.location }}</td>
             <td>
-              {{ event.event_date.strftime('%Y-%m-%d %H:%M') if event.event_date
-              else '' }}
+              <div class="ev-event-name">{{ event.title }}</div>
+            </td>
+            <td>
+              {% if event.location %}
+              <span class="ev-location-pill">
+                <svg viewBox="0 0 14 14" fill="none" width="10" height="10">
+                  <path d="M7 1A3.5 3.5 0 0110.5 4.5c0 2.5-3.5 7-3.5 7S3.5 7 3.5 4.5A3.5 3.5 0 017 1z" stroke="currentColor" stroke-width="1.4"/>
+                  <circle cx="7" cy="4.5" r="1.2" fill="currentColor"/>
+                </svg>
+                {{ event.location }}
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              {% if event.event_date %}
+              <div class="ev-date-wrap">
+                <span class="ev-date-pill">
+                  <svg viewBox="0 0 14 14" fill="none" width="10" height="10">
+                    <rect x="1" y="2" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M10 1v2.5M4 1v2.5M1 6h12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  {{ event.event_date.strftime('%d %b %Y') }}
+                </span>
+                <span class="ev-time-pill">
+                  <svg viewBox="0 0 14 14" fill="none" width="10" height="10">
+                    <circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.4"/>
+                    <path d="M7 4v3l2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                  </svg>
+                  {{ event.event_date.strftime('%H:%M') }}
+                </span>
+              </div>
+              {% else %}
+              <span class="ev-no-date">—</span>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    <div class="ev-table-foot">
+      <span id="evRowCount">Showing {{ events|length }} of {{ events|length }} event{{ 's' if events|length != 1 else '' }}</span>
+    </div>
   </div>
+
   {% else %}
-  <div class="alert alert-info">No events found.</div>
+
+  <!-- Empty state -->
+  <div class="ev-empty">
+    <div class="ev-empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+        <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M16 3v4M8 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M8 14h4M8 17h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="ev-empty-title">No events yet</p>
+    <p class="ev-empty-sub">Events created by admins will appear here.</p>
+  </div>
+
   {% endif %}
+
 </div>
+
+<style>
+  :root {
+    --navy:      #0a1628;
+    --navy-mid:  #0f2044;
+    --gold:      #f5c842;
+    --gold-pale: #fdf6d8;
+    --page-bg:   #f0f2f5;
+    --surf:      #ffffff;
+    --border:    #e2e5ea;
+    --text:      #0a1628;
+    --text2:     #4a5568;
+    --text3:     #9aa5b4;
+    --green:     #059669;
+    --blue:      #0ea5e9;
+    --r:         14px;
+    --ff: 'DM Sans', sans-serif;
+    --fd: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .ev-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 52px 24px 80px;
+    font-family: var(--ff);
+  }
+
+  /* ── Header ── */
+  .ev-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; margin-bottom: 36px; flex-wrap: wrap;
+  }
+  .ev-title {
+    font-family: var(--fd); font-size: 1.85rem; font-weight: 800;
+    letter-spacing: -.035em; color: var(--navy); margin: 0 0 5px; line-height: 1.1;
+  }
+  .ev-sub { font-size: .875rem; color: var(--text3); margin: 0; }
+
+  .ev-btn-ghost {
+    display: inline-flex; align-items: center; gap: 6px;
+    text-decoration: none; font-size: .83rem; font-weight: 600; color: var(--text3);
+    padding: 9px 14px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surf); transition: color .15s, border-color .15s;
+    flex-shrink: 0; margin-top: 4px;
+  }
+  .ev-btn-ghost:hover { color: var(--navy); border-color: var(--navy); }
+
+  /* ── Stats ── */
+  .ev-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 14px; margin-bottom: 28px;
+  }
+  .ev-stat-card {
+    background: var(--surf); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 22px 24px;
+    box-shadow: 0 2px 10px rgba(10,22,40,.06);
+    animation: evUp .3s ease both;
+    border-top: 3px solid var(--gold);
+  }
+  .ev-stat--gold  { border-top-color: var(--gold); }
+  .ev-stat--green { border-top-color: var(--green); animation-delay: 50ms; }
+  .ev-stat--blue  { border-top-color: var(--blue);  animation-delay: 100ms; }
+
+  .ev-stat-num {
+    font-family: var(--fd); font-size: 2.1rem; font-weight: 800;
+    color: var(--navy); line-height: 1; margin-bottom: 6px;
+  }
+  .ev-stat-label {
+    font-size: .73rem; font-weight: 600; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+
+  /* ── Card ── */
+  .ev-card {
+    background: var(--surf); border: 1px solid var(--border);
+    border-radius: var(--r); overflow: hidden;
+    box-shadow: 0 2px 20px rgba(10,22,40,.07);
+    animation: evUp .35s ease both;
+  }
+  @keyframes evUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .ev-card-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+    font-family: var(--fd); font-size: .95rem; font-weight: 700; color: var(--navy);
+  }
+  .ev-card-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green); flex-shrink: 0;
+  }
+  .ev-badge {
+    margin-left: auto; font-size: .65rem; font-weight: 700;
+    background: var(--navy); color: var(--gold);
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  /* ── Search ── */
+  .ev-search-wrap {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 24px; border-bottom: 1px solid var(--border);
+    background: var(--page-bg);
+  }
+  .ev-search-icon { color: var(--text3); flex-shrink: 0; }
+  .ev-search {
+    flex: 1; border: none; background: none; outline: none;
+    font-family: var(--ff); font-size: .875rem; color: var(--text);
+  }
+  .ev-search::placeholder { color: var(--text3); }
+
+  /* ── Table ── */
+  .ev-table-wrap { overflow-x: auto; }
+  .ev-table { width: 100%; border-collapse: collapse; }
+
+  .ev-table thead tr { border-bottom: 1px solid var(--border); }
+  .ev-table th {
+    padding: 12px 24px; text-align: left;
+    font-family: var(--fd); font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--text3);
+    white-space: nowrap;
+  }
+  .ev-table tbody tr {
+    border-bottom: 1px solid var(--border); transition: background .15s;
+  }
+  .ev-table tbody tr:last-child { border-bottom: none; }
+  .ev-table tbody tr:hover { background: #fafbfc; }
+  .ev-table td { padding: 15px 24px; vertical-align: middle; }
+
+  .ev-event-name {
+    font-family: var(--fd); font-weight: 700; font-size: .9rem;
+    color: var(--navy); letter-spacing: -.01em;
+  }
+
+  .ev-location-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--page-bg); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 11px;
+    font-size: .76rem; font-weight: 500; color: var(--text2); white-space: nowrap;
+  }
+
+  .ev-date-wrap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  .ev-date-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--gold-pale); border: 1px solid rgba(245,200,66,.45);
+    border-radius: 20px; padding: 4px 11px;
+    font-size: .76rem; font-weight: 600; color: #92700a; white-space: nowrap;
+  }
+  .ev-time-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 20px; padding: 4px 11px;
+    font-size: .76rem; font-weight: 600; color: #1d4ed8; white-space: nowrap;
+  }
+  .ev-no-date { color: var(--text3); font-size: .85rem; }
+
+  /* footer */
+  .ev-table-foot {
+    padding: 12px 24px; border-top: 1px solid var(--border);
+    background: var(--page-bg); font-size: .75rem; color: var(--text3); font-weight: 500;
+  }
+
+  /* ── Empty ── */
+  .ev-empty {
+    background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+    padding: 64px 32px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    box-shadow: 0 2px 10px rgba(10,22,40,.05);
+  }
+  .ev-empty-icon {
+    width: 58px; height: 58px; border-radius: 15px;
+    background: var(--gold-pale); border: 1px solid rgba(245,200,66,.4);
+    display: flex; align-items: center; justify-content: center; color: var(--navy);
+  }
+  .ev-empty-title { font-family: var(--fd); font-size: 1.1rem; font-weight: 700; color: var(--navy); }
+  .ev-empty-sub   { font-size: .875rem; color: var(--text3); max-width: 300px; line-height: 1.6; }
+
+  @media (max-width: 700px) {
+    .ev-title  { font-size: 1.5rem; }
+    .ev-header { flex-direction: column; gap: 12px; }
+    .ev-stats  { grid-template-columns: 1fr 1fr; }
+    .ev-stats .ev-stat-card:last-child { grid-column: 1 / -1; }
+    .ev-table th, .ev-table td { padding: 12px 16px; }
+  }
+</style>
+
+<script>
+  document.getElementById('evSearch').addEventListener('input', function () {
+    const q     = this.value.toLowerCase();
+    const rows  = document.querySelectorAll('#evTable tbody tr');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const match = row.textContent.toLowerCase().includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    const total = rows.length;
+    document.getElementById('evRowCount').textContent =
+      `Showing ${visible} of ${total} event${total !== 1 ? 's' : ''}`;
+  });
+</script>
+
 {% endblock %}

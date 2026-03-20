@@ -1,14 +1,67 @@
 {% extends "admin_base.html" %} {% block content %}
-<div class="container py-5">
-  <h2 class="fw-bold mb-4">All RSVPs</h2>
+
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<div class="rsvp-wrap">
+
+  <!-- Header -->
+  <div class="rsvp-header">
+    <div>
+      <h1 class="rsvp-title">All RSVPs</h1>
+      <p class="rsvp-sub">Track event responses from alumni members.</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="rsvp-btn-ghost">
+      <svg viewBox="0 0 16 16" fill="none" width="13" height="13">
+        <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Dashboard
+    </a>
+  </div>
 
   {% if rsvps %}
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <table class="table">
+
+  <!-- Stats row -->
+  <div class="rsvp-stats">
+    <div class="rsvp-stat-card">
+      <div class="rsvp-stat-num">{{ rsvps|length }}</div>
+      <div class="rsvp-stat-label">Total RSVPs</div>
+    </div>
+    <div class="rsvp-stat-card">
+      <div class="rsvp-stat-num">{{ rsvps|selectattr('0.response', 'equalto', 'attending')|list|length }}</div>
+      <div class="rsvp-stat-label">Attending</div>
+    </div>
+    <div class="rsvp-stat-card">
+      <div class="rsvp-stat-num">{{ rsvps|selectattr('0.response', 'equalto', 'rsvp')|list|length }}</div>
+      <div class="rsvp-stat-label">RSVP'd</div>
+    </div>
+    <div class="rsvp-stat-card">
+      <div class="rsvp-stat-num">{{ rsvps|map(attribute='2.title')|unique|list|length }}</div>
+      <div class="rsvp-stat-label">Events</div>
+    </div>
+  </div>
+
+  <!-- Table card -->
+  <div class="rsvp-card">
+    <div class="rsvp-card-header">
+      <div class="rsvp-card-dot"></div>
+      <span>RSVP Registry</span>
+      <span class="rsvp-badge">{{ rsvps|length }} record{{ 's' if rsvps|length != 1 else '' }}</span>
+    </div>
+
+    <!-- Search -->
+    <div class="rsvp-search-wrap">
+      <svg viewBox="0 0 20 20" fill="none" width="15" height="15" class="rsvp-search-icon">
+        <circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <input type="text" id="rsvpSearch" class="rsvp-search" placeholder="Search by name, event or response…">
+    </div>
+
+    <div class="rsvp-table-wrap">
+      <table class="rsvp-table" id="rsvpTable">
         <thead>
           <tr>
-            <th>Name</th>
+            <th>Member</th>
             <th>Event</th>
             <th>Response</th>
           </tr>
@@ -16,17 +69,272 @@
         <tbody>
           {% for rsvp, user, event in rsvps %}
           <tr>
-            <td>{{ user.name }}</td>
-            <td>{{ event.title }}</td>
-            <td>{{ rsvp.response }}</td>
+            <td>
+              <div class="rsvp-user">
+                <div class="rsvp-avatar">{{ user.name[0]|upper }}</div>
+                <span class="rsvp-name">{{ user.name }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="rsvp-event-name">{{ event.title }}</span>
+            </td>
+            <td>
+              {% if rsvp.response == 'attending' %}
+                <span class="rsvp-status rsvp-status--attending">
+                  <svg viewBox="0 0 12 12" fill="none" width="10" height="10">
+                    <path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Attending
+                </span>
+              {% elif rsvp.response == 'rsvp' %}
+                <span class="rsvp-status rsvp-status--rsvp">
+                  <svg viewBox="0 0 12 12" fill="none" width="10" height="10">
+                    <rect x="1" y="1" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M7 8l1.5 1.5L11 6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  RSVP'd
+                </span>
+              {% elif rsvp.response == 'cancelled' %}
+                <span class="rsvp-status rsvp-status--cancelled">
+                  <svg viewBox="0 0 12 12" fill="none" width="10" height="10">
+                    <path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+                  </svg>
+                  Cancelled
+                </span>
+              {% else %}
+                <span class="rsvp-status rsvp-status--other">{{ rsvp.response }}</span>
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    <div class="rsvp-table-foot">
+      <span id="rsvpRowCount">Showing {{ rsvps|length }} of {{ rsvps|length }} records</span>
+    </div>
   </div>
+
   {% else %}
-  <div class="alert alert-info">No RSVPs found.</div>
+
+  <!-- Empty state -->
+  <div class="rsvp-empty">
+    <div class="rsvp-empty-icon">
+      <svg viewBox="0 0 24 24" fill="none" width="28" height="28">
+        <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M16 3v4M8 3v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M8 15h4M8 12h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="rsvp-empty-title">No RSVPs yet</p>
+    <p class="rsvp-empty-sub">RSVPs will appear here once alumni respond to events.</p>
+  </div>
+
   {% endif %}
+
 </div>
+
+<style>
+  :root {
+    --navy:      #0a1628;
+    --navy-mid:  #0f2044;
+    --navy-soft: #162a52;
+    --gold:      #f5c842;
+    --gold-pale: #fdf6d8;
+    --page-bg:   #f0f2f5;
+    --surf:      #ffffff;
+    --border:    #e2e5ea;
+    --text:      #0a1628;
+    --text2:     #4a5568;
+    --text3:     #9aa5b4;
+    --green:     #059669;
+    --r:         14px;
+    --ff: 'DM Sans', sans-serif;
+    --fd: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .rsvp-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 52px 24px 80px;
+    font-family: var(--ff);
+  }
+
+  /* ── Header ── */
+  .rsvp-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; margin-bottom: 36px; flex-wrap: wrap;
+  }
+  .rsvp-title {
+    font-family: var(--fd); font-size: 1.85rem; font-weight: 800;
+    letter-spacing: -.035em; color: var(--navy); margin: 0 0 5px; line-height: 1.1;
+  }
+  .rsvp-sub { font-size: .875rem; color: var(--text3); margin: 0; }
+
+  .rsvp-btn-ghost {
+    display: inline-flex; align-items: center; gap: 6px;
+    text-decoration: none; font-size: .83rem; font-weight: 600; color: var(--text3);
+    padding: 9px 14px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surf); transition: color .15s, border-color .15s;
+    flex-shrink: 0; margin-top: 4px;
+  }
+  .rsvp-btn-ghost:hover { color: var(--navy); border-color: var(--navy); }
+
+  /* ── Stats ── */
+  .rsvp-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 14px; margin-bottom: 28px;
+  }
+  .rsvp-stat-card {
+    background: var(--surf); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 20px 22px;
+    box-shadow: 0 2px 10px rgba(10,22,40,.06);
+    animation: fadeUp .3s ease both;
+    border-top: 3px solid var(--gold);
+  }
+  .rsvp-stat-card:nth-child(2) { border-top-color: var(--green); }
+  .rsvp-stat-card:nth-child(3) { border-top-color: #0ea5e9; }
+  .rsvp-stat-card:nth-child(4) { border-top-color: #8b5cf6; }
+
+  .rsvp-stat-num {
+    font-family: var(--fd); font-size: 2rem; font-weight: 800;
+    color: var(--navy); line-height: 1; margin-bottom: 6px;
+  }
+  .rsvp-stat-label { font-size: .75rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ── Main card ── */
+  .rsvp-card {
+    background: var(--surf); border: 1px solid var(--border);
+    border-radius: var(--r); overflow: hidden;
+    box-shadow: 0 2px 20px rgba(10,22,40,.07);
+    animation: fadeUp .35s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .rsvp-card-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 18px 24px; border-bottom: 1px solid var(--border);
+    font-family: var(--fd); font-size: .95rem; font-weight: 700; color: var(--navy);
+  }
+  .rsvp-card-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--navy); flex-shrink: 0; }
+  .rsvp-badge {
+    margin-left: auto; font-size: .65rem; font-weight: 700;
+    background: var(--navy); color: var(--gold);
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  /* ── Search ── */
+  .rsvp-search-wrap {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 24px; border-bottom: 1px solid var(--border);
+    background: var(--page-bg);
+  }
+  .rsvp-search-icon { color: var(--text3); flex-shrink: 0; }
+  .rsvp-search {
+    flex: 1; border: none; background: none; outline: none;
+    font-family: var(--ff); font-size: .875rem; color: var(--text);
+  }
+  .rsvp-search::placeholder { color: var(--text3); }
+
+  /* ── Table ── */
+  .rsvp-table-wrap { overflow-x: auto; }
+  .rsvp-table { width: 100%; border-collapse: collapse; }
+
+  .rsvp-table thead tr { border-bottom: 1px solid var(--border); }
+  .rsvp-table th {
+    padding: 12px 24px; text-align: left;
+    font-family: var(--fd); font-size: .68rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--text3);
+    white-space: nowrap;
+  }
+  .rsvp-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .rsvp-table tbody tr:last-child { border-bottom: none; }
+  .rsvp-table tbody tr:hover { background: #fafbfc; }
+  .rsvp-table td { padding: 14px 24px; vertical-align: middle; }
+
+  /* user cell */
+  .rsvp-user { display: flex; align-items: center; gap: 10px; }
+  .rsvp-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--navy); color: var(--gold);
+    font-family: var(--fd); font-size: .8rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .rsvp-name { font-weight: 600; font-size: .875rem; color: var(--navy); }
+
+  .rsvp-event-name { font-size: .875rem; color: var(--text2); font-weight: 500; }
+
+  /* status badges */
+  .rsvp-status {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: .73rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; padding: 4px 11px; border-radius: 20px;
+  }
+  .rsvp-status--attending { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .rsvp-status--rsvp      { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .rsvp-status--cancelled { background: #fff5f5; color: #dc2626; border: 1px solid #fecaca; }
+  .rsvp-status--other     { background: var(--page-bg); color: var(--text2); border: 1px solid var(--border); }
+
+  /* table footer */
+  .rsvp-table-foot {
+    padding: 12px 24px; border-top: 1px solid var(--border);
+    background: var(--page-bg); font-size: .75rem; color: var(--text3); font-weight: 500;
+  }
+
+  /* ── Empty state ── */
+  .rsvp-empty {
+    background: var(--surf); border: 1px solid var(--border); border-radius: var(--r);
+    padding: 64px 32px; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    box-shadow: 0 2px 10px rgba(10,22,40,.05);
+  }
+  .rsvp-empty-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--gold-pale); border: 1px solid rgba(245,200,66,.4);
+    display: flex; align-items: center; justify-content: center; color: var(--navy);
+  }
+  .rsvp-empty-title { font-family: var(--fd); font-size: 1.1rem; font-weight: 700; color: var(--navy); }
+  .rsvp-empty-sub   { font-size: .875rem; color: var(--text3); max-width: 300px; line-height: 1.6; }
+
+  @media (max-width: 700px) {
+    .rsvp-title { font-size: 1.5rem; }
+    .rsvp-header { flex-direction: column; gap: 12px; }
+    .rsvp-stats { grid-template-columns: repeat(2, 1fr); }
+    .rsvp-table th, .rsvp-table td { padding: 12px 16px; }
+  }
+  @media (max-width: 420px) {
+    .rsvp-stats { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+
+<script>
+  // Live search filter
+  document.getElementById('rsvpSearch').addEventListener('input', function () {
+    const q     = this.value.toLowerCase();
+    const rows  = document.querySelectorAll('#rsvpTable tbody tr');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      const show = text.includes(q);
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    const total = rows.length;
+    document.getElementById('rsvpRowCount').textContent =
+      `Showing ${visible} of ${total} record${total !== 1 ? 's' : ''}`;
+  });
+</script>
+
 {% endblock %}
