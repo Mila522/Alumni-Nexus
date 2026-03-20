@@ -96,7 +96,12 @@ def get_connection_status(target_id):
         return "pending_received"
 
 
+# ── MODIFIED: now also allows messaging between accepted mentor/mentee pairs ──
 def are_users_connected(user1_id, user2_id):
+    """Two users may message each other if they share an accepted Connection
+    OR if one is a mentor and the other is their accepted mentee."""
+
+    # 1. Standard connection
     connection = Connection.query.filter(
         (
             ((Connection.sender_id == user1_id) & (Connection.receiver_id == user2_id)) |
@@ -104,14 +109,46 @@ def are_users_connected(user1_id, user2_id):
         ) &
         (Connection.status == "accepted")
     ).first()
-    return connection is not None
+    if connection:
+        return True
+
+    # 2. Accepted mentorship relationship (either direction)
+    mentorship = MentorshipRequest.query.filter(
+        (
+            ((MentorshipRequest.student_id == user1_id) & (MentorshipRequest.mentor_id == user2_id)) |
+            ((MentorshipRequest.student_id == user2_id) & (MentorshipRequest.mentor_id == user1_id))
+        ) &
+        (MentorshipRequest.status == "accepted")
+    ).first()
+    if mentorship:
+        return True
+
+    return False
+
+
+# ── NEW: returns context about the relationship type for the message UI ──
+def get_conversation_context(user1_id, user2_id):
+    """Return a dict describing why these two users can talk.
+    Used by message.html to show 'Your Mentor' / 'Your Mentee' / 'Connection'."""
+
+    mentorship = MentorshipRequest.query.filter(
+        (
+            ((MentorshipRequest.student_id == user1_id) & (MentorshipRequest.mentor_id == user2_id)) |
+            ((MentorshipRequest.student_id == user2_id) & (MentorshipRequest.mentor_id == user1_id))
+        ) &
+        (MentorshipRequest.status == "accepted")
+    ).first()
+
+    if mentorship:
+        if mentorship.mentor_id == user1_id:
+            return {"type": "mentorship", "role": "mentor"}
+        else:
+            return {"type": "mentorship", "role": "mentee"}
+
+    return {"type": "connection", "role": None}
 
 
 def get_mentorship_status(student_id, mentor_id):
-    """
-    Returns the mentorship request status between a student/alumni and a mentor.
-    Possible values: 'none', 'pending', 'accepted', 'rejected'
-    """
     req = MentorshipRequest.query.filter_by(
         student_id=student_id,
         mentor_id=mentor_id
@@ -136,10 +173,11 @@ def message_page(user_id):
         return redirect(url_for("profile", user_id=current_user.user_id))
 
     if not are_users_connected(current_user.user_id, other_user.user_id):
-        flash("You can only message users you are connected with.", "error")
+        flash("You can only message users you are connected with or your mentor/mentee.", "error")
         return redirect(url_for("profile", user_id=other_user.user_id))
 
-    return render_template("message.html", other_user=other_user)
+    context = get_conversation_context(current_user.user_id, other_user.user_id)
+    return render_template("message.html", other_user=other_user, conversation_context=context)
 
 
 @app.route("/api/messages/<int:user_id>", methods=["GET"])
@@ -151,7 +189,7 @@ def get_conversation(user_id):
         return jsonify({"error": "You cannot message yourself"}), 400
 
     if not are_users_connected(current_user.user_id, other_user.user_id):
-        return jsonify({"error": "You can only view conversations with connected users"}), 403
+        return jsonify({"error": "You can only view conversations with connected users or your mentor/mentee"}), 403
 
     messages = Message.query.filter(
         ((Message.sender_id == current_user.user_id) & (Message.receiver_id == other_user.user_id)) |
@@ -181,7 +219,7 @@ def send_message(user_id):
         return jsonify({"error": "You cannot message yourself"}), 400
 
     if not are_users_connected(current_user.user_id, other_user.user_id):
-        return jsonify({"error": "You can only message users you are connected with"}), 403
+        return jsonify({"error": "You can only message users you are connected with or your mentor/mentee"}), 403
 
     data = request.get_json()
     message_text = data.get("message_text", "").strip()
@@ -493,8 +531,6 @@ def edit_profile():
 def mentorship():
     selected_expertise = request.args.get('expertise', '')
 
-    # ── Available mentors ────────────────────────────────────────────────────
-    # Join User → MentorProfile so we can filter by expertise and attach it
     mentor_query = (
         db.session.query(User, MentorProfile)
         .join(MentorProfile, MentorProfile.mentor_id == User.user_id)
@@ -504,14 +540,11 @@ def mentorship():
     if selected_expertise:
         mentor_query = mentor_query.filter(MentorProfile.expertise == selected_expertise)
 
-    # Attach .expertise directly onto each User object so the template can do
-    # {{ mentor.expertise }} without going through mentor_profile
     mentors = []
     for user_obj, mp in mentor_query.all():
         user_obj.expertise = mp.expertise if mp else None
         mentors.append(user_obj)
 
-    # ── My mentorship requests (sent by current user) ────────────────────────
     my_requests_raw = MentorshipRequest.query.filter_by(
         student_id=current_user.user_id
     ).order_by(MentorshipRequest.request_date.desc()).all()
@@ -522,7 +555,6 @@ def mentorship():
         req.mentor_name = mentor_user.name if mentor_user else "Unknown"
         my_requests.append(req)
 
-    # ── Accepted mentor (the mentor this user is currently paired with) ──────
     accepted_mentor = None
     accepted_req = MentorshipRequest.query.filter_by(
         student_id=current_user.user_id,
@@ -531,7 +563,6 @@ def mentorship():
     if accepted_req:
         accepted_mentor = User.query.get(accepted_req.mentor_id)
 
-    # ── Latest mentor application (for alumni status display) ────────────────
     latest_application = None
     if current_user.role == 'alumni':
         latest_application = (
@@ -541,7 +572,6 @@ def mentorship():
             .first()
         )
 
-    # ── Mentor dashboard data (only populated when viewer is a mentor) ────────
     pending_requests_count = 0
     accepted_requests_count = 0
     mentees_count = 0
@@ -570,6 +600,7 @@ def mentorship():
         for req in incoming_raw:
             student = User.query.get(req.student_id)
             req.student_name = student.name if student else "Unknown"
+            req.student_user = student
             incoming_requests.append(req)
 
     return render_template(
@@ -601,7 +632,6 @@ def apply_mentor():
             flash("Please select an area of expertise.", "error")
             return redirect(url_for('apply_mentor'))
 
-        # Block duplicate pending applications
         existing = MentorApplication.query.filter_by(
             user_id=current_user.user_id,
             status='pending'
@@ -643,7 +673,6 @@ def request_mentorship(mentor_id):
         flash("You cannot request mentorship from yourself.", "error")
         return redirect(url_for('mentorship'))
 
-    # Prevent duplicate requests
     existing = MentorshipRequest.query.filter_by(
         student_id=current_user.user_id,
         mentor_id=mentor_id
@@ -801,6 +830,52 @@ def rsvp_event(event_id):
     db.session.commit()
 
     return jsonify({"message": "RSVP successful"})
+
+
+# ── NEW: Mark Attending ────────────────────────────────────────────────────────
+@app.route("/api/events/<int:event_id>/attend", methods=["POST"])
+@login_required
+def attend_event(event_id):
+    """Upgrade an existing RSVP to 'attending', or create one directly."""
+    Event.query.get_or_404(event_id)
+
+    existing_rsvp = RSVP.query.filter_by(
+        user_id=current_user.user_id,
+        event_id=event_id
+    ).first()
+
+    if existing_rsvp:
+        existing_rsvp.response = "attending"
+    else:
+        existing_rsvp = RSVP(
+            user_id=current_user.user_id,
+            event_id=event_id,
+            response="attending"
+        )
+        db.session.add(existing_rsvp)
+
+    db.session.commit()
+    return jsonify({"message": "Marked as attending"})
+
+
+# ── NEW: Cancel RSVP ──────────────────────────────────────────────────────────
+@app.route("/api/events/<int:event_id>/cancel-rsvp", methods=["POST"])
+@login_required
+def cancel_rsvp(event_id):
+    """Remove the user's RSVP / attending record entirely."""
+    Event.query.get_or_404(event_id)
+
+    existing_rsvp = RSVP.query.filter_by(
+        user_id=current_user.user_id,
+        event_id=event_id
+    ).first()
+
+    if existing_rsvp:
+        db.session.delete(existing_rsvp)
+        db.session.commit()
+        return jsonify({"message": "RSVP cancelled"})
+
+    return jsonify({"message": "No RSVP found to cancel"}), 404
 
 
 # ────────────────────────────────────────────────
@@ -1030,7 +1105,8 @@ def get_suggestions():
         result.append({
             "id": u.user_id,
             "name": u.name,
-            "industry": industry
+            "industry": industry,
+            "profile_image": u.profile_image or "default-profile.png"
         })
 
     return jsonify(result)
@@ -1109,7 +1185,8 @@ def search_users():
             "role": user.role,
             "industry": industry_val,
             "faculty": faculty_val,
-            "graduation_year": year_val
+            "graduation_year": year_val,
+            "profile_image": user.profile_image or "default-profile.png"
         })
 
     return jsonify(results)

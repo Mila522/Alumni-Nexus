@@ -632,15 +632,46 @@ async function loadEvents() {
   }
 }
 
-/* ── RSVP actions ── */
+/* ── RSVP: initial sign-up ── */
 async function rsvpEvent(id) {
-  try { const r = await fetch(`/api/events/${id}/rsvp`,{method:'POST'}); const d = await r.json().catch(()=>{}); if(!r.ok) alert(d?.message||'Failed'); else alert(d?.message||'RSVP successful!'); loadEvents(); } catch { alert('Error.'); }
+  try {
+    const r = await fetch(`/api/events/${id}/rsvp`, { method: 'POST' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      alert(d?.message || 'Failed to RSVP');
+    }
+    loadEvents();
+  } catch {
+    alert('Error submitting RSVP.');
+  }
 }
+
+/* ── FIXED: Mark Attending — calls /api/events/<id>/attend ── */
 async function attendEvent(id) {
-  try { await fetch(`/api/events/${id}/attend`,{method:'POST'}); loadEvents(); } catch { alert('Error.'); }
+  try {
+    const r = await fetch(`/api/events/${id}/attend`, { method: 'POST' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      alert(d?.message || 'Failed to mark as attending');
+    }
+    loadEvents();
+  } catch {
+    alert('Error marking attendance.');
+  }
 }
+
+/* ── FIXED: Cancel RSVP — calls /api/events/<id>/cancel-rsvp ── */
 async function cancelRsvp(id) {
-  try { await fetch(`/api/events/${id}/cancel-rsvp`,{method:'POST'}); loadEvents(); } catch { alert('Error.'); }
+  try {
+    const r = await fetch(`/api/events/${id}/cancel-rsvp`, { method: 'POST' });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      alert(d?.message || 'Failed to cancel RSVP');
+    }
+    loadEvents();
+  } catch {
+    alert('Error cancelling RSVP.');
+  }
 }
 
 /* ── Like ── */
