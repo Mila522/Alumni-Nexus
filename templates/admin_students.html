@@ -1,35 +1,54 @@
 {% extends "admin_base.html" %} {% block content %}
 <div class="container py-5">
-  <h2 class="fw-bold mb-4">All Events</h2>
+  <h2 class="fw-bold mb-4">All Students</h2>
 
-  {% if events %}
+  {% if student_users %}
   <div class="card shadow-sm">
     <div class="card-body">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Location</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for event in events %}
-          <tr>
-            <td>{{ event.title }}</td>
-            <td>{{ event.location }}</td>
-            <td>
-              {{ event.event_date.strftime('%Y-%m-%d %H:%M') if event.event_date
-              else '' }}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Faculty</th>
+              <th>Department</th>
+              <th>Graduation Year</th>
+              <th>Industry</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in student_users %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ student.name }}</td>
+              <td>{{ student.email }}</td>
+              <td>
+                {{ student.student_profile.faculty if student.student_profile
+                else "N/A" }}
+              </td>
+              <td>
+                {{ student.student_profile.department if student.student_profile
+                else "N/A" }}
+              </td>
+              <td>
+                {{ student.student_profile.graduation_year if
+                student.student_profile else "N/A" }}
+              </td>
+              <td>
+                {{ student.student_profile.industry if student.student_profile
+                else "N/A" }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
   {% else %}
-  <div class="alert alert-info">No events found.</div>
+  <div class="alert alert-info">No students found.</div>
   {% endif %}
 </div>
 {% endblock %}

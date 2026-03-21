@@ -9,14 +9,18 @@
   .card:hover {
     border-color: #e2b93d !important;
     box-shadow: 0 4px 16px rgba(201, 168, 76, 0.3) !important;
-    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    transition:
+      box-shadow 0.2s ease,
+      border-color 0.2s ease;
   }
 
   #connections-container .connection {
     border: 1.5px solid #0a1628;
     border-radius: 8px;
     padding: 10px 14px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   #connections-container .connection:hover {
@@ -192,7 +196,6 @@
 </div>
 
 <script>
-  /* ── Avatar helpers ─────────────────────────────────────── */
   function getInitials(name) {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
@@ -225,16 +228,11 @@
   }
 
   function avatarHtml(user) {
-    /* Matches Flask's url_for('static', filename=user.profile_image) */
-    const pic = user.profile_image
-      ? `/static/${user.profile_image}`
-      : null;
-
+    const pic = user.profile_image ? `/static/${user.profile_image}` : null;
     const initials = getInitials(user.name);
     const { bg, fg } = avatarColors(user.name);
 
     if (pic) {
-      /* Real image — fall back to initials if the URL is broken */
       return `<img
         src="${pic}"
         alt="${user.name}"
@@ -244,14 +242,20 @@
       />`;
     }
 
-    /* No image URL — render initials avatar */
     return `<div
       class="profile-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
       style="width:72px;height:72px;border-radius:50%;background:${bg};color:${fg};font-size:1.4rem;font-weight:700;border:2px solid #c9a84c;letter-spacing:1px;">
       ${initials}
     </div>`;
   }
-  /* ─────────────────────────────────────────────────────────── */
+
+  function renderEmptyState(container, message) {
+    container.innerHTML = `
+      <div class="col-12">
+        <p class="text-muted mb-0">${message}</p>
+      </div>
+    `;
+  }
 
   async function searchUsers() {
     const q = document.getElementById("search-box").value;
@@ -260,12 +264,21 @@
     const year = document.getElementById("year-filter").value;
 
     const res = await fetch(
-      `/api/search?q=${q}&role=${role}&industry=${industry}&year=${year}`,
+      `/api/search?q=${encodeURIComponent(q)}&role=${encodeURIComponent(
+        role,
+      )}&industry=${encodeURIComponent(industry)}&year=${encodeURIComponent(year)}`,
     );
     const users = await res.json();
 
     const container = document.getElementById("suggestions-container");
     container.innerHTML = "";
+
+    document.getElementById("suggestions-count").innerText = users.length;
+
+    if (!users.length) {
+      renderEmptyState(container, "No matching users found.");
+      return;
+    }
 
     users.forEach((user) => {
       container.innerHTML += `
@@ -295,6 +308,14 @@
     container.innerHTML = "";
 
     document.getElementById("suggestions-count").innerText = users.length;
+
+    if (!users.length) {
+      renderEmptyState(
+        container,
+        "No suggestions available yet. Complete profiles in the same industry will appear here.",
+      );
+      return;
+    }
 
     users.forEach((user) => {
       container.innerHTML += `
@@ -334,6 +355,7 @@
       }
 
       loadRequests();
+      loadSuggestions();
       loadStats();
     } else {
       alert(data.message || data.error || "Unable to send request");
@@ -422,20 +444,27 @@
 
     connections.forEach((conn) => {
       container.innerHTML += `
-    <div class="connection d-flex justify-content-between align-items-center mb-2">
-        <div>
-            <a href="/profile/${conn.id}" class="fw-bold text-decoration-none">
-                ${conn.name}
-            </a>
-            <br>
-            <small class="text-muted">${conn.email}</small>
-        </div>
+        <div class="connection d-flex justify-content-between align-items-center mb-2">
+            <div>
+                <a href="/profile/${conn.id}" class="fw-bold text-decoration-none">
+                    ${conn.name}
+                </a>
+                <br>
+                <small class="text-muted">${conn.email}</small>
+            </div>
 
-        <a href="/messages/${conn.id}" class="btn btn-sm btn-primary">
-            Message
-        </a>
-    </div>
-    `;
+            <a href="/messages/${conn.id}" class="btn btn-sm btn-primary position-relative">
+                Message
+                ${
+                  conn.unread_count > 0
+                    ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                         ${conn.unread_count}
+                       </span>`
+                    : ""
+                }
+            </a>
+        </div>
+      `;
     });
   }
 

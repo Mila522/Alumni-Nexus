@@ -1,38 +1,29 @@
-{% extends "admin_base.html" %}
-{% block content %}
+{% extends "admin_base.html" %} {% block content %}
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+  @import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
 
   :root {
-    --bg:         #f0f4ff;
-    --surface:    #ffffff;
-    --surface2:   #f7f9ff;
-    --border:     #e0e7ff;
-    --accent:     #4f46e5;
-    --accent-lt:  #eef2ff;
-    --accent2:    #0ea5e9;
+    --bg: #f0f4ff;
+    --surface: #ffffff;
+    --surface2: #f7f9ff;
+    --border: #e0e7ff;
+    --accent: #4f46e5;
+    --accent-lt: #eef2ff;
+    --accent2: #0ea5e9;
     --accent2-lt: #e0f2fe;
-    --success:    #059669;
-    --success-lt: #d1fae5;
-    --danger:     #dc2626;
-    --danger-lt:  #fee2e2;
-    --muted:      #6b7280;
-    --text:       #1e1b4b;
-    --text-dim:   #6b7280;
-    --font-head:  'Barlow Condensed', sans-serif;
-    --font-body:  'Barlow', sans-serif;
-    --font-mono:  'IBM Plex Mono', monospace;
+    --danger: #dc2626;
+    --danger-lt: #fee2e2;
+    --muted: #6b7280;
+    --text: #1e1b4b;
+    --font-head: "Barlow Condensed", sans-serif;
+    --font-body: "Barlow", sans-serif;
+    --font-mono: "IBM Plex Mono", monospace;
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     background: var(--bg);
-    color: var(--text);
     font-family: var(--font-body);
-    font-size: 14px;
-    line-height: 1.6;
   }
 
   .mm-wrap {
@@ -41,315 +32,180 @@
     padding: 48px 32px;
   }
 
-  /* Header */
   .mm-header {
     display: flex;
     align-items: flex-end;
     gap: 16px;
     margin-bottom: 40px;
   }
+
   .mm-header-text h1 {
     font-family: var(--font-head);
     font-size: 2.8rem;
     font-weight: 700;
-    letter-spacing: 0.03em;
     text-transform: uppercase;
-    line-height: 1;
-    color: var(--text);
   }
-  .mm-header-text h1 span { color: var(--accent); }
+
+  .mm-header-text span {
+    color: var(--accent);
+  }
+
   .mm-header-sub {
     font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--muted);
-    letter-spacing: 0.1em;
-    margin-top: 4px;
   }
+
   .mm-header-line {
     flex: 1;
     height: 2px;
-    background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) 60%, transparent 100%);
-    opacity: 0.25;
-    margin-bottom: 10px;
-    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.3;
   }
 
-  /* Card */
   .mm-card {
     background: var(--surface);
     border: 1.5px solid var(--border);
     border-radius: 12px;
-    margin-bottom: 28px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(79,70,229,0.06), 0 8px 24px rgba(79,70,229,0.04);
   }
+
   .mm-card-head {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 20px 28px;
-    border-bottom: 1.5px solid var(--border);
-    background: linear-gradient(135deg, var(--accent-lt) 0%, #fff 100%);
+    padding: 20px;
+    background: var(--accent2-lt);
   }
-  .mm-card + .mm-card .mm-card-head {
-    background: linear-gradient(135deg, var(--accent2-lt) 0%, #fff 100%);
-  }
+
   .mm-card-head h2 {
     font-family: var(--font-head);
-    font-size: 1.1rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
+    font-size: 1rem;
     text-transform: uppercase;
-    color: var(--text);
   }
+
   .mm-count {
     margin-left: auto;
     font-family: var(--font-mono);
-    font-size: 0.68rem;
-    color: var(--accent);
-    background: var(--accent-lt);
-    border: 1.5px solid #c7d2fe;
-    padding: 3px 12px;
-    border-radius: 20px;
-    letter-spacing: 0.08em;
-    font-weight: 500;
-  }
-  .mm-card + .mm-card .mm-count {
+    font-size: 0.7rem;
     color: var(--accent2);
-    background: var(--accent2-lt);
-    border-color: #bae6fd;
   }
-  .mm-icon {
-    width: 34px; height: 34px;
-    border-radius: 8px;
-    display: grid; place-items: center;
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-  .mm-icon-indigo { background: #e0e7ff; color: var(--accent); }
-  .mm-icon-sky    { background: #e0f2fe; color: var(--accent2); }
 
-  /* Table */
-  .mm-table-wrap { overflow-x: auto; }
-  table.mm-table { width: 100%; border-collapse: collapse; }
-  table.mm-table thead tr { background: var(--surface2); }
-  table.mm-table th {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    font-weight: 500;
-    letter-spacing: 0.13em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 13px 20px;
-    border-bottom: 1.5px solid var(--border);
-    white-space: nowrap;
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
     text-align: left;
   }
-  table.mm-table td {
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-    vertical-align: middle;
-  }
-  table.mm-table tbody tr { transition: background 0.12s; }
-  table.mm-table tbody tr:hover { background: #fafbff; }
-  table.mm-table tbody tr:last-child td { border-bottom: none; }
 
-  .mm-name  { font-weight: 600; color: var(--text); }
-  .mm-email { font-family: var(--font-mono); font-size: 0.76rem; color: var(--muted); }
-  .mm-expertise {
-    font-size: 0.78rem;
-    color: var(--accent);
-    background: var(--accent-lt);
-    border: 1px solid #c7d2fe;
+  th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .mm-name {
+    font-weight: 600;
+  }
+  .mm-email {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
     border-radius: 6px;
-    padding: 3px 10px;
-    display: inline-block;
-    white-space: nowrap;
-    max-width: 180px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-weight: 500;
-  }
-  .mm-motivation { font-size: 0.82rem; color: var(--muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  /* Badges */
-  .badge-mm {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 20px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-  }
-  .badge-mm::before { content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-  .badge-pending  { background: #fefce8; color: #a16207; border: 1px solid #fde047; }
-  .badge-pending::before  { background: #ca8a04; }
-  .badge-approved { background: var(--success-lt); color: var(--success); border: 1px solid #6ee7b7; }
-  .badge-approved::before { background: var(--success); }
-  .badge-rejected { background: var(--danger-lt);  color: var(--danger);  border: 1px solid #fca5a5; }
-  .badge-rejected::before { background: var(--danger); }
-
-  /* Buttons */
-  .btn-mm {
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 7px 16px;
-    border-radius: 7px;
-    border: 1.5px solid transparent;
     cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-    text-decoration: none;
-    display: inline-block;
   }
-  .btn-mm:hover { transform: translateY(-1px); }
-  .btn-mm:active { transform: translateY(0); }
 
-  .btn-outline-indigo { color: var(--accent); border-color: #c7d2fe; background: #fff; }
-  .btn-outline-indigo:hover { background: var(--accent-lt); border-color: var(--accent); box-shadow: 0 2px 8px rgba(79,70,229,0.15); }
+  .btn-view {
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: white;
+  }
 
-  .btn-solid-green { color: #fff; background: var(--success); border-color: var(--success); }
-  .btn-solid-green:hover { background: #047857; border-color: #047857; box-shadow: 0 2px 10px rgba(5,150,105,0.3); }
-
-  .btn-outline-red { color: var(--danger); background: #fff; border-color: #fca5a5; }
-  .btn-outline-red:hover { background: var(--danger-lt); border-color: var(--danger); box-shadow: 0 2px 8px rgba(220,38,38,0.15); }
-
-  .btn-solid-red { color: #fff; background: var(--danger); border-color: var(--danger); }
-  .btn-solid-red:hover { background: #b91c1c; border-color: #b91c1c; box-shadow: 0 2px 10px rgba(220,38,38,0.3); }
-
-  .btn-actions { display: flex; gap: 8px; align-items: center; }
-  form { display: contents; }
+  .btn-remove {
+    background: var(--danger);
+    color: white;
+    border: none;
+  }
 
   .mm-empty {
-    padding: 44px 28px;
+    padding: 30px;
     text-align: center;
     color: var(--muted);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    letter-spacing: 0.06em;
-    background: var(--surface2);
   }
-  .mm-reviewed { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.08em; color: #9ca3af; text-transform: uppercase; }
 </style>
 
 <div class="mm-wrap">
-
   <div class="mm-header">
     <div class="mm-header-text">
-      <h1>Mentor <span>Management</span></h1>
-      <div class="mm-header-sub">// Admin Panel — Mentor Oversight</div>
+      <h1>Active <span>Mentors</span></h1>
+      <div class="mm-header-sub">// Approved mentors only</div>
     </div>
     <div class="mm-header-line"></div>
   </div>
 
-  <!-- Applications -->
   <div class="mm-card">
     <div class="mm-card-head">
-      <div class="mm-icon mm-icon-indigo">⬡</div>
-      <h2>Mentor Applications</h2>
-      {% if applications %}<span class="mm-count">{{ applications | length }} Records</span>{% endif %}
-    </div>
-
-    {% if applications %}
-    <div class="mm-table-wrap">
-      <table class="mm-table">
-        <thead>
-          <tr>
-            <th>Name</th><th>Email</th><th>Expertise</th><th>Motivation</th>
-            <th>Profile</th><th>Status</th><th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for application, user in applications %}
-          <tr>
-            <td><span class="mm-name">{{ user.name }}</span></td>
-            <td><span class="mm-email">{{ user.email }}</span></td>
-            <td><span class="mm-expertise">{{ application.expertise }}</span></td>
-            <td><span class="mm-motivation">{{ application.motivation if application.motivation else '—' }}</span></td>
-            <td>
-              <a href="{{ url_for('profile', user_id=user.user_id) }}" class="btn-mm btn-outline-indigo">View Profile</a>
-            </td>
-            <td>
-              {% if application.status == 'pending' %}
-                <span class="badge-mm badge-pending">Pending</span>
-              {% elif application.status == 'approved' %}
-                <span class="badge-mm badge-approved">Approved</span>
-              {% elif application.status == 'rejected' %}
-                <span class="badge-mm badge-rejected">Rejected</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if application.status == 'pending' %}
-              <div class="btn-actions">
-                <form method="POST" action="{{ url_for('approve_mentor_application', application_id=application.application_id) }}">
-                  <button type="submit" class="btn-mm btn-solid-green">Approve</button>
-                </form>
-                <form method="POST" action="{{ url_for('reject_mentor_application', application_id=application.application_id) }}">
-                  <button type="submit" class="btn-mm btn-outline-red">Reject</button>
-                </form>
-              </div>
-              {% else %}
-              <span class="mm-reviewed">Reviewed</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="mm-empty">No mentor applications found.</div>
-    {% endif %}
-  </div>
-
-  <!-- Registered Mentors -->
-  <div class="mm-card">
-    <div class="mm-card-head">
-      <div class="mm-icon mm-icon-sky">◈</div>
       <h2>Registered Mentors</h2>
-      {% if mentor_users %}<span class="mm-count">{{ mentor_users | length }} Records</span>{% endif %}
+      {% if mentor_users %}
+      <span class="mm-count">{{ mentor_users | length }} Records</span>
+      {% endif %}
     </div>
 
     {% if mentor_users %}
-    <div class="mm-table-wrap">
-      <table class="mm-table">
-        <thead>
-          <tr>
-            <th>Name</th><th>Email</th><th>Expertise</th><th>Profile</th><th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for user in mentor_users %}
-          <tr>
-            <td><span class="mm-name">{{ user.name }}</span></td>
-            <td><span class="mm-email">{{ user.email }}</span></td>
-            <td><span class="mm-expertise">{{ user.mentor_profile.expertise if user.mentor_profile else '—' }}</span></td>
-            <td>
-              <a href="{{ url_for('profile', user_id=user.user_id) }}" class="btn-mm btn-outline-indigo">View Profile</a>
-            </td>
-            <td>
-              <form method="POST" action="{{ url_for('remove_mentor', user_id=user.user_id) }}">
-                <button type="submit" class="btn-mm btn-solid-red">Remove</button>
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Expertise</th>
+          <th>Profile</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for user in mentor_users %}
+        <tr>
+          <td class="mm-name">{{ user.name }}</td>
+          <td class="mm-email">{{ user.email }}</td>
+          <td>
+            {{ user.mentor_profile.expertise if user.mentor_profile else "—" }}
+          </td>
+
+          <td>
+            <a
+              href="{{ url_for('profile', user_id=user.user_id) }}"
+              class="btn btn-view"
+            >
+              View
+            </a>
+          </td>
+
+          <td>
+            <form
+              method="POST"
+              action="{{ url_for('remove_mentor', user_id=user.user_id) }}"
+            >
+              <button class="btn btn-remove">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
     {% else %}
-    <div class="mm-empty">No registered mentors found.</div>
+    <div class="mm-empty">No active mentors found.</div>
     {% endif %}
   </div>
-
 </div>
+
 {% endblock %}

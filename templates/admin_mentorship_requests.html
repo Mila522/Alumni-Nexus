@@ -1,0 +1,264 @@
+{% extends "admin_base.html" %} {% block content %}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+  :root {
+    --bg: #f0f4ff;
+    --surface: #ffffff;
+    --surface2: #f7f9ff;
+    --border: #e0e7ff;
+    --accent: #4f46e5;
+    --accent-lt: #eef2ff;
+    --muted: #6b7280;
+    --text: #1e1b4b;
+    --success: #059669;
+    --success-lt: #d1fae5;
+    --danger: #dc2626;
+    --danger-lt: #fee2e2;
+    --warning: #a16207;
+    --warning-lt: #fef3c7;
+    --font-head: "Barlow Condensed", sans-serif;
+    --font-body: "Barlow", sans-serif;
+    --font-mono: "IBM Plex Mono", monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+  }
+
+  .mr-wrap {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  .mr-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .mr-header-text h1 {
+    font-family: var(--font-head);
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .mr-header-text h1 span {
+    color: var(--accent);
+  }
+
+  .mr-header-sub {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-top: 6px;
+  }
+
+  .mr-header-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent) 0%, transparent 100%);
+    opacity: 0.25;
+    margin-bottom: 10px;
+    border-radius: 2px;
+  }
+
+  .mr-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 3px rgba(79, 70, 229, 0.06),
+      0 8px 24px rgba(79, 70, 229, 0.04);
+  }
+
+  .mr-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 28px;
+    border-bottom: 1.5px solid var(--border);
+    background: linear-gradient(135deg, var(--accent-lt) 0%, #fff 100%);
+  }
+
+  .mr-card-head h2 {
+    font-family: var(--font-head);
+    font-size: 1.08rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .mr-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--accent);
+    background: var(--accent-lt);
+    border: 1px solid #c7d2fe;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .mr-table-wrap {
+    overflow-x: auto;
+  }
+
+  .mr-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .mr-table thead tr {
+    background: var(--surface2);
+  }
+
+  .mr-table th {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 13px 20px;
+    border-bottom: 1.5px solid var(--border);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .mr-table td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .mr-table tbody tr:hover {
+    background: #fafbff;
+  }
+
+  .mr-name {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .mr-email {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .badge-mr {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    letter-spacing: 0.08em;
+  }
+
+  .badge-pending {
+    background: var(--warning-lt);
+    color: var(--warning);
+    border: 1px solid #fcd34d;
+  }
+
+  .badge-accepted {
+    background: var(--success-lt);
+    color: var(--success);
+    border: 1px solid #6ee7b7;
+  }
+
+  .badge-rejected {
+    background: var(--danger-lt);
+    color: var(--danger);
+    border: 1px solid #fca5a5;
+  }
+
+  .mr-empty {
+    padding: 44px 28px;
+    text-align: center;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+  }
+</style>
+
+<div class="mr-wrap">
+  <div class="mr-header">
+    <div class="mr-header-text">
+      <h1>Mentorship <span>Requests</span></h1>
+      <div class="mr-header-sub">// Admin Panel — Request Tracking</div>
+    </div>
+    <div class="mr-header-line"></div>
+  </div>
+
+  <div class="mr-card">
+    <div class="mr-card-head">
+      <h2>All Mentorship Requests</h2>
+      {% if requests %}
+      <span class="mr-count">{{ requests|length }} Records</span>
+      {% endif %}
+    </div>
+
+    {% if requests %}
+    <div class="mr-table-wrap">
+      <table class="mr-table">
+        <thead>
+          <tr>
+            <th>Requester</th>
+            <th>Mentor</th>
+            <th>Status</th>
+            <th>Request Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req, student_user, mentor_user in requests %}
+          <tr>
+            <td>
+              <div class="mr-name">{{ student_user.name }}</div>
+              <div class="mr-email">{{ student_user.email }}</div>
+            </td>
+            <td>
+              <div class="mr-name">{{ mentor_user.name }}</div>
+              <div class="mr-email">{{ mentor_user.email }}</div>
+            </td>
+            <td>
+              {% if req.status == "pending" %}
+              <span class="badge-mr badge-pending">Pending</span>
+              {% elif req.status == "accepted" %}
+              <span class="badge-mr badge-accepted">Accepted</span>
+              {% elif req.status == "rejected" %}
+              <span class="badge-mr badge-rejected">Rejected</span>
+              {% else %}
+              <span class="badge-mr badge-pending">{{ req.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {{ req.request_date.strftime("%Y-%m-%d %H:%M") if req.request_date
+              else "—" }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="mr-empty">No mentorship requests found.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

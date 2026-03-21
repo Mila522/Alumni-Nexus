@@ -96,20 +96,7 @@
       <div class="nav-group">
         <div class="sidebar-section-title">People</div>
         <nav class="sidebar-nav">
-          <a href="#" class="nav-item">
-            <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
-              <circle cx="10" cy="6" r="3.5" fill="currentColor" opacity=".6" />
-              <path
-                d="M3 17c0-3.866 3.134-7 7-7s7 3.134 7 7"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                opacity=".6"
-              />
-            </svg>
-            Registered Users
-          </a>
-          <a href="#" class="nav-item">
+          <a href="{{ url_for('admin_mentor_applications') }}" class="nav-item">
             <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
               <path
                 d="M9 12l2 2 4-4"
@@ -128,6 +115,7 @@
             </svg>
             Mentor Applications
           </a>
+
           <a href="{{ url_for('admin_mentors') }}" class="nav-item">
             <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
               <circle cx="7" cy="7" r="3" fill="currentColor" opacity=".5" />
@@ -142,7 +130,8 @@
             </svg>
             Active Mentors
           </a>
-          <a href="#" class="nav-item">
+
+          <a href="{{ url_for('admin_mentorship_requests') }}" class="nav-item">
             <svg class="nav-icon" viewBox="0 0 20 20" fill="none">
               <path
                 d="M3 10h14M3 5h14M3 15h8"
@@ -940,6 +929,28 @@
 
   .highlight-card {
     border: 1px solid #111;
+  }
+
+  .highlight-card h6 {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .highlight-card h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+
+  .highlight-card a {
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
   }
 
   @keyframes fadeUp {

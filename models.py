@@ -85,12 +85,13 @@ class AlumniProfile(db.Model):
     headline = db.Column(db.String(150), nullable=False)
     education = db.Column(db.Text, nullable=True)
     experience = db.Column(db.Text, nullable=False)
-    career_interest = db.Column(db.String(150), nullable=False)
+    industry = db.Column(db.String(150), nullable=False)
     level_of_study = db.Column(db.String(50), nullable=False)
 
     skills = db.Column(db.Text, nullable=True)
     certifications = db.Column(db.Text, nullable=True)
     linkedin_url = db.Column(db.String(255), nullable=True)
+
 
 
 # ────────────────────────────────────────────────
@@ -152,6 +153,7 @@ class Message(db.Model):
 
     message_text = db.Column(db.Text, nullable=False)
     sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_read = db.Column(db.Boolean, default=False, nullable=False)
 
 
 # ────────────────────────────────────────────────
