@@ -25,6 +25,8 @@ from models import (
     Post,
     PostLike,
     PostComment,
+    MentorChannelPost,
+    MentorChannelFile,
 )
 
 app = Flask(__name__)
@@ -37,6 +39,8 @@ login_manager.login_view = "login"
 
 app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
 app.config["ALLOWED_EXTENSIONS"] = {"png", "jpg", "jpeg", "gif"}
+
+ALLOWED_CHANNEL_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf"}
 
 db.init_app(app)
 
@@ -110,6 +114,10 @@ def add_no_cache_headers(response):
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
+
+
+def allowed_channel_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_CHANNEL_EXTENSIONS
 
 
 @login_manager.user_loader
@@ -229,6 +237,16 @@ def get_unread_message_count(user_id):
     except Exception as e:
         print(f"Unread count error: {e}")
         return 0
+
+
+def _get_mentor_of_student(student_id):
+    """Return the mentor User for a given student, or None."""
+    req = MentorshipRequest.query.filter_by(
+        student_id=student_id, status="accepted"
+    ).first()
+    if req:
+        return User.query.get(req.mentor_id)
+    return None
 
 
 @app.context_processor
@@ -822,6 +840,116 @@ def reject_mentorship_request(request_id):
     return redirect(url_for("mentorship"))
 
 
+# ─────────────────────────────────────────────────────────────────
+# MENTOR CHANNEL ROUTES
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/mentor-channel/post", methods=["POST"])
+@login_required
+def create_mentor_channel_post():
+    if current_user.role != "mentor":
+        return jsonify({"error": "Only mentors can post to the channel"}), 403
+
+    caption = request.form.get("caption", "").strip()
+    files = request.files.getlist("files")
+
+    if not caption and not any(f.filename for f in files):
+        return jsonify({"error": "Please add a caption or at least one file"}), 400
+
+    post = MentorChannelPost(mentor_id=current_user.user_id, caption=caption or None)
+    db.session.add(post)
+    db.session.flush()  # get post.post_id before commit
+
+    for f in files:
+        if f and f.filename:
+            if not allowed_channel_file(f.filename):
+                db.session.rollback()
+                return jsonify({"error": f"Unsupported file type: {f.filename}"}), 400
+
+            ext = f.filename.rsplit(".", 1)[1].lower()
+            safe_name = secure_filename(f.filename)
+            unique_name = (
+                f"ch_{current_user.user_id}_{post.post_id}_"
+                f"{int(datetime.utcnow().timestamp())}_{safe_name}"
+            )
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
+            f.save(save_path)
+
+            file_type = "pdf" if ext == "pdf" else "image"
+            channel_file = MentorChannelFile(
+                post_id=post.post_id,
+                filename=f"uploads/{unique_name}",
+                original_name=f.filename,
+                file_type=file_type
+            )
+            db.session.add(channel_file)
+
+    db.session.commit()
+    return jsonify({"message": "Post created", "post_id": post.post_id}), 201
+
+
+@app.route("/api/mentor-channel/post/<int:post_id>", methods=["DELETE"])
+@login_required
+def delete_mentor_channel_post(post_id):
+    post = MentorChannelPost.query.get_or_404(post_id)
+
+    if post.mentor_id != current_user.user_id:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    db.session.delete(post)
+    db.session.commit()
+    return jsonify({"message": "Post deleted"})
+
+
+@app.route("/api/mentor-channel/posts", methods=["GET"])
+@login_required
+def get_mentor_channel_posts():
+    """
+    Mentor  → sees their own channel posts.
+    Student / Alumni → sees their accepted mentor's posts (if any).
+    """
+    if current_user.role == "mentor":
+        mentor_id = current_user.user_id
+    elif current_user.role in ["student", "alumni"]:
+        mentor = _get_mentor_of_student(current_user.user_id)
+        if not mentor:
+            return jsonify([])  # no accepted mentor yet
+        mentor_id = mentor.user_id
+    else:
+        return jsonify({"error": "Forbidden"}), 403
+
+    posts = (
+        MentorChannelPost.query
+        .filter_by(mentor_id=mentor_id)
+        .order_by(MentorChannelPost.created_at.desc())
+        .all()
+    )
+
+    result = []
+    for p in posts:
+        result.append({
+            "post_id": p.post_id,
+            "caption": p.caption,
+            "created_at": p.created_at.strftime("%d %b %Y, %H:%M"),
+            "is_mine": p.mentor_id == current_user.user_id,
+            "files": [
+                {
+                    "file_id": f.file_id,
+                    "filename": f.filename,
+                    "original_name": f.original_name,
+                    "file_type": f.file_type
+                }
+                for f in p.files
+            ]
+        })
+
+    return jsonify(result)
+
+
+# ─────────────────────────────────────────────────────────────────
+# EVENTS
+# ─────────────────────────────────────────────────────────────────
+
 @app.route("/api/events", methods=["POST"])
 @login_required
 def create_event():
@@ -972,6 +1100,10 @@ def cancel_rsvp(event_id):
     return jsonify({"message": "No RSVP found to cancel"}), 404
 
 
+# ─────────────────────────────────────────────────────────────────
+# POSTS (Pinboard)
+# ─────────────────────────────────────────────────────────────────
+
 @app.route("/api/posts", methods=["POST"])
 @login_required
 def create_post():
@@ -1113,6 +1245,10 @@ def get_post_comments(post_id):
 
     return jsonify(results)
 
+
+# ─────────────────────────────────────────────────────────────────
+# NETWORK / CONNECTIONS
+# ─────────────────────────────────────────────────────────────────
 
 @app.route("/api/connect/<int:receiver_id>", methods=["POST"])
 @login_required
@@ -1377,6 +1513,10 @@ def debug_unread():
 
     return jsonify(results)
 
+
+# ─────────────────────────────────────────────────────────────────
+# ADMIN
+# ─────────────────────────────────────────────────────────────────
 
 @app.route("/admin/dashboard")
 @login_required

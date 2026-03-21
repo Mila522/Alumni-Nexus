@@ -33,6 +33,9 @@ class User(UserMixin, db.Model):
     mentor_applications = db.relationship(
         'MentorApplication', backref='user', lazy=True, cascade="all, delete-orphan"
     )
+    channel_posts = db.relationship(
+        'MentorChannelPost', backref='mentor', lazy=True, cascade="all, delete-orphan"
+    )
 
     posts = db.relationship(
         'Post', backref='author', lazy=True, cascade="all, delete-orphan"
@@ -91,7 +94,6 @@ class AlumniProfile(db.Model):
     skills = db.Column(db.Text, nullable=True)
     certifications = db.Column(db.Text, nullable=True)
     linkedin_url = db.Column(db.String(255), nullable=True)
-
 
 
 # ────────────────────────────────────────────────
@@ -252,3 +254,36 @@ class PostComment(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     is_deleted = db.Column(db.Boolean, default=False)
+
+
+# ────────────────────────────────────────────────
+# MENTOR CHANNEL
+# ────────────────────────────────────────────────
+class MentorChannelPost(db.Model):
+    __tablename__ = 'mentor_channel_posts'
+
+    post_id = db.Column(db.Integer, primary_key=True)
+    mentor_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+
+    caption = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    files = db.relationship(
+        'MentorChannelFile', backref='post', lazy=True, cascade="all, delete-orphan"
+    )
+
+
+class MentorChannelFile(db.Model):
+    __tablename__ = 'mentor_channel_files'
+
+    file_id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(
+        db.Integer,
+        db.ForeignKey('mentor_channel_posts.post_id'),
+        nullable=False
+    )
+
+    filename = db.Column(db.String(255), nullable=False)       # path under static/
+    original_name = db.Column(db.String(255), nullable=False)
+    file_type = db.Column(db.String(10), nullable=False)       # 'pdf' | 'image'
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)

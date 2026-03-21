@@ -1,46 +1,350 @@
-{% extends "base.html" %} {% block title %}Sign In{% endblock %} {% block
-content %}
+{% extends "base.html" %}
+{% block title %}Sign In — Alumni Nexus{% endblock %}
 
-<div class="container mt-5" style="max-width: 500px">
-  <h2 class="mb-4 text-center">Login</h2>
+{% block content %}
 
-  {% with messages = get_flashed_messages(with_categories=true) %} {% if
-  messages %} {% for category, message in messages %}
-  <div class="alert alert-info alert-dismissible fade show" role="alert">
-    {{ message }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --navy:      #042C53;
+    --navy-mid:  #0C447C;
+    --blue:      #378ADD;
+    --blue-pale: #EAF2FB;
+    --border:    #D9E8F5;
+    --surface:   #F5F9FD;
+    --text:      #1A2B3C;
+    --muted:     #6B7F93;
+    --white:     #FFFFFF;
+  }
+
+  .ln-page {
+    min-height: calc(100vh - 62px);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px 80px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .ln-wrap {
+    width: 100%;
+    max-width: 460px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Card */
+  .ln-card {
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: 0 4px 28px rgba(4,44,83,0.10);
+    overflow: hidden;
+  }
+
+  /* Top banner */
+  .ln-card-top {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--blue) 100%);
+    padding: 32px 36px 28px;
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .ln-card-top::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .ln-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .ln-logo span { color: #85B7EB; }
+
+  .ln-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    position: relative;
+  }
+
+  .ln-icon i { font-size: 1.5rem; color: #fff; }
+
+  .ln-card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.65rem;
+    color: #fff;
+    margin: 0 0 6px;
+    position: relative;
+  }
+
+  .ln-card-sub {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+    position: relative;
+  }
+
+  /* Flash messages */
+  .ln-flash {
+    margin: 20px 36px 0;
+  }
+
+  .ln-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #FFF0F0;
+    border: 1px solid #FECACA;
+    border-left: 4px solid #DC2626;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 0.85rem;
+    color: #7F1D1D;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .ln-alert.success {
+    background: #F0FDF4;
+    border-color: #BBF7D0;
+    border-left-color: #16A34A;
+    color: #14532D;
+  }
+
+  .ln-alert i { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+  /* Form body */
+  .ln-body { padding: 28px 36px 36px; }
+
+  .ln-field { margin-bottom: 20px; }
+
+  .ln-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 7px;
+  }
+
+  .ln-input-wrap { position: relative; }
+
+  .ln-input-wrap i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.95rem;
+    pointer-events: none;
+  }
+
+  .ln-input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px 11px 38px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .ln-input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
+  }
+
+  .ln-input::placeholder { color: var(--muted); }
+
+  /* Password toggle */
+  .ln-eye {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 0.95rem;
+    padding: 0;
+    transition: color 0.2s;
+  }
+
+  .ln-eye:hover { color: var(--navy); }
+
+  /* Submit */
+  .ln-submit {
+    width: 100%;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 4px 14px rgba(55,138,221,0.3);
+    transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .ln-submit:hover {
+    background: #185FA5;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(55,138,221,0.35);
+  }
+
+  /* Footer link */
+  .ln-footer {
+    text-align: center;
+    padding: 0 36px 28px;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  .ln-footer a {
+    color: var(--blue);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .ln-footer a:hover { text-decoration: underline; }
+
+  .ln-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0 20px;
+  }
+
+  @media (max-width: 480px) {
+    .ln-card-top, .ln-body, .ln-flash, .ln-footer { padding-left: 22px; padding-right: 22px; }
+  }
+</style>
+
+<div class="ln-page">
+  <div class="ln-wrap">
+    <div class="ln-card">
+
+      <!-- Banner -->
+      <div class="ln-card-top">
+        <div class="ln-logo">Alumni <span>Nexus</span></div>
+        <div class="ln-icon">
+          <i class="bi bi-person-lock"></i>
+        </div>
+        <h1 class="ln-card-title">Welcome Back</h1>
+        <p class="ln-card-sub">Sign in to continue to your account</p>
+      </div>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="ln-flash">
+          {% for category, message in messages %}
+          <div class="ln-alert {{ 'success' if category == 'success' else '' }}">
+            <i class="bi {{ 'bi-check-circle-fill' if category == 'success' else 'bi-exclamation-circle-fill' }}"></i>
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+
+      <!-- Form -->
+      <div class="ln-body">
+        <form action="{{ url_for('login') }}" method="POST">
+
+          <div class="ln-field">
+            <label class="ln-label" for="email">Email Address</label>
+            <div class="ln-input-wrap">
+              <i class="bi bi-envelope"></i>
+              <input
+                type="email"
+                class="ln-input"
+                id="email"
+                name="email"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="ln-field">
+            <label class="ln-label" for="password">Password</label>
+            <div class="ln-input-wrap">
+              <i class="bi bi-lock"></i>
+              <input
+                type="password"
+                class="ln-input"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+                style="padding-right: 40px;"
+              />
+              <button type="button" class="ln-eye" onclick="togglePassword()" id="eyeBtn">
+                <i class="bi bi-eye" id="eyeIcon"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="ln-submit">
+            <i class="bi bi-box-arrow-in-right"></i>
+            Sign In
+          </button>
+
+        </form>
+      </div>
+
+      <!-- Footer -->
+      <div class="ln-divider" style="margin: 0 36px;"></div>
+      <div class="ln-footer">
+        Don't have an account? <a href="{{ url_for('register') }}">Create one</a>
+      </div>
+
+    </div>
   </div>
-  {% endfor %} {% endif %} {% endwith %}
-
-  <form action="{{ url_for('login') }}" method="POST">
-    <div class="mb-3">
-      <label for="email" class="form-label">Email Address</label>
-      <input
-        type="email"
-        class="form-control"
-        id="email"
-        name="email"
-        required
-      />
-    </div>
-
-    <div class="mb-3">
-      <label for="password" class="form-label">Password</label>
-      <input
-        type="password"
-        class="form-control"
-        id="password"
-        name="password"
-        required
-      />
-    </div>
-
-    <div class="d-grid">
-      <button type="submit" class="btn btn-primary">Login</button>
-    </div>
-  </form>
 </div>
 
-{% endblock %}
+<script>
+  function togglePassword() {
+    const input   = document.getElementById('password');
+    const icon    = document.getElementById('eyeIcon');
+    const visible = input.type === 'text';
+    input.type    = visible ? 'password' : 'text';
+    icon.className = visible ? 'bi bi-eye' : 'bi bi-eye-slash';
+  }
+</script>
 
+{% endblock %}
 

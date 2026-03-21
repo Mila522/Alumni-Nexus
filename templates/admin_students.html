@@ -1,54 +1,398 @@
-{% extends "admin_base.html" %} {% block content %}
-<div class="container py-5">
-  <h2 class="fw-bold mb-4">All Students</h2>
+{% extends "admin_base.html" %}
+{% block content %}
 
-  {% if student_users %}
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Faculty</th>
-              <th>Department</th>
-              <th>Graduation Year</th>
-              <th>Industry</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for student in student_users %}
-            <tr>
-              <td>{{ loop.index }}</td>
-              <td>{{ student.name }}</td>
-              <td>{{ student.email }}</td>
-              <td>
-                {{ student.student_profile.faculty if student.student_profile
-                else "N/A" }}
-              </td>
-              <td>
-                {{ student.student_profile.department if student.student_profile
-                else "N/A" }}
-              </td>
-              <td>
-                {{ student.student_profile.graduation_year if
-                student.student_profile else "N/A" }}
-              </td>
-              <td>
-                {{ student.student_profile.industry if student.student_profile
-                else "N/A" }}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --navy:      #042C53;
+    --navy-mid:  #0C447C;
+    --blue:      #378ADD;
+    --blue-pale: #EAF2FB;
+    --border:    #D9E8F5;
+    --surface:   #F5F9FD;
+    --text:      #1A2B3C;
+    --muted:     #6B7F93;
+    --white:     #FFFFFF;
+    --green:     #059669;
+    --green-pale:#ECFDF5;
+  }
+
+  .as-page {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 24px 80px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .as-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .as-breadcrumb {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .as-breadcrumb a {
+    color: var(--blue);
+    text-decoration: none;
+  }
+
+  .as-breadcrumb a:hover { text-decoration: underline; }
+
+  .as-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.85rem;
+    color: var(--navy);
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  .as-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--blue-pale);
+    color: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .as-search-wrap {
+    position: relative;
+    width: 260px;
+  }
+
+  .as-search-wrap i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+  }
+
+  .as-search {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px 9px 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    color: var(--text);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .as-search:focus { border-color: var(--blue); }
+  .as-search::placeholder { color: var(--muted); }
+
+  .as-card {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(4,44,83,0.08);
+    overflow: hidden;
+  }
+
+  .as-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .as-table thead {
+    background: var(--navy);
+  }
+
+  .as-table thead th {
+    padding: 14px 18px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    white-space: nowrap;
+    border: none;
+  }
+
+  .as-table thead th:first-child { padding-left: 24px; }
+  .as-table thead th:last-child  { padding-right: 24px; }
+
+  .as-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .as-table tbody tr:last-child { border-bottom: none; }
+  .as-table tbody tr:hover { background: var(--surface); }
+
+  .as-table tbody td {
+    padding: 14px 18px;
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  .as-table tbody td:first-child { padding-left: 24px; }
+  .as-table tbody td:last-child  { padding-right: 24px; }
+
+  .as-idx {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted);
+    width: 36px;
+  }
+
+  .as-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .as-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: 'DM Serif Display', serif;
+  }
+
+  .as-name {
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .as-email {
+    color: var(--muted);
+    font-size: 0.82rem;
+  }
+
+  .as-tag {
+    display: inline-block;
+    background: var(--blue-pale);
+    color: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .as-tag-year {
+    background: var(--green-pale);
+    color: var(--green);
+    border-color: #A7F3D0;
+  }
+
+  .as-na {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+
+  .as-empty {
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .as-empty i {
+    font-size: 2.2rem;
+    color: var(--border);
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .as-empty p { font-size: 0.9rem; margin: 0; }
+
+  .as-no-results {
+    display: none;
+  }
+
+  .as-no-results td {
+    text-align: center;
+    padding: 32px !important;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+</style>
+
+<div class="as-page">
+
+  <div class="as-header">
+    <div>
+      <div class="as-breadcrumb">
+        <a href="{{ url_for('admin_dashboard') }}">Admin</a> &rsaquo; Students
+      </div>
+      <h1 class="as-title">All Students</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span class="as-count-badge" id="visibleCount" data-total="{{ student_users|length }}">
+        <i class="bi bi-people-fill"></i>
+        <span id="countText">{{ student_users|length }} student{{ 's' if student_users|length != 1 }}</span>
+      </span>
+
+      <!-- Department filter -->
+      <div class="as-search-wrap" style="width:200px;">
+        <i class="bi bi-funnel"></i>
+        <select class="as-search" id="deptFilter" style="padding-left:36px;cursor:pointer;">
+          <option value="">All Departments</option>
+          {% set departments = [] %}
+          {% for student in student_users %}
+            {% if student.student_profile and student.student_profile.department %}
+              {% if student.student_profile.department not in departments %}
+                {% set _ = departments.append(student.student_profile.department) %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {% for dept in departments|sort %}
+            <option value="{{ dept }}">{{ dept }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="as-search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" class="as-search" id="studentSearch" placeholder="Search students…">
       </div>
     </div>
   </div>
+
+  {% if student_users %}
+  <div class="as-card">
+    <table class="as-table" id="studentTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student</th>
+          <th>Email</th>
+          <th>Faculty</th>
+          <th>Department</th>
+          <th>Grad Year</th>
+          <th>Industry</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in student_users %}
+        <tr data-dept="{{ student.student_profile.department if student.student_profile and student.student_profile.department else '' }}">
+          <td class="as-idx">{{ loop.index }}</td>
+
+          <td>
+            <div class="as-name-cell">
+              <div class="as-avatar">{{ student.name[0]|upper }}</div>
+              <span class="as-name">{{ student.name }}</span>
+            </div>
+          </td>
+
+          <td class="as-email">{{ student.email }}</td>
+
+          <td>
+            {% if student.student_profile and student.student_profile.faculty %}
+              <span class="as-tag">{{ student.student_profile.faculty }}</span>
+            {% else %}
+              <span class="as-na">N/A</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if student.student_profile and student.student_profile.department %}
+              {{ student.student_profile.department }}
+            {% else %}
+              <span class="as-na">N/A</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if student.student_profile and student.student_profile.graduation_year %}
+              <span class="as-tag as-tag-year">{{ student.student_profile.graduation_year }}</span>
+            {% else %}
+              <span class="as-na">N/A</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if student.student_profile and student.student_profile.industry %}
+              {{ student.student_profile.industry }}
+            {% else %}
+              <span class="as-na">N/A</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+
+        <tr class="as-no-results" id="noResults">
+          <td colspan="7">No students match your search.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   {% else %}
-  <div class="alert alert-info">No students found.</div>
+  <div class="as-card">
+    <div class="as-empty">
+      <i class="bi bi-people"></i>
+      <p>No students have registered yet.</p>
+    </div>
+  </div>
   {% endif %}
+
 </div>
+
+<script>
+  const searchInput = document.getElementById('studentSearch');
+  const deptFilter  = document.getElementById('deptFilter');
+  const countText   = document.getElementById('countText');
+  const noResults   = document.getElementById('noResults');
+  const total       = parseInt(document.getElementById('visibleCount').dataset.total, 10);
+
+  function applyFilters() {
+    const q    = searchInput ? searchInput.value.toLowerCase() : '';
+    const dept = deptFilter  ? deptFilter.value : '';
+    const rows = document.querySelectorAll('#studentTable tbody tr:not(#noResults)');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const textMatch = row.textContent.toLowerCase().includes(q);
+      const deptMatch = dept === '' || row.dataset.dept === dept;
+      const show = textMatch && deptMatch;
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    if (noResults) noResults.style.display = visible === 0 ? 'table-row' : 'none';
+    if (countText) {
+      const filtered = (q || dept) && visible !== total;
+      countText.textContent = filtered
+        ? `${visible} of ${total} student${total !== 1 ? 's' : ''}`
+        : `${total} student${total !== 1 ? 's' : ''}`;
+    }
+  }
+
+  if (searchInput) searchInput.addEventListener('input', applyFilters);
+  if (deptFilter)  deptFilter.addEventListener('change', applyFilters);
+</script>
+
 {% endblock %}

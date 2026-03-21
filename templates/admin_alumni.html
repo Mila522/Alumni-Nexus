@@ -1,30 +1,398 @@
-{% extends "admin_base.html" %} {% block content %}
-<div class="container py-5">
-  <h2 class="fw-bold mb-4">Registered Alumni</h2>
+{% extends "admin_base.html" %}
+{% block content %}
 
-  {% if alumni_users %}
-  <div class="card shadow-sm">
-    <div class="card-body">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-          </tr>
-        </thead>
-        <tbody>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --navy:      #042C53;
+    --navy-mid:  #0C447C;
+    --blue:      #378ADD;
+    --blue-pale: #EAF2FB;
+    --border:    #D9E8F5;
+    --surface:   #F5F9FD;
+    --text:      #1A2B3C;
+    --muted:     #6B7F93;
+    --white:     #FFFFFF;
+    --gold:      #B76E00;
+    --gold-pale: #FFF8E1;
+    --gold-border: #FFD97D;
+    --purple:    #6D28D9;
+    --purple-pale:#F5F3FF;
+    --purple-border:#C4B5FD;
+  }
+
+  .as-page {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 0 24px 80px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .as-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .as-breadcrumb {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .as-breadcrumb a { color: var(--blue); text-decoration: none; }
+  .as-breadcrumb a:hover { text-decoration: underline; }
+
+  .as-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.85rem;
+    color: var(--navy);
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  .as-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--blue-pale);
+    color: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .as-search-wrap {
+    position: relative;
+    width: 260px;
+  }
+
+  .as-search-wrap i {
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+  }
+
+  .as-search {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 14px 9px 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    color: var(--text);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .as-search:focus { border-color: var(--blue); }
+  .as-search::placeholder { color: var(--muted); }
+
+  .as-card {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(4,44,83,0.08);
+    overflow: hidden;
+  }
+
+  .as-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .as-table thead { background: var(--navy); }
+
+  .as-table thead th {
+    padding: 14px 18px;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.75);
+    white-space: nowrap;
+    border: none;
+  }
+
+  .as-table thead th:first-child { padding-left: 24px; }
+  .as-table thead th:last-child  { padding-right: 24px; }
+
+  .as-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .as-table tbody tr:last-child { border-bottom: none; }
+  .as-table tbody tr:hover { background: var(--surface); }
+
+  .as-table tbody td {
+    padding: 14px 18px;
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  .as-table tbody td:first-child { padding-left: 24px; }
+  .as-table tbody td:last-child  { padding-right: 24px; }
+
+  .as-idx {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted);
+    width: 36px;
+  }
+
+  .as-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .as-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--navy-mid);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: 'DM Serif Display', serif;
+  }
+
+  .as-name { font-weight: 600; color: var(--navy); }
+
+  .as-email { color: var(--muted); font-size: 0.82rem; }
+
+  .as-tag {
+    display: inline-block;
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .as-tag-headline {
+    background: var(--gold-pale);
+    color: var(--gold);
+    border: 1px solid var(--gold-border);
+  }
+
+  .as-tag-level {
+    background: var(--purple-pale);
+    color: var(--purple);
+    border: 1px solid var(--purple-border);
+  }
+
+  .as-tag-career {
+    background: var(--blue-pale);
+    color: var(--navy-mid);
+    border: 1px solid var(--border);
+  }
+
+  .as-na {
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+
+  .as-empty {
+    padding: 60px 24px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .as-empty i {
+    font-size: 2.2rem;
+    color: var(--border);
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .as-empty p { font-size: 0.9rem; margin: 0; }
+
+  .as-no-results { display: none; }
+
+  .as-no-results td {
+    text-align: center;
+    padding: 32px !important;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+</style>
+
+<div class="as-page">
+
+  <!-- Header -->
+  <div class="as-header">
+    <div>
+      <div class="as-breadcrumb">
+        <a href="{{ url_for('admin_dashboard') }}">Admin</a> &rsaquo; Alumni
+      </div>
+      <h1 class="as-title">Registered Alumni</h1>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      {% if alumni_users %}
+      <span class="as-count-badge" id="visibleCount" data-total="{{ alumni_users|length }}">
+        <i class="bi bi-mortarboard-fill"></i>
+        <span id="countText">{{ alumni_users|length }} alumnu{{ 's' if alumni_users|length != 1 else 's' }}</span>
+      </span>
+      {% endif %}
+
+      <!-- Level of study filter -->
+      <div class="as-search-wrap" style="width:200px;">
+        <i class="bi bi-funnel"></i>
+        <select class="as-search" id="levelFilter" style="padding-left:36px;cursor:pointer;">
+          <option value="">All Levels</option>
+          {% set levels = [] %}
           {% for user in alumni_users %}
-          <tr>
-            <td>{{ user.name }}</td>
-            <td>{{ user.email }}</td>
-          </tr>
+            {% if user.alumni_profile and user.alumni_profile.level_of_study %}
+              {% if user.alumni_profile.level_of_study not in levels %}
+                {% set _ = levels.append(user.alumni_profile.level_of_study) %}
+              {% endif %}
+            {% endif %}
           {% endfor %}
-        </tbody>
-      </table>
+          {% for level in levels|sort %}
+            <option value="{{ level }}">{{ level }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Search -->
+      <div class="as-search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" class="as-search" id="alumniSearch" placeholder="Search alumni…">
+      </div>
     </div>
   </div>
+
+  <!-- Table -->
+  {% if alumni_users %}
+  <div class="as-card">
+    <table class="as-table" id="alumniTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Alumni</th>
+          <th>Email</th>
+          <th>Headline</th>
+          <th>Level of Study</th>
+          <th>Career Interest</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in alumni_users %}
+        <tr data-level="{{ user.alumni_profile.level_of_study if user.alumni_profile and user.alumni_profile.level_of_study else '' }}">
+
+          <td class="as-idx">{{ loop.index }}</td>
+
+          <td>
+            <div class="as-name-cell">
+              <div class="as-avatar">{{ user.name[0]|upper }}</div>
+              <span class="as-name">{{ user.name }}</span>
+            </div>
+          </td>
+
+          <td class="as-email">{{ user.email }}</td>
+
+          <td>
+            {% if user.alumni_profile and user.alumni_profile.headline %}
+              <span class="as-tag as-tag-headline">{{ user.alumni_profile.headline }}</span>
+            {% else %}
+              <span class="as-na">N/A</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if user.alumni_profile and user.alumni_profile.level_of_study %}
+              <span class="as-tag as-tag-level">{{ user.alumni_profile.level_of_study }}</span>
+            {% else %}
+              <span class="as-na">N/A</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if user.alumni_profile and user.alumni_profile.career_interest %}
+              <span class="as-tag as-tag-career">{{ user.alumni_profile.career_interest }}</span>
+            {% else %}
+              <span class="as-na">N/A</span>
+            {% endif %}
+          </td>
+
+        </tr>
+        {% endfor %}
+
+        <tr class="as-no-results" id="noResults">
+          <td colspan="6">No alumni match your search.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
   {% else %}
-  <div class="alert alert-info">No alumni found.</div>
+  <div class="as-card">
+    <div class="as-empty">
+      <i class="bi bi-mortarboard"></i>
+      <p>No alumni have registered yet.</p>
+    </div>
+  </div>
   {% endif %}
+
 </div>
+
+<script>
+  const searchInput = document.getElementById('alumniSearch');
+  const levelFilter = document.getElementById('levelFilter');
+  const countText   = document.getElementById('countText');
+  const noResults   = document.getElementById('noResults');
+  const badge       = document.getElementById('visibleCount');
+  const total       = badge ? parseInt(badge.dataset.total, 10) : 0;
+
+  function applyFilters() {
+    const q     = searchInput ? searchInput.value.toLowerCase() : '';
+    const level = levelFilter ? levelFilter.value : '';
+    const rows  = document.querySelectorAll('#alumniTable tbody tr:not(#noResults)');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const textMatch  = row.textContent.toLowerCase().includes(q);
+      const levelMatch = level === '' || row.dataset.level === level;
+      const show = textMatch && levelMatch;
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    if (noResults) noResults.style.display = visible === 0 ? 'table-row' : 'none';
+
+    if (countText) {
+      const isFiltered = (q || level) && visible !== total;
+      countText.textContent = isFiltered
+        ? `${visible} of ${total} alumni`
+        : `${total} alumni`;
+    }
+  }
+
+  if (searchInput) searchInput.addEventListener('input', applyFilters);
+  if (levelFilter) levelFilter.addEventListener('change', applyFilters);
+</script>
+
 {% endblock %}

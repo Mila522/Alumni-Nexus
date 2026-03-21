@@ -1,44 +1,362 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container py-5">
-  <div class="row justify-content-center">
-    <div class="col-lg-8">
-      <div class="card shadow-sm border-0">
-        <div class="card-body p-4">
-          <h2 class="fw-bold mb-3">Apply to Become a Mentor</h2>
-          <p class="text-muted mb-4">
-            Alumni can apply to become mentors and wait for admin approval.
-          </p>
 
-          <form method="POST">
-            <div class="mb-3">
-              <label class="form-label">Expertise <span class="text-danger">*</span></label>
-              <select name="expertise" class="form-select" required>
-                <option value="">Select expertise</option>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --navy:      #042C53;
+    --navy-mid:  #0C447C;
+    --blue:      #378ADD;
+    --blue-pale: #EAF2FB;
+    --border:    #D9E8F5;
+    --surface:   #F5F9FD;
+    --text:      #1A2B3C;
+    --muted:     #6B7F93;
+    --white:     #FFFFFF;
+    --gold:      #B76E00;
+    --gold-pale: #FFF8E1;
+    --gold-border:#FFD97D;
+  }
+
+  .am-page {
+    min-height: calc(100vh - 62px);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px 80px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .am-wrap {
+    width: 100%;
+    max-width: 620px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Back link */
+  .am-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    margin-bottom: 20px;
+    transition: color 0.2s;
+  }
+
+  .am-back:hover { color: var(--navy); }
+
+  /* Card */
+  .am-card {
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: 0 4px 28px rgba(4,44,83,0.10);
+    overflow: hidden;
+  }
+
+  /* Card top accent */
+  .am-card-top {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, var(--blue) 100%);
+    padding: 32px 36px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .am-card-top::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .am-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.15);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .am-icon i { font-size: 1.4rem; color: #fff; }
+
+  .am-card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.6rem;
+    color: #fff;
+    margin: 0 0 8px;
+    line-height: 1.2;
+    position: relative;
+  }
+
+  .am-card-sub {
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.65);
+    margin: 0;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  /* Info strip */
+  .am-info-strip {
+    background: var(--gold-pale);
+    border-bottom: 1px solid var(--gold-border);
+    padding: 12px 36px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .am-info-strip i { font-size: 0.95rem; }
+
+  /* Form body */
+  .am-body { padding: 32px 36px 36px; }
+
+  /* Field */
+  .am-field { margin-bottom: 24px; }
+
+  .am-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+
+  .am-required {
+    color: #DC2626;
+    margin-left: 2px;
+  }
+
+  .am-hint {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 2px;
+  }
+
+  .am-select,
+  .am-textarea {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance: none;
+  }
+
+  .am-select-wrap {
+    position: relative;
+  }
+
+  .am-select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--muted);
+    pointer-events: none;
+  }
+
+  .am-select:focus,
+  .am-textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
+  }
+
+  .am-textarea {
+    resize: vertical;
+    min-height: 140px;
+    line-height: 1.6;
+  }
+
+  .am-textarea::placeholder { color: var(--muted); }
+
+  /* Char counter */
+  .am-char-counter {
+    text-align: right;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  /* Divider */
+  .am-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0 28px;
+  }
+
+  /* Actions */
+  .am-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .am-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 11px 26px;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all 0.18s ease;
+  }
+
+  .am-btn-primary {
+    background: var(--blue);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(55,138,221,0.3);
+  }
+
+  .am-btn-primary:hover {
+    background: #185FA5;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(55,138,221,0.35);
+    color: #fff;
+  }
+
+  .am-btn-ghost {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+  }
+
+  .am-btn-ghost:hover {
+    border-color: var(--navy);
+    color: var(--navy);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 560px) {
+    .am-card-top, .am-body, .am-info-strip { padding-left: 22px; padding-right: 22px; }
+    .am-card-title { font-size: 1.35rem; }
+    .am-actions { flex-direction: column; align-items: stretch; }
+    .am-btn { justify-content: center; }
+  }
+</style>
+
+<div class="am-page">
+  <div class="am-wrap">
+
+    <a href="{{ url_for('mentorship') }}" class="am-back">
+      <i class="bi bi-arrow-left"></i> Back to Mentorship
+    </a>
+
+    <div class="am-card">
+
+      <!-- Header -->
+      <div class="am-card-top">
+        <div class="am-icon">
+          <i class="bi bi-person-hearts"></i>
+        </div>
+        <h1 class="am-card-title">Apply to Become a Mentor</h1>
+        <p class="am-card-sub">Share your expertise and help students grow in their careers.</p>
+      </div>
+
+      <!-- Info strip -->
+      <div class="am-info-strip">
+        <i class="bi bi-info-circle-fill"></i>
+        Your application will be reviewed by an admin before approval.
+      </div>
+
+      <!-- Form -->
+      <div class="am-body">
+        <form method="POST">
+
+          <div class="am-field">
+            <label class="am-label">
+              Area of Expertise <span class="am-required">*</span>
+              <span class="am-hint">Select the field you'd like to mentor in</span>
+            </label>
+            <div class="am-select-wrap">
+              <select name="expertise" class="am-select" required>
+                <option value="" disabled selected>Select your expertise…</option>
                 <option value="Information Technology">Information Technology</option>
                 <option value="Business">Business</option>
                 <option value="Engineering">Engineering</option>
               </select>
             </div>
+          </div>
 
-            <div class="mb-4">
-              <label class="form-label">Motivation</label>
-              <textarea
-                name="motivation"
-                class="form-control"
-                rows="5"
-                placeholder="Tell the admin why you would like to become a mentor."
-              ></textarea>
-            </div>
+          <div class="am-field">
+            <label class="am-label" for="motivation">
+              Motivation
+              <span class="am-hint">Tell the admin why you'd like to become a mentor (optional)</span>
+            </label>
+            <textarea
+              name="motivation"
+              id="motivation"
+              class="am-textarea"
+              rows="5"
+              maxlength="600"
+              placeholder="e.g. I want to give back to the community by sharing the career lessons I've learned over the years…"
+              oninput="updateCounter(this)"
+            ></textarea>
+            <div class="am-char-counter"><span id="charCount">0</span> / 600</div>
+          </div>
 
-            <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-primary">Submit Request</button>
-              <a href="{{ url_for('mentorship') }}" class="btn btn-outline-secondary">Cancel</a>
-            </div>
-          </form>
-        </div>
+          <div class="am-divider"></div>
+
+          <div class="am-actions">
+            <button type="submit" class="am-btn am-btn-primary">
+              <i class="bi bi-send-fill"></i> Submit Application
+            </button>
+            <a href="{{ url_for('mentorship') }}" class="am-btn am-btn-ghost">
+              <i class="bi bi-x"></i> Cancel
+            </a>
+          </div>
+
+        </form>
       </div>
+
     </div>
   </div>
 </div>
+
+<script>
+  function updateCounter(el) {
+    const counter = document.getElementById('charCount');
+    if (counter) counter.textContent = el.value.length;
+  }
+</script>
+
 {% endblock %}
