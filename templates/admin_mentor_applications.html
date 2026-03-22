@@ -192,6 +192,7 @@
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    align-items: center;
   }
 
   .btn-ma {
@@ -202,6 +203,10 @@
     border-radius: 7px;
     border: 1px solid transparent;
     cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
   }
 
   .btn-approve {
@@ -214,6 +219,19 @@
     background: #fff;
     color: var(--danger);
     border-color: #fca5a5;
+  }
+
+  /* New: View Profile button */
+  .btn-view-profile {
+    background: var(--accent-lt);
+    color: var(--accent);
+    border-color: #c7d2fe;
+  }
+
+  .btn-view-profile:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
   }
 
   .ma-empty {
@@ -276,8 +294,17 @@
               {% endif %}
             </td>
             <td>
-              {% if application.status == "pending" %}
               <div class="btn-row">
+                <!-- View Profile — always visible, opens standalone profile in new tab -->
+                <a
+                  href="{{ url_for('view_profile_standalone', user_id=user.user_id) }}"
+                  target="_blank"
+                  class="btn-ma btn-view-profile"
+                >
+                  <i class="bi bi-person-badge"></i> Profile
+                </a>
+
+                {% if application.status == "pending" %}
                 <form
                   method="POST"
                   action="{{ url_for('approve_mentor_application', application_id=application.application_id) }}"
@@ -294,8 +321,10 @@
                     Reject
                   </button>
                 </form>
+                {% else %}
+                <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);">Reviewed</span>
+                {% endif %}
               </div>
-              {% else %} Reviewed {% endif %}
             </td>
           </tr>
           {% endfor %}

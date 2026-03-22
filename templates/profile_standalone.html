@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ user.name }} — Profile</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --navy:       #042C53;
+      --navy-mid:   #0C447C;
+      --blue:       #378ADD;
+      --blue-light: #85B7EB;
+      --blue-pale:  #EAF2FB;
+      --text:       #1A2B3C;
+      --muted:      #6B7F93;
+      --border:     #D9E8F5;
+      --white:      #FFFFFF;
+      --surface:    #F5F9FD;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--surface);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Slim admin-context banner ── */
+    .admin-bar {
+      background: var(--navy);
+      color: rgba(255,255,255,0.75);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 9px 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-bar i { font-size: 0.85rem; color: var(--blue-light); }
+
+    .admin-bar-sep {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .admin-bar a {
+      color: var(--blue-light);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.2s;
+    }
+    .admin-bar a:hover { color: #fff; }
+
+    /* ── Page layout ── */
+    .profile-page {
+      max-width: 860px;
+      margin: 36px auto 60px;
+      padding: 0 20px;
+      animation: fadeUp 0.45s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Hero card ── */
+    .hero-card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(4,44,83,0.08);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .hero-banner {
+      height: 120px;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 50%, var(--blue) 100%);
+      position: relative;
+    }
+
+    .hero-banner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .hero-body {
+      padding: 0 32px 28px;
+      position: relative;
+    }
+
+    .avatar-wrap {
+      position: relative;
+      display: inline-block;
+      margin-top: -52px;
+      margin-bottom: 12px;
+    }
+
+    .avatar-wrap img {
+      width: 104px;
+      height: 104px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--white);
+      box-shadow: 0 2px 12px rgba(4,44,83,0.15);
+      display: block;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .hero-info { flex: 1; min-width: 0; }
+
+    .hero-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.7rem;
+      color: var(--navy);
+      margin: 0 0 4px;
+      line-height: 1.2;
+    }
+
+    .hero-headline {
+      font-size: 0.95rem;
+      color: var(--muted);
+      margin: 0 0 10px;
+      line-height: 1.5;
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge-mentor  { background: #FFF8E1; color: #B76E00; border: 1px solid #FFD97D; }
+    .badge-alumni  { background: var(--blue-pale); color: var(--navy-mid); border: 1px solid var(--border); }
+    .badge-student { background: #E8F5E9; color: #2E7D32; border: 1px solid #A5D6A7; }
+    .badge-admin   { background: #FCE4EC; color: #880E4F; border: 1px solid #F48FB1; }
+
+    /* Application summary pill (admin only) */
+    .app-summary {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #EEF2FF;
+      border: 1px solid #C7D2FE;
+      border-radius: 10px;
+      padding: 10px 18px;
+      margin-top: 16px;
+      font-size: 0.82rem;
+      color: #4338CA;
+      font-weight: 600;
+    }
+
+    .app-summary i { font-size: 1rem; }
+
+    .app-summary-sep {
+      width: 1px;
+      height: 16px;
+      background: #C7D2FE;
+      margin: 0 4px;
+    }
+
+    /* ── Info cards ── */
+    .info-card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 2px 16px rgba(4,44,83,0.07);
+      padding: 28px 32px;
+      margin-bottom: 20px;
+    }
+
+    .info-card h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: var(--navy);
+      margin: 0 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--blue-pale);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-card h2 i { color: var(--blue); font-size: 1rem; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .info-item label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .info-item p {
+      margin: 0;
+      font-size: 0.92rem;
+      color: var(--text);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    .info-row { margin-bottom: 18px; }
+    .info-row:last-child { margin-bottom: 0; }
+
+    .info-row label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .info-row p {
+      margin: 0;
+      font-size: 0.93rem;
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      background: var(--blue-pale);
+      color: var(--navy-mid);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .section-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+
+    /* Motivation block (admin-specific) */
+    .motivation-block {
+      background: #FFFBEB;
+      border: 1px solid #FDE68A;
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+
+    .motivation-block .mot-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #92400E;
+      margin-bottom: 6px;
+    }
+
+    .motivation-block p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #78350F;
+      line-height: 1.65;
+      font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+      .hero-body { padding: 0 20px 24px; }
+      .info-card { padding: 20px; }
+      .admin-bar { padding: 9px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Admin context bar -->
+  <div class="admin-bar">
+    <i class="bi bi-shield-lock-fill"></i>
+    Admin View &mdash; Applicant Profile
+    <div class="admin-bar-sep">
+      <a href="javascript:window.close()">
+        <i class="bi bi-x-lg"></i> Close
+      </a>
+    </div>
+  </div>
+
+  <div class="profile-page">
+
+    <!-- ── Hero Card ── -->
+    <div class="hero-card">
+      <div class="hero-banner"></div>
+      <div class="hero-body">
+
+        <div class="avatar-wrap">
+          <img src="{{ url_for('static', filename=user.profile_image) }}" alt="{{ user.name }}">
+        </div>
+
+        <div class="hero-meta">
+          <div class="hero-info">
+            <h1 class="hero-name">{{ user.name }}</h1>
+
+            {% if user.role == 'alumni' and user.alumni_profile %}
+              <p class="hero-headline">{{ user.alumni_profile.headline }} &middot; {{ user.alumni_profile.level_of_study }} &middot; {{ user.alumni_profile.career_interest }}</p>
+            {% elif user.role == 'student' and user.student_profile %}
+              <p class="hero-headline">{{ user.student_profile.faculty }} Student &middot; Graduating {{ user.student_profile.graduation_year }} &middot; {{ user.student_profile.industry }}</p>
+            {% elif user.role == 'mentor' and user.mentor_profile %}
+              <p class="hero-headline">{{ user.mentor_profile.expertise or 'Mentor' }}</p>
+            {% endif %}
+
+            {% if user.role == 'mentor' %}
+              <span class="role-badge badge-mentor"><i class="bi bi-star-fill"></i> Verified Mentor</span>
+            {% elif user.role == 'alumni' %}
+              <span class="role-badge badge-alumni"><i class="bi bi-mortarboard-fill"></i> Alumni</span>
+            {% elif user.role == 'student' %}
+              <span class="role-badge badge-student"><i class="bi bi-book-fill"></i> Student</span>
+            {% elif user.role == 'admin' %}
+              <span class="role-badge badge-admin"><i class="bi bi-shield-fill"></i> Admin</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Application summary strip (shown only when application context is passed) -->
+        {% if application %}
+        <div class="app-summary">
+          <i class="bi bi-file-earmark-person"></i>
+          Mentor Application
+          <div class="app-summary-sep"></div>
+          Expertise: <strong>{{ application.expertise }}</strong>
+          <div class="app-summary-sep"></div>
+          Status:
+          {% if application.status == 'pending' %}
+            <span style="color:#B45309;">⏳ Pending</span>
+          {% elif application.status == 'approved' %}
+            <span style="color:#059669;">✓ Approved</span>
+          {% else %}
+            <span style="color:#DC2626;">✕ Rejected</span>
+          {% endif %}
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- ── Application Motivation (admin-specific) ── -->
+    {% if application and application.motivation %}
+    <div class="info-card">
+      <h2><i class="bi bi-chat-quote"></i> Application Motivation</h2>
+      <div class="motivation-block">
+        <div class="mot-label">Why they want to mentor</div>
+        <p>{{ application.motivation }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Alumni Details ── -->
+    {% if user.role == 'alumni' and user.alumni_profile %}
+    <div class="info-card">
+      <h2><i class="bi bi-person-lines-fill"></i> Professional Profile</h2>
+
+      <div class="info-row">
+        <label>Experience</label>
+        <p>{{ user.alumni_profile.experience or "Not specified" }}</p>
+      </div>
+      <div class="section-divider"></div>
+
+      <div class="info-row">
+        <label>Education</label>
+        <p>{{ user.alumni_profile.education or "Not specified" }}</p>
+      </div>
+      <div class="section-divider"></div>
+
+      <div class="info-row">
+        <label>Certifications</label>
+        <p>{{ user.alumni_profile.certifications or "None listed" }}</p>
+      </div>
+      <div class="section-divider"></div>
+
+      <div class="info-row">
+        <label>Skills</label>
+        {% if user.alumni_profile.skills %}
+          <div class="tag-list">
+            {% for skill in user.alumni_profile.skills.split(',') %}
+              <span class="tag">{{ skill.strip() }}</span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p>No skills listed</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Student Details ── -->
+    {% if user.role == 'student' and user.student_profile %}
+    <div class="info-card">
+      <h2><i class="bi bi-mortarboard"></i> Academic Information</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Faculty</label>
+          <p>{{ user.student_profile.faculty }}</p>
+        </div>
+        <div class="info-item">
+          <label>Department</label>
+          <p>{{ user.student_profile.department }}</p>
+        </div>
+        <div class="info-item">
+          <label>Graduation Year</label>
+          <p>{{ user.student_profile.graduation_year }}</p>
+        </div>
+        <div class="info-item">
+          <label>Industry Interest</label>
+          <p>{{ user.student_profile.industry }}</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Mentor Details ── -->
+    {% if user.role == 'mentor' and user.mentor_profile %}
+    <div class="info-card">
+      <h2><i class="bi bi-award"></i> Mentor Profile</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Area of Expertise</label>
+          <p>{{ user.mentor_profile.expertise or "Not specified" }}</p>
+        </div>
+        <div class="info-item">
+          <label>Availability</label>
+          <p>{{ user.mentor_profile.availability or "Not specified" }}</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+</body>
+</html>

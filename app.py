@@ -479,6 +479,18 @@ def profile(user_id):
     )
 
 
+@app.route("/admin/applicant-profile/<int:user_id>")
+@login_required
+def view_profile_standalone(user_id):
+    if current_user.role != "admin":
+        flash("Access denied.", "error")
+        return redirect(url_for("home"))
+
+    user = User.query.get_or_404(user_id)
+    application = MentorApplication.query.filter_by(user_id=user_id).first()
+    return render_template("profile_standalone.html", user=user, application=application)
+
+
 @app.route("/profile/edit", methods=["GET", "POST"])
 @login_required
 def edit_profile():
