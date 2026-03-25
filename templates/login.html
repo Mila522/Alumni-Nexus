@@ -198,6 +198,26 @@
 
   .ln-eye:hover { color: var(--navy); }
 
+  /* Forgot password link */
+  .ln-forgot {
+    text-align: right;
+    margin-bottom: 20px;
+    margin-top: -8px;
+  }
+
+  .ln-forgot a {
+    font-size: 0.8rem;
+    color: var(--blue);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .ln-forgot a:hover {
+    text-decoration: underline;
+    color: var(--navy);
+  }
+
   /* Submit */
   .ln-submit {
     width: 100%;
@@ -245,6 +265,87 @@
     height: 1px;
     background: var(--border);
     margin: 4px 0 20px;
+  }
+
+  /* Modal styles - matching the template */
+  .modal-content {
+    border-radius: 16px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .modal-header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-title {
+    color: white;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.3rem;
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-body p {
+    color: var(--text);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+
+  .modal-footer {
+    border-top: 1px solid var(--border);
+    padding: 16px 24px;
+    gap: 12px;
+  }
+
+  .modal-input {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .modal-input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(55,138,221,0.12);
+  }
+
+  .btn-cancel {
+    background: #f0f2f5;
+    color: var(--text);
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .btn-cancel:hover {
+    background: #e4e6e9;
+  }
+
+  .btn-send {
+    background: var(--blue);
+    color: white;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.2s;
+  }
+
+  .btn-send:hover {
+    background: #185FA5;
   }
 
   @media (max-width: 480px) {
@@ -318,6 +419,13 @@
             </div>
           </div>
 
+          <!-- Forgot Password Link -->
+          <div class="ln-forgot">
+            <a href="#" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">
+              Forgot Password?
+            </a>
+          </div>
+
           <button type="submit" class="ln-submit">
             <i class="bi bi-box-arrow-in-right"></i>
             Sign In
@@ -336,6 +444,42 @@
   </div>
 </div>
 
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="forgotPasswordModalLabel">Reset Password</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Enter your email address and we'll send you instructions to reset your password.</p>
+        <form action="{{ url_for('forgot_password') }}" method="POST" id="forgotPasswordForm">
+          <div class="mb-3">
+            <label for="reset_email" class="form-label" style="font-weight: 600; color: var(--navy);">Email Address</label>
+            <input
+              type="email"
+              class="modal-input"
+              id="reset_email"
+              name="email"
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" data-bs-dismiss="modal">
+          <i class="bi bi-x-lg me-1"></i>Cancel
+        </button>
+        <button type="submit" form="forgotPasswordForm" class="btn-send">
+          <i class="bi bi-envelope-paper me-1"></i>Send Reset Link
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   function togglePassword() {
     const input   = document.getElementById('password');
@@ -347,4 +491,3 @@
 </script>
 
 {% endblock %}
-

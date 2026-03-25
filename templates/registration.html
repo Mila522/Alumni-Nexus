@@ -1,5 +1,6 @@
-{% extends "base.html" %} {% block title %}Alumni Nexus Registration{% endblock
-%} {% block content %}
+{% extends "base.html" %} 
+{% block title %}Alumni Nexus Registration{% endblock %} 
+{% block content %}
 <div class="container mt-5" style="max-width: 800px">
   <h2 class="mb-4 text-center">Alumni Nexus Registration</h2>
 
@@ -13,10 +14,13 @@
       <input type="text" class="form-control" id="name" name="name" required />
     </div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %} {% for category, message in messages %}
-    <div class="alert alert-danger">{{ message }}</div>
-    {% endfor %} {% endif %} {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %} 
+    {% if messages %} 
+      {% for category, message in messages %}
+        <div class="alert alert-danger">{{ message }}</div>
+      {% endfor %} 
+    {% endif %} 
+    {% endwith %}
 
     <div class="mb-3">
       <label for="email" class="form-label">Email:</label>
@@ -38,7 +42,26 @@
         name="password"
         required
         minlength="8"
+        onkeyup="validatePassword()"
       />
+      <div id="password-requirements" class="mt-2">
+        <small class="text-muted d-block mb-1">Password must contain:</small>
+        <div id="req-length" class="small">
+          <span id="length-icon">○</span> At least 8 characters
+        </div>
+        <div id="req-upper" class="small">
+          <span id="upper-icon">○</span> At least one uppercase letter
+        </div>
+        <div id="req-lower" class="small">
+          <span id="lower-icon">○</span> At least one lowercase letter
+        </div>
+        <div id="req-number" class="small">
+          <span id="number-icon">○</span> At least one number
+        </div>
+        <div id="req-special" class="small">
+          <span id="special-icon">○</span> At least one special character (!@#$%^&*)
+        </div>
+      </div>
     </div>
 
     <div class="mb-3">
@@ -184,7 +207,79 @@
   </p>
 </div>
 
+<style>
+  .requirement-met {
+    color: #28a745;
+  }
+  .requirement-unmet {
+    color: #dc3545;
+  }
+  .valid-icon {
+    color: #28a745;
+    font-weight: bold;
+  }
+  .invalid-icon {
+    color: #dc3545;
+    font-weight: bold;
+  }
+  .is-valid {
+    border-color: #28a745;
+  }
+  .is-invalid {
+    border-color: #dc3545;
+  }
+</style>
+
 <script>
+  function validatePassword() {
+    const password = document.getElementById("password").value;
+    
+    // Check requirements (must match backend validation)
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecial = /[!@#$%^&*]/.test(password);
+    const isLongEnough = password.length >= 8;
+    
+    // Update requirement displays
+    updateRequirement("length", isLongEnough);
+    updateRequirement("upper", hasUpperCase);
+    updateRequirement("lower", hasLowerCase);
+    updateRequirement("number", hasNumbers);
+    updateRequirement("special", hasSpecial);
+    
+    // Update password input styling based on validity
+    const passwordInput = document.getElementById("password");
+    const allValid = isLongEnough && hasUpperCase && hasLowerCase && hasNumbers && hasSpecial;
+    
+    if (password.length === 0) {
+      passwordInput.classList.remove("is-invalid", "is-valid");
+    } else if (allValid) {
+      passwordInput.classList.remove("is-invalid");
+      passwordInput.classList.add("is-valid");
+    } else {
+      passwordInput.classList.remove("is-valid");
+      passwordInput.classList.add("is-invalid");
+    }
+  }
+  
+  function updateRequirement(id, isMet) {
+    const reqElement = document.getElementById(`req-${id}`);
+    const iconSpan = document.getElementById(`${id}-icon`);
+    
+    if (isMet) {
+      reqElement.classList.add("requirement-met");
+      reqElement.classList.remove("requirement-unmet");
+      iconSpan.innerHTML = "✓";
+      iconSpan.className = "valid-icon";
+    } else {
+      reqElement.classList.add("requirement-unmet");
+      reqElement.classList.remove("requirement-met");
+      iconSpan.innerHTML = "○";
+      iconSpan.className = "invalid-icon";
+    }
+  }
+
   function showRoleFields() {
     const role = document.getElementById("role").value;
     const studentFields = document.getElementById("student-fields");
@@ -197,6 +292,9 @@
       studentFields.style.display = "block";
     } else if (role === "alumni") {
       alumniFields.style.display = "block";
+    } else if (role === "mentor") {
+      alert("Mentors must be approved by the admin first. Please register as a student or alumni.");
+      document.getElementById("role").value = "";
     }
   }
 </script>
