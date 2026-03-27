@@ -119,8 +119,3 @@ This ensures alumni engagement initiatives are both facilitated and evaluated.
 This project is currently under development as part of an academic group project.
 
 Let’s build a professional, scalable, and impactful alumni engagement platform.
-
-## Contributors
-
-- **@PhiwokuhleShabalala** - Project Creator
-- **@PHELOKAZI120** - Contributor
