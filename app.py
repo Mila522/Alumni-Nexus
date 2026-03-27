@@ -11,6 +11,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from sqlalchemy import or_, func, case
 from sqlalchemy.orm import aliased
+from itsdangerous import URLSafeTimedSerializer
+from flask_mail import Mail,Message as message1
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from email_validator import validate_email, EmailNotValidError
 

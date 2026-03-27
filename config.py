@@ -12,5 +12,5 @@ class Config:
     MAIL_PORT = 587
     MAIL_USE_TLS = True
     MAIL_USERNAME= 'minenhlebhekane@gmail.com'  # Change this
-    MAIL_PASSWORD = 'qgiq afzv doco njul'     # Change this
+    MAIL_PASSWORD = 'qgiqafzvdoconjul'     # Change this
     MAIL_DEFAULT_SENDER = 'minenhlebhekane@gmail.com'  # Change this
